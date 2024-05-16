@@ -1,0 +1,12 @@
+
+Music
+	CoMa (Pause theme)
+
+Script Proof-Reading
+	Luke O'Neill
+
+Screen artwork
+	Kevin B. Gener
+	Daniel Marschall
+
+Developed with TGC DarkBasic Professional and Borland Delphi

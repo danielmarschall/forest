@@ -1,0 +1,127 @@
+rem https://forum.thegamecreators.com/thread/160210#msg1886513 , modified
+
+// Screen settings
+sync on
+sync rate 60
+autocam off
+
+#constant SPREAD1_MAX 10
+#constant SPREAD2_MAX 15
+
+gosub _setup_particles
+ 
+// Main loop
+do 
+   // Check when SPACE is pressed
+   if spacekey() = 1 and keySP = 0
+        gosub _splat_blood
+   endif
+   keySP = spacekey() 
+
+   gosub _handle_blood
+loop
+
+// ---------------------
+
+_setup_particles:
+    // Make 100 particle objects
+    particleIndex = 0
+    #constant PARTICLEMAX = 100
+    dim particle(PARTICLEMAX) as particleType
+    for i = 1 to PARTICLEMAX
+       make object plain i, 2, 2
+       color object i, rgb(128, 0, 0)
+       exclude object on i
+    next i
+return
+
+_handle_blood:
+   // Update particles
+   for i = 1 to PARTICLEMAX
+      UpdateParticle(i)
+   next i
+   
+   // Update screen
+   sync
+return
+
+_splat_blood:
+    yoff = rnd(SPREAD1_MAX*2)-SPREAD1_MAX;
+
+      // Activate blood particles around box
+      for i = 1 to PARTICLEMAX
+          // The angle particles should fly
+        yAng# = 90+rnd(SPREAD2_MAX*2)-SPREAD2_MAX+yoff
+
+         // Calculate directions
+         xSpeed# = cos(yAng#)
+         zSpeed# = sin(yAng#)
+         // Calculate speeds
+         xSpeed# = xSpeed# * (rnd(20)/5.0)
+         ySpeed# = ((rnd(20)-rnd(20))/10.0)
+         zSpeed# = zSpeed# * (rnd(20)/5.0)
+         // Activate particle
+         
+         x# = camera position x()
+         y# = camera position y()
+         z# = camera position z()
+         
+         particleIndex = ActivateParticle(particleIndex, 30+rnd(30), x#, y#, z#, xSpeed#, ySpeed#, zSpeed#)
+      next i
+return
+ 
+// Activate the specified particle and give it an initial position/velocity
+function ActivateParticle(i, life, x#, y#, z#, xSpeed#, ySpeed#, zSpeed#)
+   // Cycle through the particle objects to use
+   inc i
+   if i > PARTICLEMAX then dec i, PARTICLEMAX
+    
+   // Set particle variables
+   particle(i).life = life
+   particle(i).x = x#
+   particle(i).y = y#
+   particle(i).z = z#
+   particle(i).xSpeed = xSpeed#
+   particle(i).ySpeed = ySpeed#
+   particle(i).zSpeed = zSpeed#
+    
+   // Show particle object
+   exclude object off i
+endfunction i
+ 
+// Update positioning for specified particle
+function UpdateParticle(i)
+      // Only update particles that are alive
+      if particle(i).life > 0
+ 
+         // Apply gravity
+         dec particle(i).ySpeed, 0.098
+ 
+         // Move the particle
+         inc particle(i).x, particle(i).xSpeed
+         inc particle(i).y, particle(i).ySpeed
+         inc particle(i).z, particle(i).zSpeed
+ 
+         // Position particle
+         position object i, particle(i).x, particle(i).y, particle(i).z
+         point object i, camera position x(), camera position y(), camera position z()
+ 
+         // Lower particle's life
+         dec particle(i).life
+ 
+         // Hide particles when they die
+         if particle(i).life <= 0 then exclude object on i
+ 
+      endif
+endfunction
+ 
+// Data type used by particles
+type particleType
+   life as integer      // Remaining life of particle (0=Dead)
+   x as float           // Position
+   y as float           // ...
+   z as float           // ...
+   xSpeed as float      // Velocity
+   ySpeed as float      // ...
+   zSpeed as float      // ...
+endtype

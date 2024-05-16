@@ -1,0 +1,57 @@
+remstart
+Sync Rate 0
+load music "music\darkness.mid", 1
+loop music 1
+load sound "sound\Type.wav", 1
+lcd("The Dark Night...", 1, 10, 1, 1, 0)
+sleep 500
+lcd("Dies ist eine Beta. Das Spiel wird in den nächsten 5 Jahren", 1, 40, 0, 1, 0)
+sleep 500
+lcd("fertig sein. Benutzen Sie die Maus, um sich umzuschauen", 1, 55, 0, 1, 0)
+sleep 500
+lcd("und benutzen Sie die Pfeiltasten, um zu laufen. Mit der rechten", 1, 70, 0, 1, 0)
+sleep 500
+lcd("Maustaste springen Sie.", 1, 85, 0, 1, 0)
+sleep 500
+lcd("(C)Copyright 2001 - 2002 Daniel Marschall.", 1, 115, 1, 0, 0)
+sleep 500
+lcd("Alle Rechte vorbehalten!", 1, 130, 1, 0, 0)
+sleep 500
+lcd("Besuchen Sie meine Webseite!", 1, 160, 0, 0, 1)
+sleep 500
+lcd("http://www.d-m-home.de", 1, 175, 0, 0, 1)
+sleep 500
+lcd("Diese Version ist vom 6.9.2002.", 1, 205, 1, 1, 1)
+sleep 5000
+delete sound 1
+delete music 1
+remend
+
+function lcd(rich$, x, y, r, g, b)
+  a = len(rich$) + 1
+  i = 0
+  s = 16
+  set text font "Courier"
+  repeat
+    sprite 1, s, y, 1
+    set cursor x * 8, y
+    x$ = mid$(rich$, x)
+    repeat
+      if r = 1 then ink rgb(i, 0, 0), 0
+      if g = 1 then ink rgb(0, i, 0), 0
+      if b = 1 then ink rgb(0, 0, i), 0
+      if r = 1 and g = 1 then ink rgb(i, i, 0), 0
+      if r = 1 and b = 1 then ink rgb(i, 0, i), 0
+      if g = 1 and b = 1 then ink rgb(0, i, i), 0
+      if b = 1 and g = 1 and b = 1 then ink rgb(i, i, i), 0
+      text x * 8, y, x$
+      inc i, 35
+      sync
+    until i => 255
+    inc x
+    inc s, 8
+    i = 0
+    play sound 1
+  until x = a
+endfunction
+

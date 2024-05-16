@@ -1,0 +1,1424 @@
+rem Nightmare Forest by Daniel Marschall
+rem Revision: 31 May 2018
+
+rem ---------------------
+
+rem SPRUNG-PHYSIK:
+rem - wenn man auf einem baum landet, kann man von dort aus nicht springen, und glitched manchmal auf dem boden
+rem - im baum wird man trotzdem von skorpionen angefressen
+rem ... scheinbar ist die jumpheight = 0 dann!
+
+rem Der Himmel ist zu niedrig. Die Tannen sieht man nicht bis ganz oben
+
+rem TODO: clone -> INSTANCE 
+
+rem TODO: scorpion schiebt stehenden spieler nicht weg
+
+rem TODO: scorpion soll nicht so nah rankommen, sodass er im spieler stehen würde, wenn der spieler eingeklemmt ist
+
+rem TODO: ambient light wird falsch verwendet. es ist viel zu blau, und alle objekte haben es deaktiviert, weil es die farben zerstört
+
+rem TODO: screen or desktop?
+rem TODO: mehr konfigurierbar machen
+rem TODO: alles einrücken
+
+rem TODO: lahm?
+rem TODO: map außenlinie ist nicht gesperrt mit bäumen
+rem TODO: überall float verwenden
+
+rem TODO
+rem - HUD
+rem - schwimmen
+rem - im wasser langsamer
+rem - menü am anfang und pause mit maus bedienen
+rem - rascheln im busch
+rem - die gegner kommen erst nach einer bestimmten zeit. spawnen weit weg vom spieler
+rem - tag und nachtzeiten?
+
+rem NICE TO HAVE
+rem - radar breitbild
+rem - wassermatrix bewegt sich nur in 1 richtung
+rem - mausumkehrung einstellbar
+rem - stars.bmp (5000px) braucht lange zum laden. 1000px ist verpixelt
+rem - besserer bluteffekt
+
+rem ToDo:
+rem   Radar wackelt
+rem   :startgame weglassen
+rem   Streifen am Boden und am Himmel...
+rem   Baum teiltransparenz
+rem   Radar lieber als Matrix. Viele Probleme wie z.B. mit Skorpion transparenz
+rem   Unscharfes Radar, Radar ganz dyn. zeichnen? Rader stay on top
+rem   Menü: musik aus --> an: loop von position 0!
+
+// --------------------------------
+// Numerical Resources
+// --------------------------------
+rem TODO: vervollständigen
+rem TODO: auch dateinamen als konstanten
+
+#constant IMG_ForestFloor 1
+#constant IMG_Stars 2
+#constant IMG_Water 3
+#constant IMG_Tree 4
+#constant IMG_MapBackground 5
+#constant IMG_PauseScreen 95
+#constant IMG_TitleScreen 96
+#constant IMG_BLOOD 97
+
+#constant OBJ_Skybox 2
+#constant OBJ_Tent 10
+#constant OBJ_MapGhostObject 51
+#constant OBJ_TreeTemplate 52
+#constant OBJ_CollissionDummy 53
+#constant OBJ_BloodParticle_Base 100
+#constant OBJ_Monster_Base 1000
+#constant OBJ_Tree_Base 1500
+
+#constant MSH_TreeTemplate 52
+
+#constant MAT_Ground 1
+#constant MAT_Water 3
+
+#constant SFX_ForestBG 1
+#constant SFX_PauseMusic 5
+#constant SFX_Walk_Earth 10
+#constant SFX_Walk_Water 11
+#constant SFX_Attack_Base 20
+#constant SFX_Monster_Base 1000
+
+#constant DLL_MapGen 1
+#constant DLL_DBIni 2
+#constant DLL_Resize32 3
+    
+#constant MEM_Map 1
+#constant MEM_ResizeSrc 2
+#constant MEM_ResizeDest 3
+
+// --------------------------------
+// File names
+// --------------------------------
+
+#constant FN_DLL_Resize32 "dll_resize\Resize32.dll"
+#constant FN_DLL_MapGen32 "mapgen\mapgen32.dll"
+#constant FN_DLL_DBIni "cfgread\dbini32.dll"
+
+#constant FN_SFX_ForestBG "sound\forestbg.wav"
+#constant FN_SFX_PauseMusic "music\pause.wav"
+#constant FN_SFX_Walk_Earth "sound\walk.wav"
+#constant FN_SFX_Walk_Water "sound\walk_water.wav"
+#constant FN_SFX_ScorpWalk "test.wav"
+#constant FN_SFX_ScorpionAttack1 "sound\scorpionAttack\attack1.wav"
+#constant FN_SFX_ScorpionAttack2 "sound\scorpionAttack\attack2.wav"
+#constant FN_SFX_ScorpionAttack3 "sound\scorpionAttack\attack3.wav"
+#constant FN_SFX_ScorpionAttack4 "sound\scorpionAttack\attack4.wav"
+
+#constant FN_OBJ_ScorpIdle "obj\scorpion\ScorpIdle.x"
+#constant FN_OBJ_ScorpWalk "obj\scorpion\ScorpWalk.x"
+#constant FN_OBJ_Tent "obj\tent\Tent.x"
+#constant FN_GFX_PauseScreen "bitmap\titlescreen.jpg"
+
+#constant FN_GFX_MapBackground "map\ST01L01a.bmp"
+#constant FN_GFX_TitleScreen "bitmap\titlescreen.jpg"
+#constant FN_GFX_FloorTexture "bitmap\forest_floor_texture.jpg"
+#constant FN_GFX_Stars "bitmap\stars.bmp"
+#constant FN_GFX_Water "bitmap\water.bmp"
+#constant FN_GFX_Tree "bitmap\tree.bmp"
+#constant FN_GFX_BLOOD "bitmap\blood.png"
+
+// --------------------------------
+// Language specific
+// --------------------------------
+
+rem TODO: vervollständigen. multilang per DLL
+#constant LNG_StartingGame "Starting game..."
+
+// --------------------------------
+// Read configuration
+// --------------------------------
+
+load dll FN_DLL_DBIni, DLL_DBIni
+call dll DLL_DBIni, "LoadINI", "forest.ini"
+framerate                   = call dll(DLL_DBIni, "ReadInt",   "Game", "framerate",                   0)
+clockSpeedFactor            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockSpeedFactor",            0)
+clockBlinksPerSecond        = call dll(DLL_DBIni, "ReadInt",   "Game", "clockBlinksPerSecond",        0)
+clockShowSeconds            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockShowSeconds",            0)
+beginClockSeconds           = call dll(DLL_DBIni, "ReadInt",   "Game", "beginClockSeconds",           0)
+enemyRotateSmoothness       = call dll(DLL_DBIni, "ReadInt",   "Game", "enemyRotateSmoothness",       0)
+maxRunEnergy                = call dll(DLL_DBIni, "ReadInt",   "Game", "maxRunEnergy",                0)
+waterLevel                  = call dll(DLL_DBIni, "ReadInt",   "Game", "waterLevel",                  0)
+sound3dVolumeCor            = call dll(DLL_DBIni, "ReadInt",   "Game", "sound3dVolumeCor",            0)
+invertMouse                 = call dll(DLL_DBIni, "ReadInt",   "Game", "invertMouse",                 0)
+test                        = call dll(DLL_DBIni, "ReadInt",   "Game", "test",                        0)
+camerarange                 = call dll(DLL_DBIni, "ReadInt",   "Game", "camerarange",                 0)
+fogdistance                 = call dll(DLL_DBIni, "ReadInt",   "Game", "fogdistance",                 0)
+waterMovementMaxDistance    = call dll(DLL_DBIni, "ReadInt",   "Game", "waterMovementMaxDistance",    0)
+gravity#                    = call dll(DLL_DBIni, "ReadFloat", "Game", "gravity",                     0.0)
+JumpStartVelocity#          = call dll(DLL_DBIni, "ReadFloat", "Game", "JumpStartVelocity",           0.0)
+MinFallVelocity#            = call dll(DLL_DBIni, "ReadFloat", "Game", "MinFallVelocity",             0.0)
+collissionboxsize#          = call dll(DLL_DBIni, "ReadFloat", "Game", "collissionboxsize",           0.0)
+playerEyeHeight#            = call dll(DLL_DBIni, "ReadFloat", "Game", "playerEyeHeight",             0.0)
+cMaxTrees                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxTrees",                   0)
+cMapSizeX                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeX",                   0)
+cMapSizeZ                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeZ",                   0)
+cTreeRadius                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cTreeRadius",                 0)
+cMaxEnemies                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxEnemies",                 0)
+HitInterval                 = call dll(DLL_DBIni, "ReadInt",   "Game", "HitInterval",                 0)
+initialEnemySafezone#       = call dll(DLL_DBIni, "ReadFloat", "Game", "InitialEnemySafezone",        0.0)
+cEnemySpawnMapBorderPadding = call dll(DLL_DBIni, "ReadInt",   "Game", "EnemySpawnMapBorderPadding",  0)
+call dll DLL_DBIni, "UnloadINI"
+delete dll DLL_DBIni
+
+rem Setup & Startbildschirm
+if check display mode( desktop width(), desktop height(), screen depth() )
+    set display mode desktop width(), desktop height(), screen depth()
+endif
+hide mouse
+
+Sync On
+Sync Rate framerate
+
+LoadImageFullscreen(FN_GFX_TitleScreen, IMG_TitleScreen)
+
+PASTE IMAGE IMG_TitleScreen, 0, 0
+
+rem Sync twice at application start for friendliness with dbpro's double buffering
+rem (Required for newer versions of DB Pro)
+sync : sync
+
+gosub _menu
+
+_startgame:
+
+ink rgb(255, 230, 0), 0
+PASTE IMAGE IMG_TitleScreen, 0, 0
+text 28, 550, LNG_StartingGame
+
+sync
+
+randomize timer()
+
+rem Working variables ONLY
+JumpKeyStatePrev = 0
+JumpPosition# = 0.0
+onGround = 1
+velocityY# = 0.0
+runEnergy# = maxRunEnergy
+clockSeconds = beginClockSeconds
+collcounter = 0
+hits = 0
+LastAttackSound = 0
+
+draw to front
+
+gosub _setup_camera
+gosub _create_floor
+gosub _setup_player_position
+gosub _create_sky
+gosub _create_trees
+gosub _draw_trees
+gosub _create_water
+gosub _create_radar
+
+rem Bildschirm neu aufbauen
+cls
+sync
+
+rem Lichtversuch
+make light 1
+
+rem Radar vorbereiten
+radarpointcolor = 150
+
+gosub _create_enemies
+gosub _setupClock
+gosub _setup_blood
+
+Rem Forest atmo
+load sound FN_SFX_ForestBG, SFX_ForestBG
+load sound FN_SFX_PauseMusic, SFX_PauseMusic
+load sound FN_SFX_Walk_Earth, SFX_Walk_Earth
+load sound FN_SFX_Walk_Water, SFX_Walk_Water
+
+#constant NumberOfAttackSounds 4
+load sound FN_SFX_ScorpionAttack1, SFX_Attack_Base+0
+load sound FN_SFX_ScorpionAttack2, SFX_Attack_Base+1
+load sound FN_SFX_ScorpionAttack3, SFX_Attack_Base+2
+load sound FN_SFX_ScorpionAttack4, SFX_Attack_Base+3
+
+LoadImageFullscreen(FN_GFX_PauseScreen, IMG_PauseScreen)
+
+#constant SPREAD1_MAX 10
+#constant SPREAD2_MAX 15
+
+Disable EscapeKey
+
+loop sound SFX_ForestBG
+
+rem Hauptschleife
+do
+    gosub _handle_weather
+    gosub _handle_player
+    gosub _update_trees
+    gosub _handle_radar
+    gosub _handle_enemies
+    gosub _handleClock
+    gosub _handle_blood
+   
+    rem TODO: does not work. There is always an attack!
+    set object collision on OBJ_CollissionDummy
+    position object OBJ_CollissionDummy, camera position x(), camera position y(), camera position z()
+    for t = 0 to cMaxEnemies-1
+        if object collision(OBJ_CollissionDummy, OBJ_Monster_Base+t) = 1
+            collcounter = collcounter + 1
+            print "Attacking enemy: ", t
+        endif
+    NEXT
+    print "Collision counter: ", collcounter
+    set object collision off OBJ_CollissionDummy
+        
+    if collcounter >= HitInterval
+        collcounter = 0
+        inc hits, 1
+        gosub _play_attack_sound
+        gosub _splat_blood
+    endif
+    print "Hits: ", hits
+    
+    if EscapeKey() = 1
+        repeat
+            sync
+        until not (EscapeKey() = 1)
+        gosub _pausemenu
+    endif
+    sceneInitialized=1
+    sync
+loop
+
+_pausemenu:
+    gosub _stop_game_sounds
+    loop sound SFX_PauseMusic
+    show mouse 
+    
+    repeat
+        cls
+        
+        paste image IMG_PauseScreen, 0, 0
+                
+        rem Text
+        ink rgb(255,255,255),1
+        text 100,100,"text"
+                
+        text 28, 550, "Pause. ESC=Weiter. Runter=Ende."
+        sync
+        
+        if DownKey() = 1
+            goto _exit
+        ENDIF
+    UNTIL EscapeKey() = 1
+    repeat
+        sync
+    until not (EscapeKey() = 1)
+    hide mouse
+    stop sound SFX_PauseMusic
+    loop sound SFX_ForestBG
+    
+    rem TODO: das bringt nix. wenn man die maus bewegt, wird nach der pause die kamera gescrollt
+    set cursor 0, 0
+return
+
+_setup_camera:
+    Set camera range 1, camerarange
+    AUTOMATIC CAMERA COLLISION 0,collissionboxsize#,0 : rem scorpione stoßen den spieler nicht weg, wenn keine taste gedrückt wird? syntax mit 4 parametern funktioniert im neuen dbpro free nicht!
+    Autocam off
+    
+    rem TODO: zylinder
+    MAKE OBJECT SPHERE OBJ_CollissionDummy, collissionboxsize#
+    rem hide object OBJ_CollissionDummy
+    set object collision off OBJ_CollissionDummy
+return
+
+_setup_player_position:
+    X# = cMapSizeX / 2
+    Y# = floorHeight#(X#, Z#) + playerEyeHeight
+    Z# = cMapSizeZ / 2
+    position camera X#, Y#, Z#
+    
+    rem TODO zelt ist winzig klein!
+    rem TODO zelt ist schwarz schattiert
+    rem TODO zelt beleuchten
+    Load object FN_OBJ_Tent, OBJ_Tent
+    show object OBJ_Tent
+    scale object OBJ_Tent, 10000, 5000, 5000
+    position object OBJ_Tent, X#-20, Y#, Z#-10
+return
+
+_handle_weather:
+    rem Wetter
+   
+    color ambient light rgb(64,64,128)
+    rem set ambient light 1
+    set ambient light 50
+    if fog available() = 1
+        fog on
+        fog distance fogdistance
+        fog color rgb(0, 0, 0)
+    endif
+   
+    if test = 1
+        SET MATRIX WIREFRAME ON MAT_Ground
+        SET MATRIX WIREFRAME ON MAT_Water
+    endif
+   
+    rem Stars are moving
+    scroll object texture OBJ_Skybox, 0.00002, 0    
+    
+    rem Water movement
+    rem TODO: wasser soll sich langsamer bewegen, aber das ist schwierig. wenn man die bewegung nur zu bestimmten ticks
+    rem       durchführt, dann ruckelt es.
+    waterdir = (waterdir + 1) mod 360;
+    watermov = 0 + cos(waterdir)*waterMovementMaxDistance
+    position matrix MAT_Water, watermov, waterLevel, watermov
+return
+
+_handle_enemies:
+    pX# = Camera Position X()
+    pZ# = Camera Position Z()
+    
+    rem TODO: gegner sollen sich nicht überschneiden
+    
+    for t = 0 to cMaxEnemies-1
+        eX# = Object Position X(OBJ_Monster_Base+t)
+        eY# = Object Position Y(OBJ_Monster_Base+t)
+        eZ# = Object Position Z(OBJ_Monster_Base+t)
+       
+        eRX# = Object Angle X(OBJ_Monster_Base+t)
+        eRY# = Object Angle Y(OBJ_Monster_Base+t)
+        eRZ# = Object Angle Z(OBJ_Monster_Base+t)
+       
+        deltaX# = pX#-eX#
+        deltaZ# = pZ#-eZ#
+
+        rem TODO: cor file
+        yPosOffset# = 20
+        
+        dist# = sqrt( deltaX#*deltaX# + deltaZ#*deltaZ# )
+        
+        if clockSeconds > 1
+            if not sound playing(SFX_Monster_Base+t)
+                set sound volume SFX_Monster_Base+t, 0
+                
+                rem TODO: beliebiges startoffset?
+                loop sound SFX_Monster_Base+t
+            endif
+        endif
+        
+        rem The mixing of 3dsound is bullshit (too loud from far distance, and not very loud on close distance),
+        rem so we mix the volume ourself
+        if sound3dVolumeCor>0 and dist#<sound3dVolumeCor then set sound volume SFX_Monster_Base+t, (1-(dist#/sound3dVolumeCor))*100
+        
+        rem TODO: 100 dynamisch machen
+        rem at least a distance of 10 so that atanfull() does not bug, when deltas becomes 0
+        rem Verhindern, dass der Skorpion in einem "drin" steht. Er soll mit den Scheren angreifen
+        scorpMinDistance = 100
+        
+        if dist# > scorpMinDistance
+            if dist# < enemy(t).AwarenessRadius
+                enemy(t).Angle = atanfull(deltaX#, deltaZ#)
+                enemy(t).Angle = WrapValue(enemy(t).Angle+180)
+                enemy(t).CurSpeed = enemy(t).MaxSpeed
+            else
+                if enemy(t).WalkTimeout <= 0
+                    enemy(t).WalkTimeout = RndBetween(enemy(t).WalkTimeoutMin, enemy(t).WalkTimeoutMax)
+                    enemy(t).Angle = RndBetween(0,359)
+                    enemy(t).CurSpeed = RndBetween(0, enemy(t).MaxSpeed)
+                ENDIF
+                enemy(t).WalkTimeout = enemy(t).WalkTimeout - 1
+            endif
+            
+            if enemy(t).CurSpeed = 0
+                gosub scorpChangeToIdle
+            else
+                gosub scorpChangeToWalk
+                rem TODO: also make animation slower/faster
+            endif
+
+            a# = WrapValue(enemy(t).Angle + 180)
+            XTest# = Newxvalue(eX#, a#, enemy(t).CurSpeed)
+            ZTest# = Newzvalue(eZ#, a#, enemy(t).CurSpeed)
+            if XTest# > 0 and XTest# < cMapSizeX then eX# = XTest#
+            if ZTest# > 0 and ZTest# < cMapSizeZ then eZ# = ZTest#
+            if XTest# <= 0 or XTest# >= cMapSizeX or ZTest# <= 0 or ZTest# >= cMapSizeZ
+                rem Kehrtwende, um den Kartenrand zu verlassen
+                enemy(t).Angle = WrapValue(enemy(t).Angle+180)
+                enemy(t).WalkTimeout = RndBetween(enemy(t).WalkTimeoutMin, enemy(t).WalkTimeoutMax)
+                enemy(t).CurSpeed = RndBetween(0, enemy(t).MaxSpeed)
+            endif
+    
+            eY# = floorHeight#(eX#, eZ#) + yPosOffset#
+            Position Object OBJ_Monster_Base+t, eX#, eY#, eZ#
+            Position Sound SFX_Monster_Base+t, eX#, eY#, eZ#
+            
+            eRY# = smoothRotate#(eRY#, enemy(t).Angle, enemyRotateSmoothness)
+            rotate object OBJ_Monster_Base+t, eRX#, eRY#, eRZ#
+        endif
+    next
+return
+
+#constant GROUNDTYPE_AIR 0
+#constant GROUNDTYPE_EARTH 1
+#constant GROUNDTYPE_WATER 2
+rem #constant GROUNDTYPE_DEEPWATER 3
+function groundType(onGround, waterLevel)
+	if onGround = 0
+		ret = GROUNDTYPE_AIR
+	else
+    	X# = camera position x()
+    	Z# = camera position z()
+		if floorHeight#(X#,Z#) > waterLevel
+			ret = GROUNDTYPE_EARTH
+		else
+			ret = GROUNDTYPE_WATER
+		endif
+	endif
+endfunction ret
+
+_handle_player:
+    set cursor 0, 0
+    oldcAY# = cAY#
+    oldcAX# = cAX#
+   
+    X# = camera position x()
+    Y# = camera position y()
+    Z# = camera position z()
+
+    if invertMouse = 1
+        cAX# = WrapValue(cAX# - MousemoveY() * 0.2)
+    else
+        cAX# = WrapValue(cAX# + MousemoveY() * 0.2)
+    endif
+    cAY# = WrapValue(cAY# + MousemoveX() * 0.2)
+    cAZ# = Camera angle Z()   
+
+    rem Sprungroutine
+    rem TODO: + Anlaufsprung
+   
+    JumpKeyStateNow=jumpPressed()
+    if (JumpKeyStatePrev=0) and (JumpKeyStateNow=1)
+        gosub PressJumpKey
+    ENDIF
+    if (JumpKeyStatePrev=1) and (JumpKeyStateNow=0)
+        gosub ReleaseJumpKey
+    ENDIF
+    JumpKeyStatePrev = JumpKeyStateNow
+    gosub JumpUpdate
+       
+    rem Laufen
+    speedboost# = 1
+    
+    gt = groundType(onGround, waterLevel)
+    
+    if upPressed()+downPressed()+leftPressed()+rightPressed() = 0
+        runEnergy# = runEnergy# + 2
+        stop sound SFX_Walk_Earth
+        stop sound SFX_Walk_Water
+    else
+		if gt = GROUNDTYPE_EARTH
+			stop sound SFX_Walk_Water
+        	if not sound playing(SFX_Walk_Earth)
+               	loop sound SFX_Walk_Earth
+        	endif
+		endif
+		if gt = GROUNDTYPE_WATER
+			stop sound SFX_Walk_Earth
+        	if not sound playing(SFX_Walk_Water)
+               	loop sound SFX_Walk_Water
+        	endif
+		endif
+    	if gt = GROUNDTYPE_AIR
+        	stop sound SFX_Walk_Earth
+        	stop sound SFX_Walk_Water
+    	endif
+		energyChanged = 0
+        if ShiftKey()+ControlKey() = 1 : rem shift+control at the same time = walk normal
+            rem TODO: es ruckelt trotzdem noch
+            if ControlKey()=1 and runEnergy#>0 : rem Energy >1 , damit es nicht ruckelt (run-walk-run-walk-run-walk) . 3 = walk regain
+                speedboost# = 2
+                runEnergy# = runEnergy# - 1
+                energyChanged = 1
+            endif
+            if ShiftKey()=1
+                speedboost# = 0.5
+                runEnergy# = runEnergy# + 0.5
+                energyChanged = 1
+            endif
+        endif
+        if not energyChanged then runEnergy# = runEnergy# + 1
+        if upPressed()
+            XTest# = Newxvalue(X#, cAY#, 7*speedboost#)
+            ZTest# = Newzvalue(Z#, cAY#, 7*speedboost#)
+            gosub _WorldBoundCheck
+        endif
+        if downPressed()
+            XTest# = Newxvalue(X#, Wrapvalue(cAY# - 180), 5*(speedboost#/2))
+            ZTest# = Newzvalue(Z#, Wrapvalue(cAY# - 180), 5*(speedboost#/2))
+            gosub _WorldBoundCheck
+        endif
+        if leftPressed()
+            XTest# = Newxvalue(X#, Wrapvalue(cAY# - 90), 5*(speedboost#/1.3))
+            ZTest# = Newzvalue(Z#, Wrapvalue(cAY# - 90), 5*(speedboost#/1.3))
+            gosub _WorldBoundCheck
+        endif
+        if rightPressed()
+            XTest# = Newxvalue(X#, Wrapvalue(cAY# + 90), 5*(speedboost#/1.3))
+            ZTest# = Newzvalue(Z#, Wrapvalue(cAY# + 90), 5*(speedboost#/1.3))
+            gosub _WorldBoundCheck
+        endif
+    endif
+    if runEnergy# > maxRunEnergy then runEnergy# = maxRunEnergy
+    print "Run energy: ", runEnergy#
+
+    Rem Rotate camera
+    cTestX# = WrapValue(cAX# - 180)
+    if cTestX# > 225 then cAX# = 45
+    if cTestX# < 135 then cAX# = 315
+    YRotate camera CurveAngle(cAY#, oldcAY#, 24)
+    XRotate camera CurveAngle(cAX#, oldcAX#, 24)
+
+    Rem Position Camera
+    if onGround=1
+        Y#=floorHeight#(X#, Z#)
+    else
+        Y#=JumpPosition#
+    ENDIF
+    inc Y#, playerEyeHeight#
+    Position Camera X#, Y#, Z#
+
+    Rem Position Listener
+    Position Listener X#, Y#, Z#
+    Rotate Listener 0, cAY#, 0   : rem todo warum 0 statt cAZ# etc ?
+
+    rem Sky sphere follows player
+rem    position object OBJ_Skybox, X#, Y#, Z#
+    position object OBJ_Skybox, X#, FloorHeight#(X#,Z#), Z#
+    
+    
+    
+rem Sollte man aus irgendeinem Grund die Skybox verlassen, soll man trotzdem zur Erde schauen können
+backdrop on
+color backdrop rgb(0,0,128) : rem TODO: schwarz + auslagern
+set object cull OBJ_Skybox, 1
+
+rem texture backdrop IMG_Stars
+rem hide object OBJ_Skybox
+rem set object fog OBJ_Skybox, 0
+
+    rem TEST: extend skybox if player jumps
+    if onGround = 0
+        jumpheight#=Y#-FloorHeight#(X#,Z#)
+    else
+        jumpheight#=0
+    endif
+
+    rem TODO: beim springen sieht man am boden den backdrop    
+    
+    rem 500 = die originalgröße der box, vor der ersten scalisierung (setup sky)
+    rem 600,120,600 = die originale skalierung als referenz
+    rem *2 , da es von beiden seiten erweitert wird
+    scalX# = 100.0*(500.0*6.00 + jumpheight#*2)/500.0
+    scalY# = 100.0*(500.0*1.20 + jumpheight#*2)/500.0
+    scalZ# = 100.0*(500.0*6.00 + jumpheight#*2)/500.0
+    scale object OBJ_Skybox, scalX#, scalY#, scalZ#
+return    
+
+_WorldBoundCheck:
+    if XTest# > 0 and XTest# < cMapSizeX then X# = XTest#
+    if ZTest# > 0 and ZTest# < cMapSizeZ then Z# = ZTest#
+return
+    
+_update_trees:
+    if (ceil(X#) mod 10 = 0) or (ceil(Z#) mod 10 = 0) or (sceneInitialized=0)
+        for t = 0 to cMaxTrees-1
+            rx = tree(t).x
+            rz = tree(t).z
+            incircle = IsInCircle(rx, rz, X#, Z#, camerarange)
+            rem incircle = IsInCircle(rx, rz, X#, Z#, fogdistance)
+            if incircle <> tree(t).drawn
+                if incircle = 1
+                    if object exist(OBJ_Tree_Base+t)
+                        show object OBJ_Tree_Base+t
+                    else
+                        make object OBJ_Tree_Base+t, MSH_TreeTemplate, IMG_Tree
+                        position object OBJ_Tree_Base+t, rx, floorHeight#(rx, rz)+190, rz
+                        set object OBJ_Tree_Base+t, 1, 1, 0
+                        rotate object OBJ_Tree_Base+t, 0, RndBetween(0,359), 0
+                    endif
+                else
+                    delete object OBJ_Tree_Base+t
+                    rem hide object OBJ_Tree_Base+t
+                endif 
+            ENDIF      
+            tree(t).drawn = incircle
+        next t
+    endif
+return
+
+_fademenu:
+    if fade# > 100 then fadedir = 0
+    if fade# < 50 then fadedir = 1
+    if fadedir = 1
+        fade# = fade# + 2.5
+    else
+        fade# = fade# - 2.5
+    endif
+    rem Beleuchtet
+    ink rgb(255, fade#, 0), 0
+    set text font "Tahoma"
+    set text size 26
+    if menu = 1
+        if pos = 1 then text 260, 255, "Neues Spiel starten"
+        if pos = 2 then text 260, 285, "Spiel laden"
+        if pos = 3 then text 260, 315, "Einstellungen"
+        if pos = 4 then text 260, 345, "Spiel beenden"
+    endif
+    if menu = 3
+        if pos = 1
+            if sound = 1 then text 260, 255, "Ton: An"
+            if sound = 0 then text 260, 255, "Ton: Aus"
+        endif
+        if pos = 2
+            if music = 1 then text 260, 285, "Musik: An"
+            if music = 0 then text 260, 285, "Musik: Aus"
+        endif
+        if pos = 3 then text 260, 315, "Hauptmenü"
+    endif
+    rem Normal
+    ink rgb(255, 230, 0), 0
+    if menu = 1
+        if pos <> 1 then text 260, 255, "Neues Spiel starten"
+        if pos <> 2 then text 260, 285, "Spiel laden"
+        if pos <> 3 then text 260, 315, "Einstellungen"
+        if pos <> 4 then text 260, 345, "Spiel beenden"
+    endif
+    if menu = 3
+        if pos <> 1
+            if sound = 1 then text 260, 255, "Ton: An"
+            if sound = 0 then text 260, 255, "Ton: Aus"
+        endif
+        if pos <> 2
+            if music = 1 then text 260, 285, "Musik: An"
+            if music = 0 then text 260, 285, "Musik: Aus"
+        endif
+        if pos <> 3 then text 260, 315, "Hauptmenü"
+    endif
+    sync
+return
+
+_handle_radar:
+	rem TODO: the player dot should always stay at the same position
+	rem TODO: don't show far away enemies
+	
+    rem Leuchtpunkt
+    if radarpointrev = 0
+        inc radarpointcolor, 3
+    else
+        dec radarpointcolor, 3
+    endif
+    if radarpointcolor > 255
+        radarpointrev = 1
+        radarpointcolor = 254
+    endif
+    if radarpointcolor < 150
+        radarpointrev = 0
+        radarpointcolor = 149
+    endif
+    rem Bäume
+    for t = 0 to cMaxTrees-1
+        if tree(t).drawn
+        	x = tree(t).x
+        	y = tree(t).z
+
+	        x0 = camera position x()
+	        y0 = camera position z()
+	        ang = camera angle y()
+	        tx = x0 + (x-x0)*cos(ang) - (y-y0)*sin(ang)
+			ty = y0 + (x-x0)*sin(ang) + (y-y0)*cos(ang)
+			x = tx
+			y = ty
+        	
+    	    x = (x / 62.5) + 7.5
+	        y = screen height() - 7.5 - (y / 62.5)
+	        
+            rem ink rgb(0, radarpointcolor, 0), 0
+            ink rgb(0, 50, 0), 0
+            circle x, y, 1
+            circle x, y, 0
+        endif
+    next i
+    rem Player
+    x = (X# / 62.5) + 7.5
+    y = screen height() - 7.5 - (Z# / 62.5)
+    ink rgb(0, 0, radarpointcolor), 0
+    circle x, y, 1
+    circle x, y, 0
+    rem Enemies
+    for t = 0 to cMaxEnemies-1
+    	x = object position x(OBJ_Monster_Base+t)
+    	y = object position z(OBJ_Monster_Base+t)
+    	
+	    x0 = camera position x()
+	    y0 = camera position z()
+	    ang = camera angle y()
+	    tx = x0 + (x-x0)*cos(ang) - (y-y0)*sin(ang)
+		ty = y0 + (x-x0)*sin(ang) + (y-y0)*cos(ang)
+		x = tx
+		y = ty
+    	
+        x = (x / 62.5) + 7.5
+        y = screen height() - 7.5 - (y / 62.5)
+        
+        ink rgb(radarpointcolor, 0, 0), 0
+        circle x, y, 1
+        circle x, y, 0
+    next
+return
+
+_draw_trees:
+    rem TODO: da ist ein baum an offset 0,0,0
+    load image FN_GFX_Tree, IMG_Tree
+    
+    make object plain OBJ_TreeTemplate, 2*cTreeRadius, 400
+    make mesh from object MSH_TreeTemplate, OBJ_TreeTemplate
+    add limb OBJ_TreeTemplate, 1, MSH_TreeTemplate
+    rotate limb OBJ_TreeTemplate, 1, 0, 90, 0
+    make mesh from object MSH_TreeTemplate, OBJ_TreeTemplate
+    delete object OBJ_TreeTemplate
+return
+
+_create_trees:
+    dim tree(cMaxTrees-1) as treeType
+    
+    remstart
+    for t = 0 to cMaxTrees-1
+        tree(t).x = RndBetween(0, cMapSizeX) 
+        tree(t).z = RndBetween(0, cMapSizeZ) 
+        tree(t).drawn = 0
+    NEXT
+    remend
+       
+    rem TODO: wegbreite definieren
+    load dll FN_DLL_MapGen32, DLL_MapGen
+    call dll DLL_MapGen, "LoadParametersFromINI", "forest.ini"
+
+    load dll FN_DLL_DBIni, DLL_DBIni
+    call dll DLL_DBIni, "LoadINI", "seed.ini"
+    onetimeseed = call dll(DLL_DBIni, "ReadInt", "Seed", "onetime", 0)
+    staticseed  = call dll(DLL_DBIni, "ReadInt", "Seed", "value", 0)
+    seedactive  = call dll(DLL_DBIni, "ReadInt", "Seed", "active", 0)
+    IF (onetimeseed = 1) AND (seedactive = 1)
+        call dll DLL_DBIni, "WriteInt", "Seed", "active", 0
+    ENDIF
+    IF seedactive
+        call dll DLL_MapGen, "UseSeed", staticseed
+    ELSE
+        call dll DLL_MapGen, "RandomSeed"
+    ENDIF
+    call dll DLL_DBIni, "UnloadINI"
+    delete dll DLL_DBIni
+    
+    make memblock MEM_Map, cMaxTrees*8
+    call dll DLL_MapGen, "GenerateMap", cMaxTrees, cTreeRadius, cMapSizeX, cMapSizeZ, get memblock ptr(MEM_Map), 0
+    for t = 0 to cMaxTrees-1
+        tree(t).x = memblock dword(MEM_Map, t*8)
+        tree(t).z = memblock dword(MEM_Map, t*8+4)
+        tree(t).drawn = 0
+    NEXT
+    delete memblock MEM_Map
+    delete dll DLL_MapGen
+return
+
+_menu:
+    PASTE IMAGE IMG_TitleScreen, 0, 0
+    set text font "times"
+    set text size 27
+    fade = 100
+    pos = 1
+    menu = 1
+    sound = 1
+    do
+        gosub _fademenu
+        if ( downkey() = 1 and pos < 4 and menu = 1 ) or ( downkey() = 1 and pos < 3 and menu = 3 )
+            inc pos
+            while downkey() = 1
+                gosub _fademenu
+            endwhile
+        endif
+        if upkey() = 1 and pos > 1
+            dec pos
+            while upkey() = 1
+                gosub _fademenu
+            endwhile
+        endif
+        if returnkey() = 1
+            if menu = 1
+                if pos = 1 then gosub _startgame
+                if pos = 2
+                    rem PASTE IMAGE IMG_TitleScreen, 0, 0
+                    rem menu = 2
+                    rem pos = 1
+                endif
+                if pos = 3
+                    PASTE IMAGE IMG_TitleScreen, 0, 0
+                    menu = 3
+                    pos = 1
+                endif
+                if pos = 4 then end
+            else
+                if menu = 3
+                    if pos = 1
+                        if sound = 1
+                            sound = 0
+                        else
+                            sound = 1
+                        endif
+                        PASTE IMAGE IMG_TitleScreen, 0, 0
+                    endif
+                    if pos = 2
+                        if music = 1
+                            music = 0
+                        else
+                            music = 1
+                        endif
+                        PASTE IMAGE IMG_TitleScreen, 0, 0
+                    endif
+                    if pos = 3
+                        PASTE IMAGE IMG_TitleScreen, 0, 0
+                        menu = 1
+                        pos = 1
+                    endif
+                endif
+            endif
+            while returnkey() = 1
+                gosub _fademenu
+            endwhile
+        endif
+    loop
+return
+
+_create_enemies:
+    dim enemy(cMaxEnemies-1) as enemyType
+    for t = 0 to cMaxEnemies-1
+        if t=0
+            Load 3Dsound FN_SFX_ScorpWalk,SFX_Monster_Base+t
+        else
+            Clone Sound SFX_Monster_Base+t, SFX_Monster_Base
+        endif
+
+        pX# = Camera Position X()
+        pY# = Camera Position Y()
+        pZ# = Camera Position Z()
+
+        repeat
+            eX# = RndBetween(cEnemySpawnMapBorderPadding, cMapSizeX-cEnemySpawnMapBorderPadding)
+            eZ# = RndBetween(cEnemySpawnMapBorderPadding, cMapSizeZ-cEnemySpawnMapBorderPadding)
+            deltaX# = pX#-eX#
+            deltaZ# = pZ#-eZ#
+            dist# = sqrt( deltaX#*deltaX# + deltaZ#*deltaZ# )
+            rem Prevent that the enemies spawn right at the player (5000/5000)
+        until dist# >= initialEnemySafezone#
+        enemy(t).AwarenessRadius = RndBetween(600, 1300)
+        enemy(t).MaxSpeed = RndBetween(1, 4)
+        enemy(t).WalkTimeoutMin = 200
+        enemy(t).WalkTimeoutMax = 300
+        
+        if t = 0
+            animScorpIdleStart = 0
+            Load object FN_OBJ_ScorpIdle, OBJ_Monster_Base+t
+            animScorpIdleEnd = total object frames(OBJ_Monster_Base+t)
+            
+            animScorpWalkStart = animScorpIdleEnd+1
+            Append object FN_OBJ_ScorpWalk, OBJ_Monster_Base+t, animScorpWalkStart
+            animScorpWalkEnd = total object frames(OBJ_Monster_Base+t)
+        else
+            Clone Object OBJ_Monster_Base+t, OBJ_Monster_Base        
+        endif
+        
+        eY# = floorHeight#(eX#, eZ#) : rem TODO  + yPosOffset#
+        position object OBJ_Monster_Base+t, eX#, eY#, eZ#
+        Position Sound SFX_Monster_Base+t, eX#, eY#, eZ#
+        
+        fix object pivot OBJ_Monster_Base+t
+        gosub scorpChangeToWalk
+        set object collision on OBJ_Monster_Base+t
+    NEXT
+return
+
+scorpChangeToIdle:
+    rem TODO: smoothness (interpolation)
+    if enemy(t).CurrentAnim <> 1
+        loop object OBJ_Monster_Base+t, animScorpIdleStart, animScorpIdleEnd
+        enemy(t).CurrentAnim = 1
+    endif
+return
+
+scorpChangeToWalk:
+    rem TODO: smoothness (interpolation)
+    if enemy(t).CurrentAnim <> 2
+        loop object OBJ_Monster_Base+t, animScorpWalkStart, animScorpWalkEnd
+        enemy(t).CurrentAnim = 2
+    endif
+return
+
+_setupClock:
+    set text font "arial" : set text size 30 : set text transparent
+    
+    // Session variables
+    clockTickCounter=0
+    clockCurrentMidDot=0
+    clockTicksPerSecond = framerate
+return
+
+_handleClock:
+    if mod(clockTickCounter*clockBlinksPerSecond, clockTicksPerSecond) = 0
+        clockCurrentMidDot = 1 - clockCurrentMidDot
+    endif
+    
+    if mod(clockTickCounter*clockSpeedFactor, clockTicksPerSecond) = 0
+        clockSeconds = clockSeconds + 1
+    endif
+    
+    gosub _printClock
+
+    clockTickCounter = clockTickCounter + 1
+RETURN
+
+_create_water:
+    make matrix MAT_Water, cMapSizeX+2*waterMovementMaxDistance, cMapSizeZ+2*waterMovementMaxDistance, 15, 15
+    load image FN_GFX_Water, IMG_Water
+    prepare matrix texture MAT_Water, IMG_Water, 1, 1
+    fill matrix MAT_Water, 0, 1
+    position matrix MAT_Water, 0, waterLevel, 0
+    ghost matrix on MAT_Water
+    set matrix MAT_Water, 0, 0, 1, 1, 1, 1, 1
+    update matrix MAT_Water
+return
+
+_create_floor:
+    rem Boden
+    make matrix MAT_Ground, cMapSizeX, cMapSizeZ, 15, 15
+
+    load image FN_GFX_FloorTexture, IMG_ForestFloor
+    prepare matrix texture MAT_Ground, IMG_ForestFloor, 1, 1
+    fill matrix MAT_Ground, 0, 1
+    set matrix MAT_Ground, 0, 0, 1, 1, 1, 1, 1
+    randomize matrix MAT_Ground, 130
+    
+    rem TEST
+    rem TODO: aber man kann 40,40 nicht updaten?!
+    set matrix height MAT_Ground, 10, 10, 1000
+    
+    update matrix MAT_Ground
+    
+    remstart
+    currentmatrix=1
+    for z=1 to 20
+        for x=1 to 20
+    
+          rem Get matrix heights
+          rem print x, " - ", z
+          rem sync
+          rem sleep 100
+          
+          h8#=get matrix height(currentmatrix,x,z-1)
+          h4#=get matrix height(currentmatrix,x-1,z)
+          h#=get matrix height(currentmatrix,x,z)
+          h2#=get matrix height(currentmatrix,x,z)
+    
+          rem Calculate projected angle X using heights
+          x1#=(x-1)*25.0 : y1#=h#
+          x2#=(x+0)*25.0 : y2#=h4#
+          dx#=x2#-x1#
+          dy#=y2#-y1#
+          ax#=atanfull(dx#,dy#)
+          ax#=wrapvalue(90-ax#)
+    
+          rem Calculate projected angle Z using heights
+          z1#=(z-1)*25.0 : y1#=h2#
+          z2#=(z+0)*25.0 : y2#=h8#
+          dz#=z2#-z1#
+          dy#=y2#-y1#
+          az#=atanfull(dz#,dy#)
+          az#=wrapvalue(90-az#)
+    
+          rem Make normal from projected angle
+          nx#=sin(ax#)
+          ny#=cos(ax#)
+          nz#=sin(az#)
+    
+          rem Setting matrix normal for smoothness
+          set matrix normal currentmatrix,x,z,nx#,ny#,nz#
+    
+       next x
+    next z
+    update matrix currentmatrix
+    remend
+return
+
+_create_sky:
+    if test = 1 
+        load image FN_GFX_Tree, IMG_Stars : rem Any small picture - it doesn't matter since we only show wireframe
+    else
+        load image FN_GFX_Stars, IMG_Stars
+    endif
+
+rem TODO: landsize undefined
+    make object sphere OBJ_Skybox, (landsize * 2) - 500
+
+    rem make object sphere OBJ_Skybox, -4000
+    
+    set object collision off OBJ_Skybox
+    rem scale object OBJ_Skybox, 2000, 750, 2000
+    scale object OBJ_Skybox, 600, 120, 600
+    set object OBJ_Skybox, 1, 0, 0, 0, 0, 1, 1
+    texture object OBJ_Skybox, IMG_Stars
+    rem fade object OBJ_Skybox, 0
+    
+    if test = 1
+        backdrop on
+        set object wireframe OBJ_Skybox, 1
+    else
+        backdrop off
+    endif
+return
+
+_create_radar:
+    rem Karte - Abstand zur Kamera: 1.1
+    remstart
+    load image FN_GFX_MapBackground, IMG_MapBackground
+    make object plain OBJ_MapGhostObject, 0.352, 0.352
+    lock object on OBJ_MapGhostObject
+    position object OBJ_MapGhostObject, -0.6908, -0.4675, 1.1
+    ghost object on OBJ_MapGhostObject
+    texture object OBJ_MapGhostObject, IMG_MapBackground
+    remend
+    
+    rem Karte - Abstand zur Kamera: 1.5
+    load image FN_GFX_MapBackground, IMG_MapBackground
+    make object plain OBJ_MapGhostObject, 0.48, 0.48
+    lock object on OBJ_MapGhostObject
+    position object OBJ_MapGhostObject, -0.942, -0.6375, 1.5
+    ghost object on OBJ_MapGhostObject
+    texture object OBJ_MapGhostObject, IMG_MapBackground
+return
+
+_printClock:
+    if clockCurrentMidDot = 0
+        middle$ = " "
+    else
+        middle$ = ":"
+    endif
+    mind = clockSeconds/60
+    hours = mind/60
+    if clockShowSeconds
+        secsText$ = middle$+TwoDigit$(mod(clockSeconds,60))
+    else
+        secsText$ = ""
+    endif
+    print "Time: ", TwoDigit$(mod(hours,24)), middle$, TwoDigit$(mod(mind,60)), secsText$
+return
+
+rem Rotate smooth, and rotate in the direction with the lowest distance
+rem "turn object left" ist das kommando
+function smoothRotate#(von#, nach#, smoothness)
+    if (von# > 270) and (nach# < 90)
+        ret# = WrapValue(von# + (360 - von# + nach#)/smoothness)
+    else
+        if (von# < 90) and (nach# > 270)
+            ret# = WrapValue(von# - (360 - nach# + von#)/smoothness)
+        else
+            ret# = von# + (nach# - von#)/smoothness
+        endif
+    endif
+endfunction ret#
+
+function floorHeight#(X#, Z#)
+    rem TODO: implement water
+    ret# = Get Ground Height(MAT_Ground, X#, Z#)
+ENDFUNCTION ret#
+
+function upPressed()
+    ret = UpKey()=1 or keystate(17)=1 or joystick up()=1
+ENDFUNCTION ret
+
+function leftPressed()
+    ret = LeftKey()=1 or keystate(30)=1 or joystick left()=1
+ENDFUNCTION ret
+
+function rightPressed()
+    ret = RightKey()=1 or keystate(32)=1 or joystick right()=1
+ENDFUNCTION ret
+
+function downPressed()
+    ret = DownKey()=1 or keystate(31)=1 or joystick down()=1
+ENDFUNCTION ret
+
+function jumpPressed()
+    ret = keystate(57)=1 or JOYSTICK FIRE A()=1
+ENDFUNCTION ret
+
+function TwoDigit$(value)
+    if value < 10
+        ret$ = "0"+STR$(value)
+    else
+        ret$ = STR$(value)
+    ENDIF
+ENDFUNCTION ret$
+
+function mod(num,modulus)
+    value=num-((num/modulus)*modulus)
+endfunction value
+
+function fileReadInt(fileNum)
+    read string 1, s$
+    ret=val(s$)
+ENDFUNCTION ret
+
+function fileReadFloat#(fileNum)
+    read string 1, s$
+    ret#=val(s$)
+ENDFUNCTION ret#
+
+function RndBetween(a,b)
+    ret = a+Rnd(b-a)
+ENDFUNCTION ret
+
+function isInCircle(pX#,pY#,cX#,cY#,cR#)
+    ret = sqrt( (pX#-cX#)*(pX#-cX#) + (pY#-cY#)*(pY#-cY#) ) <= cR#
+ENDFUNCTION ret
+
+_stop_game_sounds:
+    Stop Sound SFX_ForestBG
+    Stop Sound SFX_PauseMusic
+    Stop Sound SFX_Walk_Earth
+    Stop Sound SFX_Walk_Water
+    for t = 0 to cMaxEnemies-1
+        Stop Sound SFX_Monster_Base+t
+    next t
+return
+
+type treeType
+   x as float
+   z as float
+   drawn as boolean
+endtype
+
+type enemyType
+    Speed as float
+    WalkTimeout as float
+    WalkTimeoutMin as float
+    WalkTimeoutMax as float
+    AwarenessRadius as float
+    CurSpeed as float
+    MaxSpeed as float
+    Angle as float
+    CurrentAnim as float
+endtype
+
+PressJumpKey:
+    if onGround=1
+        rem TODO: absprungsound
+        JumpPosition#=floorHeight#(X#,Z#)
+        velocityY# = JumpStartVelocity#
+        onGround = 0
+    endif
+return
+
+ReleaseJumpKey:
+    if velocityY# > MinFallVelocity#
+        velocityY# = MinFallVelocity#
+    endif
+return
+
+JumpUpdate:
+    if onGround=0
+        dec velocityY#, gravity#
+        inc JumpPosition#, velocityY#
+        
+        rem TODO: man kann sich dann durch die decke glitchen
+        curFloorHeight# = floorHeight#(X#,Z#)
+        if JumpPosition# < curFloorHeight#
+            rem TODO: aufprallsound
+            JumpPosition# = curFloorHeight#
+            velocityY# = 0.0
+            onGround = 1
+        endif
+    endif
+return
+
+function resizeImage(image as dword, width as dword, height as dword)
+	if DLL EXIST(DLL_Resize32) = 0
+		load dll FN_DLL_Resize32, DLL_Resize32
+	endif
+	
+	make memblock from image MEM_ResizeSrc, image
+	size = call dll(DLL_Resize32, "DestSize", get memblock ptr(MEM_ResizeSrc), width, height)
+	
+	make memblock MEM_ResizeDest, size
+
+	call dll DLL_Resize32, "Resize", get memblock ptr(MEM_ResizeSrc), get memblock ptr(MEM_ResizeDest), width, height
+	
+	
+	make image from memblock image, MEM_ResizeDest
+	
+	delete memblock MEM_ResizeSrc
+	delete memblock MEM_ResizeDest
+	
+	REM delete dll DLL_Resize
+
+endfunction
+
+function LoadImageFullscreen(imgFN as string, imgID)
+    Load Image imgFN, imgID
+    width  = desktop width()
+    height = image height(imgID)*desktop width()/1.0/image width(imgID);
+    resizeImage(imgID, width, height)
+ENDFUNCTION
+
+_play_attack_sound:
+    repeat
+        r=RndBetween(0,NumberOfAttackSounds-1)
+    UNTIL (r <> LastAttackSound) or (NumberOfAttackSounds = 1)
+    LastAttackSound=r
+    play sound SFX_Attack_Base+r
+return
+
+_setup_blood:
+    // Make 100 particle objects
+    particleIndex = 0
+    #constant PARTICLEMAX = 500
+    dim particle(PARTICLEMAX) as particleType
+    
+    rem TODO: mehr
+    rem http://nobacks.com/blood-splatter-eighty-eight/
+    load image FN_GFX_BLOOD, IMG_BLOOD
+    
+    for i = 0 to PARTICLEMAX-1
+        make object plain OBJ_BloodParticle_Base+i, 2, 2
+        set object ambient OBJ_BloodParticle_Base+i, 0
+        set object collision off OBJ_BloodParticle_Base+i
+        
+        rem color object OBJ_BloodParticle_Base+i, rgb(128, 0, 0)
+        texture object OBJ_BloodParticle_Base+i, IMG_BLOOD
+        set object cull OBJ_BloodParticle_Base+i, 0
+        set object transparency OBJ_BloodParticle_Base+i, 6
+        
+        rem TEST
+rem        rotate object OBJ_BloodParticle_Base+i, RndBetween(0,359), RndBetween(0,359), RndBetween(0,359)
+        
+        exclude object on OBJ_BloodParticle_Base+i
+    next i
+return
+
+_handle_blood:
+   // Update particles
+   for i = 0 to PARTICLEMAX-1
+      UpdateParticle(i)
+   next i
+return
+
+_splat_blood:
+    rem https://forum.thegamecreators.com/thread/160210#msg1886513 , modified
+    
+    rem TODO: sieht einfach nur scheiße aus. außerdem ist der strahl in 2 himmelsrichtungen schmal (seitlich)
+    
+rem    yoff = rnd(SPREAD1_MAX*2)-SPREAD1_MAX;
+
+    // Activate blood particles around box
+    for i = 0 to PARTICLEMAX-1
+        // The angle particles should fly
+        a#=camera angle y()
+rem        yAng# = a#+rnd(SPREAD2_MAX*2)-SPREAD2_MAX+yoff
+        yAng#=a#
+
+        // Calculate directions
+        xSpeed# = sin(yAng#)
+        zSpeed# = cos(yAng#)
+                
+        // Calculate speeds
+        xSpeed# = xSpeed# * (rnd(20)/5.0)
+        ySpeed# = ((rnd(20)-rnd(20))/10.0)
+        zSpeed# = zSpeed# * (rnd(20)/5.0)
+        // Activate particle
+         
+        x# = camera position x()
+        y# = camera position y()
+        z# = camera position z()
+        
+        life = 30+rnd(30)
+         
+        particleIndex = ActivateParticle(particleIndex, life, x#, y#, z#, xSpeed#, ySpeed#, zSpeed#)
+    next i
+return
+ 
+// Activate the specified particle and give it an initial position/velocity
+function ActivateParticle(i, life, x#, y#, z#, xSpeed#, ySpeed#, zSpeed#)
+    // Cycle through the particle objects to use
+    inc i
+    if i > PARTICLEMAX-1 then dec i, PARTICLEMAX-1
+    
+    // Set particle variables
+    particle(i).life = life
+    particle(i).x = x#
+    particle(i).y = y#
+    particle(i).z = z#
+    particle(i).xSpeed = xSpeed#
+    particle(i).ySpeed = ySpeed#
+    particle(i).zSpeed = zSpeed#
+    
+    // Show particle object
+    exclude object off OBJ_BloodParticle_Base+i
+endfunction i
+ 
+// Update positioning for specified particle
+function UpdateParticle(i)
+    // Only update particles that are alive
+    if particle(i).life > 0
+        // Apply gravity
+rem        dec particle(i).ySpeed, 0.098
+        dec particle(i).ySpeed, 0.200
+ 
+        // Move the particle
+        inc particle(i).x, particle(i).xSpeed
+        inc particle(i).y, particle(i).ySpeed
+        inc particle(i).z, particle(i).zSpeed
+ 
+        // Position particle
+        position object OBJ_BloodParticle_Base+i, particle(i).x, particle(i).y, particle(i).z
+rem         point object OBJ_BloodParticle_Base+i, camera position x(), camera position y(), camera position z()
+
+
+ 
+        // Lower particle's life
+        dec particle(i).life
+ 
+        // Hide particles when they die
+        if particle(i).life <= 0
+            exclude object on OBJ_BloodParticle_Base+i
+        endif
+    endif
+endfunction
+ 
+// Data type used by particles
+type particleType
+   life as integer      // Remaining life of particle (0=Dead)
+   x as float           // Position
+   y as float           // ...
+   z as float           // ...
+   xSpeed as float      // Velocity
+   ySpeed as float      // ...
+   zSpeed as float      // ...
+endtype
+
+rem -- MUST STAY AT THE END OF THE PROGRAM --
+_exit:
+    exit

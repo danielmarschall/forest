@@ -1,0 +1,388 @@
+rem The Dark Night
+rem by Daniel Marschall
+
+rem ToDo:
+rem   Nebel-Himmel-Problem (NHP)
+
+rem Setup & Startbildschirm
+if check display mode( 800, 600, screen depth() ) then set display mode 800, 600, screen depth()
+rem if check display mode( 1024, 768, screen depth() ) then set display mode 1024, 768, screen depth()
+hide mouse
+Sync On
+Sync Rate 30
+
+rem gosub _startgame
+
+load bitmap "bitmap\title.bmp"
+
+rem Menü?
+sleep 3000
+load bitmap "bitmap\title2.bmp"
+rem show mouse
+
+set text font "times"
+set text size 27
+fade = 230
+pos = 1
+menu = 1
+sound = 1
+rem music = 1
+do
+   gosub _fademenu
+   if ( downkey() = 1 and pos < 4 and menu = 1 ) or ( downkey() = 1 and pos < 3 and menu = 3 )
+     inc pos
+     while downkey() = 1
+        gosub _fademenu
+     endwhile
+   endif
+   if upkey() = 1 and pos > 1
+     dec pos
+     while upkey() = 1
+        gosub _fademenu
+     endwhile
+   endif
+   if returnkey() = 1
+     if menu = 1
+        if pos = 1 then gosub _startgame
+        if pos = 2
+          rem load bitmap "bitmap\Titel2.bmp"
+          rem menu = 2
+          rem pos = 1
+        endif
+        if pos = 3
+          load bitmap "bitmap\title2.bmp"
+          menu = 3
+          pos = 1
+        endif
+        if pos = 4 then break
+     else
+       if menu = 3
+          if pos = 1
+            if sound = 1
+              sound = 0
+            else
+              sound = 1
+            endif
+            load bitmap "bitmap\title2.bmp"
+          endif
+          if pos = 2
+            if music = 1
+              music = 0
+            else
+              music = 1
+            endif
+            load bitmap "bitmap\title2.bmp"
+          endif
+          if pos = 3
+            load bitmap "bitmap\title2.bmp"
+            menu = 1
+            pos = 1
+          endif
+       endif
+     endif
+     while returnkey() = 1
+        gosub _fademenu
+     endwhile
+   endif
+loop
+
+_startgame:
+ink rgb(255, 230, 0), 0
+load bitmap "bitmap\title.bmp"
+text 50, 550, "Level wird geladen..."
+rem hide mouse
+
+sync
+
+rem Setup
+Backdrop on
+Set camera range 1, 5000
+Autocam off
+
+rem Boden
+Make matrix 1, 10000, 10000, 20, 20
+Load image "bitmap\grass.bmp", 1
+Prepare matrix texture 1, 1, 1, 1
+Fill matrix 1, 0, 1
+randomize matrix 1, 125
+
+rem Himmel
+load image "bitmap\sky.bmp", 2
+make object sphere 2, (landsize * 2) - 500
+set object collision off 2
+rem scale object 2, 2000, 1800, 2000
+rem scale object 2, 2000, 1000, 2000
+scale object 2, 2000, 1150, 2000
+set object 2, 1, 1, 0
+texture object 2, 2
+fade object 2, 0
+backdrop off
+
+rem Level einlesen - Bäume
+rem open to read 1, "map\001-tree.map"
+load image "bitmap\tree.bmp", 4
+make object plain 52, 200, 400
+make mesh from object 52, 52
+add limb 52, 1, 52
+rotate limb 52, 1, 0, 90, 0
+make mesh from object 52, 52
+delete object 52
+make object 52, 52, 0
+remstart
+while file end(1) = 0
+   inc t
+   read string 1, rx$
+   read string 1, rz$
+   add limb 52, t, 52
+   offset limb 52, t, val(rx$), get ground height(1, val(rx$), val(rz$)), val(rz$)
+endwhile
+remend
+for t = 1 to 199
+   rx = rnd(10000)
+   rz = rnd(10000)
+   add limb 52, t, 52
+   offset limb 52, t, rx, get ground height(1, rx, rz), rz
+next t
+make mesh from object 52, 52
+delete object 52
+make object 52, 52, 4
+rem position object 52, xxx, 190, xxx
+position object 52, 0, 190, 0
+set object 52, 1, 0, 0
+rem close file 1
+
+load object "Morningside.x",95
+position object 95, 2000, get ground height(1, 2000, 2000), 2000
+
+rem Karte
+load image "map\zone001.bmp", 5
+make object plain 51, 256, 256
+lock object on 51
+position object 51, -490, -340, 800
+ghost object on 51
+texture object 51, 5
+
+rem Bildschirm neu aufbauen
+cls
+sync
+
+Rem Musik
+if music = 1
+  load music "music\music.mid", 1
+  loop music 1
+endif
+
+rem Radar vorbereiten
+radarpointcolor = 150
+
+rem Scorpion
+remstart
+Load object "obj\idle.x", 50
+rem append object "obj\walk.x",50,100
+Loop object 50
+position object 50, 500, Get Ground Height(1, 500, 500) + 265, 500
+fix object pivot 50
+loop object 50, 0, 20
+rem Stachel verstecken
+hide limb 50, 1
+set object collision on 50
+remend
+
+rem Hauptschleife
+Do
+
+   rem Wetter
+   set ambient light 40
+   if fog available() = 1
+      fog on
+      rem fog distance 7500
+      fog distance 4500
+      fog color rgb(135, 119, 99)
+   endif
+
+   set cursor 0, 0
+   oldcAY# = cAY#
+   oldcAX# = cAX#
+
+   cAY# = WrapValue(cAY# + MousemoveX() * 0.2)
+   cAX# = WrapValue(cAX# - MousemoveY() * 0.2)
+   caZ# = Camera angle Z()
+
+   rem Sprungroutine
+   if sprungdelay > 0 then dec sprungdelay
+   if MouseClick() = 2 and sprung = 0 and sprungrev = 0 and sprungdelay = 0 then inc sprung, 4
+   if sprung > 0
+     if sprungrev = 0
+       inc sprung, 4
+       if sprung = 60 then sprungrev = 1
+     else
+       if sprungrev = 1
+         dec sprung, 5
+         if sprung = 0
+           sprungrev = 0
+           sprungdelay = 15
+         endif
+       endif
+     endif
+   endif
+
+   rem Laufen
+   rem Spiellogik (Geschwindigkeit): Vor = +2 / Zurück = -2
+   if Upkey() = 1
+      XTest# = Newxvalue(X#, cAY#, 7)
+      ZTest# = Newzvalue(Z#, cAY#, 7)
+      if XTest# > 0 and XTest# < 10000 and ZTest# > 0 and ZTest# < 10000
+         X# = XTest#
+         Z# = ZTest#
+      endif
+   endif
+   if Downkey() = 1
+      XTest# = Newxvalue(X#, Wrapvalue(cAY# - 180), 3)
+      ZTest# = Newzvalue(Z#, Wrapvalue(cAY# - 180), 5)
+      if XTest# > 0 and XTest# < 10000 and ZTest# > 0 and ZTest# < 10000
+         X# = XTest#
+         Z# = ZTest#
+      endif
+   endif
+   if Leftkey() = 1
+      XTest# = Newxvalue(X#, Wrapvalue(cAY# - 90), 5)
+      ZTest# = Newzvalue(Z#, Wrapvalue(cAY# - 90), 5)
+      if XTest# > 0 and XTest# < 10000 and ZTest# > 0 and ZTest# < 10000
+         X# = XTest#
+         Z# = ZTest#
+      endif
+   endif
+   if Rightkey() = 1
+      XTest# = Newxvalue(X#, Wrapvalue(cAY# + 90), 5)
+      ZTest# = Newzvalue(Z#, Wrapvalue(cAY# + 90), 5)
+      if XTest# > 0 and XTest# < 10000 and ZTest# > 0 and ZTest# < 10000
+         X# = XTest#
+         Z# = ZTest#
+      endif
+   endif
+
+   Rem Rotate camera
+   cTestX# = WrapValue(cAX# - 180)
+   if cTestX# > 225 then cAX# = 45
+   if cTestX# < 135 then cAX# = 315
+   YRotate camera CurveAngle(cAY#, oldcAY#, 24)
+   XRotate camera CurveAngle(cAX#, oldcAX#, 24)
+
+   Rem Position Camera
+   Y# = Get ground height(1, X#, Z#) + 85 + sprung
+   Position Camera X#, Y#, Z#
+
+   Rem Position Listener
+   Position Listener X#, Y#, Z#
+   Rotate Listener 0, cAY#, 0
+
+   rem Himmel bewegt sich...
+   rem zu schnell: 0.0005
+   scroll object texture 2, 0.0004, 0
+   fade object 2, 0
+   position object 2, x#, 0, z#
+
+   rem Radar
+   xx = X# / 62.5
+   zz = Z# / 62.5
+   z = zz * -1
+   if radarpointrev = 0
+     inc radarpointcolor, 3
+   else
+     dec radarpointcolor, 3
+   endif
+   if radarpointcolor > 255
+     radarpointrev = 1
+     radarpointcolor = 254
+   endif
+   if radarpointcolor < 150
+     radarpointrev = 0
+     radarpointcolor = 149
+   endif
+   ink rgb(radarpointcolor, 0, 0), 0
+   circle xx + 15, z + 592, 1
+   circle xx + 15, z + 592, 0
+
+   rem Scorpion bewegen
+   rem Position Object 50, Object Position X(50), Object Position Y(50), Object Position Z(50)
+
+   Rem Bild erneuern
+   Sync
+Loop
+
+function lcd(rich$, x, y, r, g, b)
+  a = len(rich$) + 1
+  i = 0
+  s = 16
+  set text font "Courier"
+  repeat
+    sprite 1, s, y, 1
+    set cursor x * 8, y
+    x$ = mid$(rich$, x)
+    repeat
+      if r = 1 then ink rgb(i, 0, 0), 0
+      if g = 1 then ink rgb(0, i, 0), 0
+      if b = 1 then ink rgb(0, 0, i), 0
+      if r = 1 and g = 1 then ink rgb(i, i, 0), 0
+      if r = 1 and b = 1 then ink rgb(i, 0, i), 0
+      if g = 1 and b = 1 then ink rgb(0, i, i), 0
+      if b = 1 and g = 1 and b = 1 then ink rgb(i, i, i), 0
+      text x * 8, y, x$
+      inc i, 35
+      sync
+    until i => 255
+    inc x
+    inc s, 8
+    i = 0
+    play sound 1
+  until x = a
+endfunction
+
+_fademenu:
+   if fade > 200 then fadedir = 0
+   if fade < 100 then fadedir = 1
+   if fadedir = 1
+      inc fade, 5
+   else
+      dec fade, 5
+   endif
+   rem Beleuchtet
+   ink rgb(255, fade, 0), 0
+   if menu = 1
+     if pos = 1 then text 260, 255, "Neues Spiel starten"
+     if pos = 2 then text 260, 285, "Spiel laden"
+     if pos = 3 then text 260, 315, "Einstellungen"
+     if pos = 4 then text 260, 345, "Spiel beenden"
+   endif
+   if menu = 3
+     if pos = 1
+        if sound = 1 then text 260, 255, "Ton: An"
+        if sound = 0 then text 260, 255, "Ton: Aus"
+     endif
+     if pos = 2
+        if music = 1 then text 260, 285, "Musik: An"
+        if music = 0 then text 260, 285, "Musik: Aus"
+     endif
+     if pos = 3 then text 260, 315, "Hauptmenü"
+   endif
+   rem Normal
+   ink rgb(255, 230, 0), 0
+   if menu = 1
+     if pos <> 1 then text 260, 255, "Neues Spiel starten"
+     if pos <> 2 then text 260, 285, "Spiel laden"
+     if pos <> 3 then text 260, 315, "Einstellungen"
+     if pos <> 4 then text 260, 345, "Spiel beenden"
+   endif
+   if menu = 3
+     if pos <> 1
+        if sound = 1 then text 260, 255, "Ton: An"
+        if sound = 0 then text 260, 255, "Ton: Aus"
+     endif
+     if pos <> 2
+        if music = 1 then text 260, 285, "Musik: An"
+        if music = 0 then text 260, 285, "Musik: Aus"
+     endif
+     if pos <> 3 then text 260, 315, "Hauptmenü"
+   endif
+   sync
+return

@@ -1,0 +1,11 @@
+rem Wasser
+remstart
+make matrix 2, 10000, 10000, 20, 20
+load image "bitmap\GM01B02.bmp", 3
+prepare matrix texture 2, 3, 1, 1
+fill matrix 2, 0, 1
+position matrix 2, 0, 100, 0
+ghost matrix on 2
+rem randomize matrix 2, 130
+update matrix 2
+remend

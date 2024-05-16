@@ -1,0 +1,61 @@
+Rem Setup sync
+Sync On
+Sync Rate 30
+
+Rem Create matrix
+Make Matrix 1,2000,2000,50,50
+
+Rem Position Camera above the matrix
+Position Camera 0,1000,0
+
+JumpKeyStatePrev = 0
+
+positionY = 175.0
+velocityY = 0.0
+gravity = 1
+onGround = 1
+
+Do
+    JumpKeyStateNow=leftkey()
+    if (JumpKeyStatePrev=0) and (JumpKeyStateNow=1)
+        gosub PressJumpKey
+    ENDIF
+
+    if (JumpKeyStatePrev=1) and (JumpKeyStateNow=0)
+        gosub ReleaseJumpKey
+    ENDIF
+
+    JumpKeyStatePrev = JumpKeyStateNow
+
+
+    gosub JumpUpdate
+    
+    position camera 0, positionY, 0
+
+    Sync
+Loop
+
+PressJumpKey:
+    if onGround=1
+        velocityY = 25.0
+        onGround = 0
+    endif
+return
+
+ReleaseJumpKey:
+    if velocityY > 6.0 then velocityY = 6.0
+return
+
+JumpUpdate:
+    dec velocityY, gravity
+    inc positionY, velocityY
+    
+    if positionY < 175.0
+        positionY = 175.0
+        velocityY = 0.0
+        onGround = 1
+    endif
+return
+
+
+

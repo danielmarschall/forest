@@ -1,0 +1,69 @@
+
+=== 3D Art ===
+
+obj\scorpion\ScorpIdle.x
+obj\scorpion\ScorpWalk.x
+	Taken from DarkBASIC Classic Demo "room"
+	Modified to fix minor problems
+
+=== Graphics ===
+
+picture/forestfloor.bmp
+	Source: http://imagestack.co/176005802-forest-floor-texture-seamless.html
+	Source: http://texturify.com/content/8695/Forest%20Soiltt-005.jpg
+	Photo credit / source: club-balalaika.de
+
+screen artwork
+	Kevin B. Gener - Spinoff of the artwork "Carnage"
+	Tree picture taken from following screenshot:
+		http://www.turbosquid.com/3d-models/3d-pine-tree/390457
+		"Pine Tree Collection" by ryrod88 at turbosquid.com
+
+bitmap/stars.bmp
+	Source: http://www.psdgraphics.com/file/stars.jpg
+	Source: http://www.psdgraphics.com/backgrounds/night-sky-stars-background/
+
+=== Music ===
+
+music/pause.wav
+	Loop for the pause menu
+	Source: https://freesound.org/people/rockerfaerie/sounds/163644/
+	Artist name: CoMa
+	License: http://creativecommons.org/publicdomain/zero/1.0/
+	Modified to make the loop work
+
+=== Sound effects ===
+
+sound/forestbg.wav
+	Source: https://freesound.org/people/caquet/sounds/157495/
+	"Night by the beach, in Barbate"
+	Author: caquet (http://caquet.es/)
+	License: http://creativecommons.org/licenses/by/3.0/
+	Amplified and modified to make the loop work
+
+sound/walk.wav
+	Source: https://freesound.org/people/freefire66/sounds/175955/
+	Author: freefire66
+	License: http://creativecommons.org/publicdomain/zero/1.0/
+	Modified to make the loop work
+	
+sound/walk_water.wav
+	Source: http://www.orangefreesounds.com/footsteps-walking-in-water/
+	Footsteps Walking In Water
+	Author: Alexander
+	Date: 6 Oct 2015
+	License: Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
+	Extracted a loop
+
+sound/scorpionAttack/attack1.wav
+sound/scorpionAttack/attack2.wav
+sound/scorpionAttack/attack3.wav
+sound/scorpionAttack/attack4.wav
+	Source: https://freesound.org/people/cgeffex/sounds/93102/
+	Author: cgeffex
+	License: http://creativecommons.org/licenses/by/3.0/
+	Extracted small parts out of the source material
+
+	The source material was a remix of: https://freesound.org/people/sonic/sounds/2883/
+	Author: sonic
+	License: http://creativecommons.org/licenses/sampling+/1.0/

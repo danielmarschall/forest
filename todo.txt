@@ -1,0 +1,17 @@
+
+rennen verhindern, wenn man auﬂer puste
+
+
+Items:
+- Karte
+- Radar
+
+Game:
+- Zelt bei Spawn-Point
+- Springen rieﬂen Problem
+  * wenn man auf skorpion landet, dann ist der himmel ganz tief
+  * wenn man ganz oben ist, kommt unten der backdrop zum vorschein
+- der himmel h‰ngt viel zu tief unten, aber nur dann ist er gut sichtbar!
+
+MapGen32:
+- Wegbreite konfigurierbar machen (INI)

@@ -1,0 +1,63 @@
+; **** Dark BASIC Professional Project File ****
+; **** Written by DarkBASIC Professional Editor ****
+version=DBP1.00
+project name=Nightmare Forest
+
+; **** source file information ****
+main=Forest.DBA
+LineMain=276
+final source=_Temp.dbsource
+
+; **** Executable Information  ***
+; build types: exe, media, installer, alone
+executable=Forest.exe
+build type=exe
+; ** Media file compression **
+compression=YES
+
+; ** Media file encryption **
+encryption=NO
+; ** Display the card options screen window? **
+card options window=NO
+
+; **** debugger information ****
+; If the editor sets this to yes, it is running in debug mode
+CLI=NO
+CommandLineArguments=
+
+; **** display mode information ****
+app title=Nightmare Forest
+
+; graphics mode options: fullscreen, window, desktop, fulldesktop, hidden
+graphics mode=fulldesktop
+fullscreen resolution=640x480x16
+
+; arbitrary sizes are valid for windowed mode
+window resolution=640x480
+
+; **** External Files Information ****
+
+; **** Media ****
+; Example entries: media1=graphics\*.jpg
+media root path=E:\tdn\
+
+; **** Icons ****
+icon1=Forest.ico
+
+; **** Cursors ****
+
+; **** Version Info ****
+VerComments=www.daniel-marschall.de
+VerCompany=Daniel Marschall, ViaThinkSoft
+VerFileDesc=Nightmare Forest
+VerFileNumber=v1.0
+VerInternal=v1.0
+VerCopyright=(C)Copyright 2001 - 2015 Daniel Marschall.
+VerTrademark=
+VerFilename=
+VerProduct=
+VerProductNumber=v1.0
+
+; **** To Do ****
+
+; **** Comments ****

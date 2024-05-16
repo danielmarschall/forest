@@ -1,0 +1,54 @@
+sync on
+hide mouse
+ 
+`---------------
+`create a matrix
+`---------------
+`the matrix will be 100 units square and be split up into 100 squares (10*10)
+make matrix 1,100,100,10,10
+ 
+`set the matrix heights
+`I am going to use two for loops to do this
+`the first loops through the xPoints, the second through the zPoints
+for xPoint=0 to 10
+   for zPoint=0 to 10
+      `create a sinewave matrix
+      `I just made the following bit up and it looked nice
+      `you can just as easily use your own numbers/ math's to create terrain's
+      `you could also use a loop like this to read values you have saved from
+      `a text file created by an editor
+      height=(sin(xPoint*36)+cos(zPoint*36))*5
+      set matrix height 1,xPoint, zPoint, height
+   next zPoint
+next xPoint
+ 
+`----------------------
+`set the matrix texture
+`----------------------
+`load matrix texture
+load image "floor1.bmp",1
+`prepare the matrix texture
+prepare matrix texture 1, 1, 2,2
+ 
+`loop through matrix tiles
+for xTile=0 to 9
+   for zTile=0 to 9
+      `set the matrix tile texture
+      `the texture is a random value
+      set matrix tile 1,xTile,zTile,rnd(3)+1
+   next zTile
+next xTile
+ 
+`update the matrix after it has been changed
+update matrix 1
+ 
+`position the camera so that it has a good view
+Position camera 50,50,-50
+point camera 50,25,50
+ 
+`main loop
+do
+ 
+   `update the screen
+   sync
+loop

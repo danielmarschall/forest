@@ -1,0 +1,28 @@
+
+#constant DLL_Resize 12
+#constant MEM_ResizeSrc 13
+#constant MEM_ResizeDest 14
+
+#constant DLL_FN_Resize "Resize32.dll"
+
+
+function resizeImage(image as dword, width as dword, height as dword)
+	if DLL EXIST(DLL_Resize) = 0
+		load dll DLL_FN_Resize, DLL_Resize
+	endif
+	
+	make memblock from image MEM_ResizeSrc, image
+	size = call dll(DLL_Resize, "DestSize", get memblock ptr(MEM_ResizeSrc), width, height)
+	
+	make memblock MEM_ResizeDest, size
+
+	call dll DLL_Resize, "Resize", get memblock ptr(MEM_ResizeSrc), get memblock ptr(MEM_ResizeDest), width, height
+	
+	
+	make image from memblock image, MEM_ResizeDest
+	
+	delete memblock MEM_ResizeSrc
+	delete memblock MEM_ResizeDest
+	
+	REM delete dll DLL_Resize
+endfunction

@@ -1,0 +1,974 @@
+rem Nightmare Forest
+rem   by Daniel Marschall
+
+rem ToDo:
+rem   Nebel-Himmel-Probleme
+rem   DynArray
+rem   Steifen am Boden
+rem   Radar wackelt
+rem   Verifizieren der Dateien
+rem   :startgame weglassen
+rem   Streifen am Boden und am Himmel...
+rem   Baum teiltransparenz
+rem   Radar lieber als Matrix. Viele Probleme wie z.B. mit Skorpion transparenz
+rem   Unscharfes Radar, Radar ganz dyn. zeichnen? Rader stay on top
+rem   Men¸: musik aus --> an: loop von position 0!
+rem   Horizont machen...
+rem breitbild
+rem mausumkehrung einstellbar
+rem 	die gegner kommen erst nach einer bestimmten zeit. spawnen weit weg vom spieler
+rem stars.bmp (5000px) braucht lange zum laden. 1000px ist verpixelt
+
+// Read configuration
+open to read 1, "config.txt"
+read string 1, dummy$ : rem header
+framerate = fileReadInt(1)
+clockSpeedFactor = fileReadInt(1)
+clockBlinksPerSecond = fileReadInt(1)
+clockShowSeconds = fileReadInt(1)
+beginClockSeconds = fileReadInt(1)
+enemyRotateSmoothness = fileReadInt(1)
+maxRunEnergy = fileReadInt(1)
+waterLevel = fileReadInt(1)
+waterMovement = fileReadInt(1)
+sound3dVolumeCor = fileReadInt(1)
+invertMouse = fileReadInt(1)
+test = fileReadInt(1)
+camerarange = fileReadInt(1)
+fogdistance = fileReadInt(1)
+close file 1
+
+rem SCHEISSE! bei 3000 ist die framerate total am arsch! was mach ich nur?
+#constant cMaxTrees 3000
+rem #constant cMaxTrees 200
+
+#constant cMapSizeX 10000
+#constant cMapSizeZ 10000
+#constant idxMonsterBase 1000
+
+#constant cMaxEnemies 20   : rem todo: 0 heiﬂt 1 , das ist verwirrend
+
+rem Setup & Startbildschirm
+if check display mode( desktop width(), desktop height(), screen depth() ) then set display mode desktop width(), desktop height(), screen depth()
+hide mouse
+
+randomize timer()
+
+Sync On
+Sync Rate framerate
+
+load bitmap "bitmap\titlescreen.jpg"
+
+gosub _menu
+
+_startgame:
+
+ink rgb(255, 230, 0), 0
+load bitmap "bitmap\titlescreen.jpg"
+text 28, 550, "Level wird geladen..."
+
+sync
+
+rem Setup
+Set camera range 1, camerarange
+Autocam off
+
+runEnergy# = maxRunEnergy
+clockSeconds = beginClockSeconds
+
+gosub _create_floor
+gosub _create_sky
+gosub _create_trees
+gosub _draw_trees
+gosub _create_water
+gosub _create_radar
+
+rem Bildschirm neu aufbauen
+cls
+sync
+
+rem Lichtversuch
+make light 1
+
+rem Radar vorbereiten
+radarpointcolor = 150
+
+gosub _create_enemies
+gosub _setupClock
+
+Rem Forest atmo
+load sound "sound\forestbg.wav", 1
+loop sound 1
+
+load sound "music\pause.wav", 5
+
+load sound "sound\walk.wav", 10
+
+rem Pause Menu
+load image "bitmap\titlescreen.jpg",95
+sprite 95,0,0,95
+set sprite 95, 1, 0
+hide sprite 95
+
+rem Hauptschleife
+do
+    Disable EscapeKey
+    gosub _handle_weather
+    gosub _handle_player
+    gosub _handle_radar
+    gosub _handle_enemies
+    gosub _handleClock
+    if EscapeKey() = 1
+        repeat
+            sync
+        until not (EscapeKey() = 1)
+        gosub _pausemenu
+    endif
+    sceneInitialized=1
+    sync
+loop
+
+_pausemenu:
+rem TODO: geht nicht
+rem    show sprite 95
+rem    load bitmap "bitmap\titlescreen.jpg",0
+    gosub _stop_game_sounds
+    loop sound 5
+    repeat
+        text 28, 550, "Pause. ESC=Weiter. Runter=Ende."
+        sync
+        
+        if DownKey() = 1
+            goto _exit
+        ENDIF
+    UNTIL EscapeKey() = 1
+    repeat
+        sync
+    until not (EscapeKey() = 1)
+    stop sound 5
+    loop sound 1
+    hide sprite 95
+    
+    rem TODO: das bringt nix. wenn man die maus bewegt, wird nach der pause die kamera gescrollt
+    set cursor 0, 0
+return
+
+_handle_weather:
+   rem Wetter
+   
+   color ambient light rgb(64,64,128)
+rem   set ambient light 1
+set ambient light 50
+   if fog available() = 1
+      fog on
+      fog distance fogdistance
+      fog color rgb(0, 0, 0)
+   endif
+   
+   
+   if test = 1
+        SET MATRIX WIREFRAME ON 1
+        SET MATRIX WIREFRAME ON 3
+    endif
+   
+   
+   
+   rem test
+   remstart
+   xx = xx - 1
+   if xx <= 0 then xx = 100
+   
+   set object specular 126, 0
+   SET OBJECT SPECULAR POWER 126,xx
+
+   set object specular 127, 0
+   SET OBJECT SPECULAR POWER 127,xx
+   remend
+   
+rem   fade object 126, xx
+rem   fade object 127, xx
+   
+   
+   rem test trees
+   remstart
+       pX# = Camera Position X()
+    pZ# = Camera Position Z()
+
+        eX# = Object Position X(126)
+        eZ# = Object Position Z(126)
+
+        deltaX# = pX#-eX#
+        deltaZ# = pZ#-eZ#
+
+                aa# = atanfull(deltaX#, deltaZ#)
+                 rotate object 126, 0, aa#, 0
+remend
+   
+
+    rem Stars are moving
+    scroll object texture 2, 0.00002, 0
+    
+    
+    
+    rem TODO: doch lieber eine plane mit scroll object texture?
+    rem man kann "fog" einschalten, aber "ambient light" (problem) ausmachen per set object
+    if waterMovement > 0
+        if waterdir=0
+            watermov=watermov+1
+            if watermov=waterMovement
+                waterdir=1
+            endif
+        ENDIF
+        if waterdir=1
+            watermov=watermov-1
+            if watermov=-1
+                waterdir=0
+            endif
+        ENDIF
+    endif
+    position matrix 3, watermov, waterLevel, watermov
+return
+
+_handle_enemies:
+    pX# = Camera Position X()
+    pZ# = Camera Position Z()
+    
+    for t = 0 to cMaxEnemies
+        eX# = Object Position X(idxMonsterBase+t)
+        eY# = Object Position Y(idxMonsterBase+t)
+        eZ# = Object Position Z(idxMonsterBase+t)
+       
+        eRX# = Object Angle X(idxMonsterBase+t)
+        eRY# = Object Angle Y(idxMonsterBase+t)
+        eRZ# = Object Angle Z(idxMonsterBase+t)
+       
+        deltaX# = pX#-eX#
+        deltaZ# = pZ#-eZ#
+
+        rem TODO: cor file
+        yPosOffset# = 20
+        
+        dist# = sqrt( deltaX#*deltaX# + deltaZ#*deltaZ# )
+        
+        if clockSeconds > 1
+            if not sound playing(idxMonsterBase+t)
+                set sound volume idxMonsterBase+t, 0
+                
+                rem TODO: beliebiges startoffset?
+                loop sound idxMonsterBase+t
+            endif
+        endif
+        
+        rem The mixing of 3dsound is bullshit (too loud from far distance, and not very loud on close distance),
+        rem so we mix the volume ourself
+        if sound3dVolumeCor>0 and dist#<sound3dVolumeCor then set sound volume idxMonsterBase+t, (1-(dist#/sound3dVolumeCor))*100
+        
+        if dist# > 10 : rem <-- at least a distance of 10 so that atanfull() does not bug, when deltas becomes 0
+            if dist# < enemyAwarenessRadius(t)
+                enemyAngle(t) = atanfull(deltaX#, deltaZ#)
+                enemyAngle(t) = WrapValue(enemyAngle(t)+180)
+                enemyCurSpeed(t) = enemyMaxSpeed(t)
+            else
+                if enemyWalkTimeout(t) <= 0
+                    enemyWalkTimeout(t) = RndBetween(enemyWalkTimeoutMin(t), enemyWalkTimeoutMax(t))
+                    enemyAngle(t) = RndBetween(0,359)
+                    enemyCurSpeed(t) = RndBetween(0, enemyMaxSpeed(t))
+                ENDIF
+                enemyWalkTimeout(t) = enemyWalkTimeout(t) - 1
+            endif
+            
+            if enemyCurSpeed(t) = 0
+                gosub scorpChangeToIdle
+            else
+                gosub scorpChangeToWalk
+                rem TODO: also make animation slower/faster
+            endif
+
+            a# = WrapValue(enemyAngle(t) + 180)
+            XTest# = Newxvalue(eX#, a#, enemyCurSpeed(t))
+            ZTest# = Newzvalue(eZ#, a#, enemyCurSpeed(t))
+            if XTest# > 0 and XTest# < cMapSizeX then eX# = XTest#
+            if ZTest# > 0 and ZTest# < cMapSizeZ then eZ# = ZTest#
+            if XTest# <= 0 or XTest# >= cMapSizeX or ZTest# <= 0 or ZTest# >= cMapSizeZ
+                rem Kehrtwende, um den Kartenrand zu verlassen
+                enemyAngle(t) = WrapValue(enemyAngle(t)+180)
+                enemyWalkTimeout(t) = RndBetween(enemyWalkTimeoutMin(t), enemyWalkTimeoutMax(t))
+                enemyCurSpeed(t) = RndBetween(0, enemyMaxSpeed(t))
+            endif
+    
+            eY# = floorHeight#(eX#, eZ#) + yPosOffset#
+            Position Object idxMonsterBase+t, eX#, eY#, eZ#
+            Position Sound idxMonsterBase+t, eX#, eY#, eZ#
+            
+            eRY# = smoothRotate#(eRY#, enemyAngle(t), enemyRotateSmoothness)
+            rotate object idxMonsterBase+t, eRX#, eRY#, eRZ#
+        endif
+    next
+return
+
+_handle_player:
+   set cursor 0, 0
+   oldcAY# = cAY#
+   oldcAX# = cAX#
+   
+   X# = camera position x()
+   Y# = camera position y()
+   Z# = camera position z()
+
+   if invertMouse = 1
+       cAX# = WrapValue(cAX# - MousemoveY() * 0.2)
+   else
+       cAX# = WrapValue(cAX# + MousemoveY() * 0.2)
+   endif
+   cAY# = WrapValue(cAY# + MousemoveX() * 0.2)
+   cAZ# = Camera angle Z()   
+
+   rem Sprungroutine
+   jumpBoost = 1
+   if sprungdelay > 0 then dec sprungdelay
+   if MouseClick() = 2 and sprung = 0 and sprungrev = 0 and sprungdelay = 0 and obentimer = 0 then sprung = sprung + 5
+   if sprung > 0
+     if sprungrev = 0
+       if obentimer = 0
+         if sprung < 70 then sprung = sprung + 5
+         if sprung > 69 then sprung = sprung + 2
+       endif
+       if sprung > 79 and obentimer < 5 then obentimer = obentimer + 1
+       if obentimer > 2
+         obentimer = 0
+         sprungrev = 1
+       endif
+     else
+       if sprungrev = 1
+         sprung = sprung - 5
+         if sprung < 1
+           sprungrev = 0
+           sprung = 0
+           sprungdelay = 15
+         endif
+       endif
+     endif
+   endif
+   
+    rem Laufen
+    speedboost# = 1
+
+    if upPressed()+downPressed()+leftPressed()+rightPressed() = 0
+        runEnergy# = runEnergy# + 2
+        stop sound 10
+    else
+        if not sound playing(10) then loop sound 10
+        energyChanged = 0
+        if ShiftKey()+ControlKey() = 1 : rem shift+control at the same time = walk normal
+            rem TODO: es ruckelt trotzdem noch
+            if ControlKey()=1 and runEnergy#>0 : rem Energy >1 , damit es nicht ruckelt (run-walk-run-walk-run-walk) . 3 = walk regain
+                speedboost# = 2
+                runEnergy# = runEnergy# - 1
+                energyChanged = 1
+            endif
+            if ShiftKey()=1
+                speedboost# = 0.5
+                runEnergy# = runEnergy# + 0.5
+                energyChanged = 1
+            endif
+        endif
+        if not energyChanged then runEnergy# = runEnergy# + 1
+        if upPressed()
+            XTest# = Newxvalue(X#, cAY#, 7*speedboost#)
+            ZTest# = Newzvalue(Z#, cAY#, 7*speedboost#)
+            if XTest# > 0 and XTest# < cMapSizeX then X# = XTest#
+            if ZTest# > 0 and ZTest# < cMapSizeZ then Z# = ZTest#
+        endif
+        if downPressed()
+            XTest# = Newxvalue(X#, Wrapvalue(cAY# - 180), 5*(speedboost#/2))
+            ZTest# = Newzvalue(Z#, Wrapvalue(cAY# - 180), 5*(speedboost#/2))
+            if XTest# > 0 and XTest# < cMapSizeX then X# = XTest#
+            if ZTest# > 0 and ZTest# < cMapSizeZ then Z# = ZTest#
+        endif
+        if leftPressed()
+            XTest# = Newxvalue(X#, Wrapvalue(cAY# - 90), 5*(speedboost#/1.3))
+            ZTest# = Newzvalue(Z#, Wrapvalue(cAY# - 90), 5*(speedboost#/1.3))
+            if XTest# > 0 and XTest# < cMapSizeX then X# = XTest#
+            if ZTest# > 0 and ZTest# < cMapSizeZ then Z# = ZTest#
+        endif
+        if rightPressed()
+            XTest# = Newxvalue(X#, Wrapvalue(cAY# + 90), 5*(speedboost#/1.3))
+            ZTest# = Newzvalue(Z#, Wrapvalue(cAY# + 90), 5*(speedboost#/1.3))
+            if XTest# > 0 and XTest# < cMapSizeX then X# = XTest#
+            if ZTest# > 0 and ZTest# < cMapSizeZ then Z# = ZTest#
+        endif
+    endif
+    if runEnergy# > maxRunEnergy then runEnergy# = maxRunEnergy
+    print "Run energy: ", runEnergy#
+
+    Rem Rotate camera
+    cTestX# = WrapValue(cAX# - 180)
+    if cTestX# > 225 then cAX# = 45
+    if cTestX# < 135 then cAX# = 315
+    YRotate camera CurveAngle(cAY#, oldcAY#, 24)
+    XRotate camera CurveAngle(cAX#, oldcAX#, 24)
+
+    Rem Position Camera
+    Y# = floorHeight#(X#, Z#) + 85 + sprung*jumpBoost
+    Position Camera X#, Y#, Z#
+
+    Rem Position Listener
+    Position Listener X#, Y#, Z#
+    Rotate Listener 0, cAY#, 0
+
+    rem Sky sphere follows player
+    position object 2, X#, Y#, Z#
+   
+    rem zrotate object 51, cAY#
+    
+    
+    
+    
+   if (ceil(X#) mod 10 = 0) or (ceil(Z#) mod 10 = 0) or (sceneInitialized=0)
+        for t = 0 to cMaxTrees
+            rx = baumx(t)
+            rz = baumz(t)
+            incircle = IsInCircle(rx, rz, X#, Z#, camerarange)
+            rem incircle = IsInCircle(rx, rz, X#, Z#, fogdistance)
+            if incircle <> baumdrawn(t)
+                if incircle = 1
+                    if object exist(1500+t)
+                        show object 1500+t                    
+                    else
+                       make object 1500+t, 52, 4
+                       position object 1500+t, rx, floorHeight#(rx, rz)+190, rz
+                       set object 1500+t, 1, 1, 0
+                   endif
+                else
+                    delete object 1500+t
+                    rem hide object 1500+t
+                endif 
+            ENDIF      
+            baumdrawn(t) = incircle
+        next t
+    endif
+    
+    
+    
+    
+return
+
+_fademenu:
+   if fade > 100 then fadedir = 0
+   if fade < 50 then fadedir = 1
+   if fadedir = 1
+      fade = fade + 2.5
+   else
+      fade = fade - 2.5
+   endif
+   rem Beleuchtet
+   ink rgb(255, fade, 0), 0
+   set text font "Tahoma"
+   set text size 26
+   if menu = 1
+     if pos = 1 then text 260, 255, "Neues Spiel starten"
+     if pos = 2 then text 260, 285, "Spiel laden"
+     if pos = 3 then text 260, 315, "Einstellungen"
+     if pos = 4 then text 260, 345, "Spiel beenden"
+   endif
+   if menu = 3
+     if pos = 1
+        if sound = 1 then text 260, 255, "Ton: An"
+        if sound = 0 then text 260, 255, "Ton: Aus"
+     endif
+     if pos = 2
+        if music = 1 then text 260, 285, "Musik: An"
+        if music = 0 then text 260, 285, "Musik: Aus"
+     endif
+     if pos = 3 then text 260, 315, "Hauptmen¸"
+   endif
+   rem Normal
+   ink rgb(255, 230, 0), 0
+   if menu = 1
+     if pos <> 1 then text 260, 255, "Neues Spiel starten"
+     if pos <> 2 then text 260, 285, "Spiel laden"
+     if pos <> 3 then text 260, 315, "Einstellungen"
+     if pos <> 4 then text 260, 345, "Spiel beenden"
+   endif
+   if menu = 3
+     if pos <> 1
+        if sound = 1 then text 260, 255, "Ton: An"
+        if sound = 0 then text 260, 255, "Ton: Aus"
+     endif
+     if pos <> 2
+        if music = 1 then text 260, 285, "Musik: An"
+        if music = 0 then text 260, 285, "Musik: Aus"
+     endif
+     if pos <> 3 then text 260, 315, "Hauptmen¸"
+   endif
+   sync
+return
+
+_handle_radar:
+   rem Leuchtpunkt
+   if radarpointrev = 0
+     inc radarpointcolor, 3
+   else
+     dec radarpointcolor, 3
+   endif
+   if radarpointcolor > 255
+     radarpointrev = 1
+     radarpointcolor = 254
+   endif
+   if radarpointcolor < 150
+     radarpointrev = 0
+     radarpointcolor = 149
+   endif
+   rem B‰ume
+    for t = 0 to cMaxTrees
+     x = (baumx(t) / 62.5) + 7.5
+     y = screen height() - 7.5 - (baumz(t) / 62.5)
+     if baumdrawn(t)
+         rem ink rgb(0, radarpointcolor, 0), 0
+         ink rgb(0, 50, 0), 0
+         circle x, y, 1
+         circle x, y, 0
+     endif
+   next i
+   rem Player
+   x = (X# / 62.5) + 7.5
+   y = screen height() - 7.5 - (Z# / 62.5)
+   ink rgb(0, 0, radarpointcolor), 0
+   circle x, y, 1
+   circle x, y, 0
+   rem Enemies
+   for t = 0 to cMaxEnemies
+       x = (object position x(idxMonsterBase+t) / 62.5) + 7.5
+       y = screen height() - 7.5 - (object position z(idxMonsterBase+t) / 62.5)
+       ink rgb(radarpointcolor, 0, 0), 0
+       circle x, y, 1
+       circle x, y, 0
+   next
+return
+
+_draw_trees:
+    rem TODO: da ist ein baum an offset 0,0,0
+    load image "bitmap\tree.bmp", 4
+    make object plain 52, 200, 400
+    make mesh from object 52, 52
+    add limb 52, 1, 52
+    rotate limb 52, 1, 0, 90, 0
+    make mesh from object 52, 52
+    delete object 52
+    
+    for t = 0 to cMaxTrees
+       rx = baumx(t)
+       rz = baumz(t)
+    next t
+return
+
+_create_trees:
+    dim baumx(cMaxTrees)
+    dim baumz(cMaxTrees)
+    dim baumdrawn(cMaxTrees)
+    for t = 0 to cMaxTrees
+        repeat
+            x = rnd(cMapSizeX)
+            z = rnd(cMapSizeZ)
+            ok = 1
+            if isInCircle(x,z,5000,5000,2000) then ok=0 : rem TODO: sp‰ter f¸r b¸schel anwenden
+        until ok=1
+        baumx(t) = x
+        baumz(t) = z
+        baumdrawn(t) = 0
+    NEXT
+return
+
+_menu:
+  load bitmap "bitmap\titlescreen.jpg"
+  set text font "times"
+  set text size 27
+  fade = 100
+  pos = 1
+  menu = 1
+  sound = 1
+  do
+     gosub _fademenu
+     if ( downkey() = 1 and pos < 4 and menu = 1 ) or ( downkey() = 1 and pos < 3 and menu = 3 )
+       inc pos
+       while downkey() = 1
+          gosub _fademenu
+       endwhile
+     endif
+     if upkey() = 1 and pos > 1
+       dec pos
+       while upkey() = 1
+          gosub _fademenu
+       endwhile
+     endif
+     if returnkey() = 1
+       if menu = 1
+          if pos = 1 then gosub _startgame
+          if pos = 2
+            rem load bitmap "bitmap\titlescreen.jpg"
+            rem menu = 2
+            rem pos = 1
+          endif
+          if pos = 3
+            load bitmap "bitmap\titlescreen.jpg"
+            menu = 3
+            pos = 1
+          endif
+          if pos = 4 then end
+       else
+         if menu = 3
+            if pos = 1
+              if sound = 1
+                sound = 0
+              else
+                sound = 1
+              endif
+              load bitmap "bitmap\titlescreen.jpg"
+            endif
+            if pos = 2
+              if music = 1
+                music = 0
+              else
+                music = 1
+              endif
+              load bitmap "bitmap\titlescreen.jpg"
+            endif
+            if pos = 3
+              load bitmap "bitmap\titlescreen.jpg"
+              menu = 1
+              pos = 1
+            endif
+         endif
+       endif
+       while returnkey() = 1
+          gosub _fademenu
+       endwhile
+     endif
+  loop
+return
+
+_create_enemies:
+    dim enemySpeed(cMaxEnemies)
+    dim enemyDir(cMaxEnemies)
+    dim enemyWalkTimeout(cMaxEnemies)
+    dim enemyWalkTimeoutMin(cMaxEnemies)
+    dim enemyWalkTimeoutMax(cMaxEnemies)
+    dim enemyAwarenessRadius(cMaxEnemies)
+    dim enemyCurSpeed(cMaxEnemies)
+    dim enemyMaxSpeed(cMaxEnemies)
+    dim enemyAngle(cMaxEnemies)
+    dim enemyCurrentAnim(cMaxEnemies)
+    for t = 0 to cMaxEnemies
+        if t=0        
+            Load 3Dsound "test.wav",idxMonsterBase+t
+        else
+            Clone Sound idxMonsterBase+t, idxMonsterBase
+        endif
+                
+        x# = RndBetween(1000, 9000)
+        z# = RndBetween(1000, 9000)
+        enemyAwarenessRadius(t) = RndBetween(600, 1300)
+        enemyMaxSpeed(t) = RndBetween(1, 4)
+        enemyWalkTimeoutMin(t) = 200
+        enemyWalkTimeoutMax(t) = 300
+                
+        if t = 0
+            animScorpIdleStart = 0
+            Load object "obj\scorpion\ScorpIdle.x", idxMonsterBase+t
+            animScorpIdleEnd = total object frames(idxMonsterBase+t)
+            
+            animScorpWalkStart = animScorpIdleEnd+1
+            Append object "obj\scorpion\ScorpWalk.x", idxMonsterBase+t, animScorpWalkStart
+            animScorpWalkEnd = total object frames(idxMonsterBase+t)
+        else
+            Clone Object idxMonsterBase+t, idxMonsterBase        
+        endif
+        
+        y# = floorHeight#(x#, z#) : rem TODO  + yPosOffset#
+        position object idxMonsterBase+t, x#, y#, z#
+        Position Sound idxMonsterBase+t, x#, y#, z#
+        
+        fix object pivot idxMonsterBase+t
+        gosub scorpChangeToWalk
+        set object collision on idxMonsterBase+t
+    NEXT
+return
+
+scorpChangeToIdle:
+    rem TODO: smoothness (interpolation)
+    if enemyCurrentAnim(t) <> 1
+        loop object idxMonsterBase+t, animScorpIdleStart, animScorpIdleEnd
+        enemyCurrentAnim(t) = 1
+    endif
+return
+
+scorpChangeToWalk:
+    rem TODO: smoothness (interpolation)
+    if enemyCurrentAnim(t) <> 2
+        loop object idxMonsterBase+t, animScorpWalkStart, animScorpWalkEnd
+        enemyCurrentAnim(t) = 2
+    endif
+return
+
+_setupClock:
+    set text font "arial" : set text size 30 : set text transparent
+    
+    // Session variables
+    clockTickCounter=0
+    clockCurrentMidDot=0
+    clockTicksPerSecond = framerate
+return
+
+_handleClock:
+    if mod(clockTickCounter*clockBlinksPerSecond, clockTicksPerSecond) = 0
+        clockCurrentMidDot = 1 - clockCurrentMidDot
+    endif
+    
+    if mod(clockTickCounter*clockSpeedFactor, clockTicksPerSecond) = 0
+        clockSeconds = clockSeconds + 1
+    endif
+    
+    gosub _printClock
+
+    clockTickCounter = clockTickCounter + 1
+RETURN
+
+_create_water:
+    remstart
+    make object plain 3, 20000, 20000
+    load image "bitmap\GM01B02.bmp", 3
+    texture object 3, 3
+    position object 3, 0, waterLevel, 0
+    xrotate object 3, 90
+    set object light 3, 1
+    ghost object on 3
+    remend
+    
+
+    remstart
+    make object plain 3, 10000, 10000
+    load image "bitmap\GM01B02a.bmp",3
+    texture object 3, 3
+    xrotate object 3, 90
+    position object 3, 5000,waterLevel, 5000
+    set object ambient 3,0
+    ghost object on 3
+    remend
+    
+    
+    remstart
+    rem TODO: geht nicht zusammen mit fog
+    make object plain 3, 10000, 10000
+    load image "bitmap\GM01B02c.bmp", 3
+    texture object 3, 3
+    xrotate object 3, 90
+    position object 3, 5000, waterLevel, 5000
+    set object ambient 3, 0
+    rem set object ambient 3, 1
+    rem ghost object on 3
+    remend
+    
+    
+    make matrix 3, cMapSizeX+2*waterMovement, cMapSizeZ+2*waterMovement, 15, 15
+    load image "bitmap\water.bmp", 3
+    prepare matrix texture 3, 3, 1, 1
+    fill matrix 3, 0, 1
+    position matrix 3, 0, waterLevel, 0
+    ghost matrix on 3
+    set matrix 3, 0, 0, 1, 1, 1, 1, 1
+    update matrix 3
+return
+
+_create_floor:
+    rem Boden
+    make matrix 1, cMapSizeX, cMapSizeZ, 15, 15
+
+    load image "bitmap\forest_floor_texture.jpg", 1
+    prepare matrix texture 1, 1, 1, 1
+    fill matrix 1, 0, 1
+    set matrix 1, 0, 0, 1, 1, 1, 1, 1
+    randomize matrix 1, 130
+    
+    rem TEST
+    rem TODO: aber man kann 40,40 nicht updaten?!
+    set matrix height 1, 10, 10, 1000
+    
+    update matrix 1
+    
+    remstart
+    currentmatrix=1
+    for z=1 to 20
+       for x=1 to 20
+    
+          rem Get matrix heights
+          rem print x, " - ", z
+          rem sync
+          rem sleep 100
+          
+          h8#=get matrix height(currentmatrix,x,z-1)
+          h4#=get matrix height(currentmatrix,x-1,z)
+          h#=get matrix height(currentmatrix,x,z)
+          h2#=get matrix height(currentmatrix,x,z)
+    
+          rem Calculate projected angle X using heights
+          x1#=(x-1)*25.0 : y1#=h#
+          x2#=(x+0)*25.0 : y2#=h4#
+          dx#=x2#-x1#
+          dy#=y2#-y1#
+          ax#=atanfull(dx#,dy#)
+          ax#=wrapvalue(90-ax#)
+    
+          rem Calculate projected angle Z using heights
+          z1#=(z-1)*25.0 : y1#=h2#
+          z2#=(z+0)*25.0 : y2#=h8#
+          dz#=z2#-z1#
+          dy#=y2#-y1#
+          az#=atanfull(dz#,dy#)
+          az#=wrapvalue(90-az#)
+    
+          rem Make normal from projected angle
+          nx#=sin(ax#)
+          ny#=cos(ax#)
+          nz#=sin(az#)
+    
+          rem Setting matrix normal for smoothness
+          set matrix normal currentmatrix,x,z,nx#,ny#,nz#
+    
+       next x
+    next z
+    update matrix currentmatrix
+    remend
+return
+
+_create_sky:
+    if test = 1 
+        load image "bitmap\tree.bmp", 2
+    else
+       load image "bitmap\stars.bmp", 2
+    endif
+
+    make object sphere 2, (landsize * 2) - 500
+
+rem    make object sphere 2, -4000
+    
+    set object collision off 2
+    rem scale object 2, 2000, 750, 2000
+    scale object 2, 600, 120, 600
+    set object 2, 1, 0, 0, 0, 0, 1, 1
+    texture object 2, 2
+rem    fade object 2, 0
+    backdrop off
+    
+    if test = 1
+        backdrop on
+        set object wireframe 2, 1
+    endif
+return
+
+_create_radar:
+    rem Karte - Abstand zur Kamera: 1.1
+    remstart
+    load image "map\ST01L01a.bmp", 5
+    make object plain 51, 0.352, 0.352
+    lock object on 51
+    position object 51, -0.6908, -0.4675, 1.1
+    ghost object on 51
+    texture object 51, 5
+    remend
+    
+    rem Karte - Abstand zur Kamera: 1.5
+    load image "map\ST01L01a.bmp", 5
+    make object plain 51, 0.48, 0.48
+    lock object on 51
+    position object 51, -0.942, -0.6375, 1.5
+    ghost object on 51
+    texture object 51, 5
+return
+
+_printClock:
+    if clockCurrentMidDot = 0
+        middle$ = " "
+    else
+        middle$ = ":"
+    endif
+    min = clockSeconds/60
+    hours = min/60
+    if clockShowSeconds
+        secsText$ = middle$+TwoDigit$(mod(clockSeconds,60))
+    else
+        secsText$ = ""
+    endif
+    print "Time: ", TwoDigit$(mod(hours,24)), middle$, TwoDigit$(mod(min,60)), secsText$
+return
+
+rem Rotate smooth, and rotate in the direction with the lowest distance
+rem "turn object left" ist das kommando
+function smoothRotate#(von#, nach#, smoothness)
+    if (von# > 270) and (nach# < 90)
+        ret# = WrapValue(von# + (360 - von# + nach#)/smoothness)
+    else
+        if (von# < 90) and (nach# > 270)
+            ret# = WrapValue(von# - (360 - nach# + von#)/smoothness)
+        else
+            ret# = von# + (nach# - von#)/smoothness
+        endif
+    endif
+endfunction ret#
+
+function floorHeight#(X#, Z#)
+    rem TODO: implement water
+    ret# = Get Ground Height(1, X#, Z#)
+ENDFUNCTION ret#
+
+function upPressed()
+    ret = UpKey()=1 or keystate(17)=1 or joystick up()=1
+ENDFUNCTION ret
+
+function leftPressed()
+    ret = LeftKey()=1 or keystate(30)=1 or joystick left()=1
+ENDFUNCTION ret
+
+function rightPressed()
+    ret = RightKey()=1 or keystate(32)=1 or joystick right()=1
+ENDFUNCTION ret
+
+function downPressed()
+    ret = DownKey()=1 or keystate(31)=1 or joystick down()=1
+ENDFUNCTION ret
+
+function TwoDigit$(value)
+    if value < 10
+        ret$ = "0"+STR$(value)
+    else
+        ret$ = STR$(value)
+    ENDIF
+ENDFUNCTION ret$
+
+function mod(num,modulus)
+   value=num-((num/modulus)*modulus)
+endfunction value
+
+function fileReadInt(fileNum)
+    read string 1, s$
+    ret=val(s$)
+ENDFUNCTION ret
+
+function RndBetween(a,b)
+    ret = a+Rnd(b-a)
+ENDFUNCTION ret
+
+function isInCircle(pX#,pY#,cX#,cY#,cR#)
+    ret = sqrt( (pX#-cX#)*(pX#-cX#) + (pY#-cY#)*(pY#-cY#) ) <= cR#
+ENDFUNCTION ret
+
+_stop_game_sounds:
+    Stop Sound 1  : rem sound\forestbg.wav
+    Stop Sound 5  : rem music\pause.wav
+    Stop Sound 10 : rem sound\walk.wav
+    for t = 0 to cMaxEnemies
+        Stop Sound idxMonsterBase+t
+    next t
+return
+
+_exit:
+    exit

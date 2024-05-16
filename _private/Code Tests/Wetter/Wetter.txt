@@ -1,0 +1,77 @@
+rem Sound
+load sound "sound\thunder.wav", 2
+load sound "sound\thunder2.wav", 3
+
+do
+
+   activate = 1
+
+   rem Wetter
+   if inkey$() = "3" and activate = 1 then Wetter$ = ""
+   if Wetter$ = ""
+     set ambient light 40
+     if fog available() = 1
+        fog on
+        fog distance 7500
+        fog color rgb(135, 119, 99)
+     endif
+     if sound exist(4) = 1
+       stop sound 4
+       delete sound 4
+     endif
+   endif
+
+   if inkey$() = "0" and activate = 1
+     Wetter$ = "day"
+     if fog available() = 1
+        Fog on
+        Fog distance 4000
+        Fog color RGB(128, 128, 128)
+     endif
+     Color Backdrop RGB(128, 128, 128)
+     Load sound "sound\crickets.wav", 4
+     Loop sound 4
+   endif
+
+   if inkey$() = "1" and activate = 1
+     Wetter$ = "thunder"
+     if fog available() = 1
+        Fog on
+        rem Nur wenn Lampe da: Fog distance 1000
+        Fog distance 500
+        Fog color RGB(0, 0, 0)
+     endif
+     Color Backdrop RGB(0, 0, 0)
+     Load sound "sound\rain.wav", 4
+     Loop sound 4
+   endif
+
+   if inkey$() = "2" and activate = 1
+     Wetter$ = "sun"
+     if fog available() = 1
+        Fog on
+        Fog distance 7000
+        Fog color RGB(255, 255, 255)
+     endif
+     Color Backdrop RGB(20, 150, 200)
+     Load sound "sound\river.wav", 4
+     Loop sound 4
+   endif
+
+   rem Donner
+   if wetter$ = "thunder"
+     if rnd(100) = 50
+        ink rgb(255, 0, 0), rgb(255, 255, 255)
+        cls
+        sync
+        if rnd(2) = 1
+           set sound pan 3, -5000 + rnd(10000)
+           play sound 3
+        else
+           set sound pan 2, -5000 + rnd(10000)
+           play sound 2
+        endif
+     endif
+   endif
+
+loop
