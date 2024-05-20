@@ -116,7 +116,7 @@ object MainForm: TMainForm
     Top = 16
   end
   object INIOpenDialog: TOpenDialog
-    DefaultExt = '.ini'
+    DefaultExt = 'ini'
     Filter = 'INI Files (*.ini)|*.ini|All files (*.*)|*.*'
     Options = [ofHideReadOnly, ofFileMustExist, ofEnableSizing]
     Title = 'Select Forest.ini'
