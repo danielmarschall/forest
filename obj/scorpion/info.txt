@@ -1,15 +1,16 @@
 
 This model of a scorpion was included in the classic DarkBASIC in an example called "room".
 
-ScorpIdle_orig.x and ScorpWalk_orig.x are the original files from May 1999.
+ScorpIdle_orig_bin.x and ScorpWalk_orig_bin.x are the original files from May 1999.
 
 Both of these models work in DarkBASIC, but there are a few small flaws with this models:
-1. The scorpion is too low. But need to increase its height, so that it stands on your plane floor.
-2. Limb #1 (named mid03) is either a sting (not animated) or a coordinate marker. It is in the sky above the scorpion. It has to be hidden by the program code.
+1. The scorpion is too low. You need to increase its height, so that it stands on your plane floor.
+2. Limb #1 (named mid03) is either the pincer (not animated) or a coordinate marker. It is in the sky above the scorpion. It has to be hidden by the program code.
 
-While ScorpIdle_orig.x works in DarkBASIC Professional, ScorpWalk_orig.x does not work, due to a bug in their engine.
+While ScorpIdle_orig_bin.x works in DarkBASIC Professional, ScorpWalk_orig_bin.x does not work, due to a bug in their engine.
 
-ScorpIdle.x and ScorpWalk.x were converted (re-exported) using 3D Exploration 1.81 .
+ScorpIdle_orig_bin.x and ScorpWalk_orig_bin.x were converted (re-exported) using 3D Exploration 1.81,
+as text format ScorpIdle_orig_txt.x and ScorpWalk_orig_txt.x
 
 Additionally, following changes were done to address the problems mentioned above:
 1. The coordinates of x3ds_mid02 (the whole scorpion) were corrected from y=-250 to y=0 (with a text editor)
