@@ -5,15 +5,14 @@ project name=Nightmare Forest
 
 ; **** source file information ****
 main=Forest.DBA
-LineMain=276
-final source=_Temp.dbsource
+LineMain=1
 
 ; **** Executable Information  ***
 ; build types: exe, media, installer, alone
 executable=Forest.exe
 build type=exe
 ; ** Media file compression **
-compression=YES
+compression=NO
 
 ; ** Media file encryption **
 encryption=NO
@@ -29,8 +28,8 @@ CommandLineArguments=
 app title=Nightmare Forest
 
 ; graphics mode options: fullscreen, window, desktop, fulldesktop, hidden
-graphics mode=fulldesktop
-fullscreen resolution=640x480x16
+graphics mode=fullscreen
+fullscreen resolution=1024x768x16
 
 ; arbitrary sizes are valid for windowed mode
 window resolution=640x480
@@ -39,7 +38,7 @@ window resolution=640x480
 
 ; **** Media ****
 ; Example entries: media1=graphics\*.jpg
-media root path=E:\tdn\
+media root path=C:\Users\danie\DBP\_Forest\trunk\
 
 ; **** Icons ****
 icon1=Forest.ico
@@ -61,3 +60,10 @@ VerProductNumber=v1.0
 ; **** To Do ****
 
 ; **** Comments ****
+comments1=
+
+; **** Advanced (setup.ini) configuration ****
+RemoveSafetyCode=NO
+SafeArrays=YES
+LocalTempFolder=NO
+ExternaliseDLLS=NO

@@ -1,5 +1,5 @@
 rem Nightmare Forest by Daniel Marschall
-rem Revision: 31 May 2018
+rem Revision: 05 Sep 2025
 
 rem ---------------------
 
@@ -70,7 +70,6 @@ rem TODO: auch dateinamen als konstanten
 #constant OBJ_Tent 10
 #constant OBJ_MapGhostObject 51
 #constant OBJ_TreeTemplate 52
-#constant OBJ_CollissionDummy 53
 #constant OBJ_BloodParticle_Base 100
 #constant OBJ_Monster_Base 1000
 #constant OBJ_Tree_Base 1500
@@ -156,7 +155,9 @@ waterMovementMaxDistance    = call dll(DLL_DBIni, "ReadInt",   "Game", "waterMov
 gravity#                    = call dll(DLL_DBIni, "ReadFloat", "Game", "gravity",                     0.0)
 JumpStartVelocity#          = call dll(DLL_DBIni, "ReadFloat", "Game", "JumpStartVelocity",           0.0)
 MinFallVelocity#            = call dll(DLL_DBIni, "ReadFloat", "Game", "MinFallVelocity",             0.0)
-collissionboxsize#          = call dll(DLL_DBIni, "ReadFloat", "Game", "collissionboxsize",           0.0)
+scorpCollissionX#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionX",            0.0)
+scorpCollissionY#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionY",            0.0)
+scorpCollissionZ#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionZ",            0.0)
 playerEyeHeight#            = call dll(DLL_DBIni, "ReadFloat", "Game", "playerEyeHeight",             0.0)
 cMaxTrees                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxTrees",                   0)
 cMapSizeX                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeX",                   0)
@@ -186,7 +187,13 @@ rem Sync twice at application start for friendliness with dbpro's double bufferi
 rem (Required for newer versions of DB Pro)
 sync : sync
 
-gosub _menu
+
+
+rem Deaktiviert. TODO: das menü lieber in Delphi machen
+rem gosub _menu
+
+
+
 
 _startgame:
 
@@ -265,17 +272,16 @@ do
     gosub _handleClock
     gosub _handle_blood
    
-    rem TODO: does not work. There is always an attack!
-    set object collision on OBJ_CollissionDummy
-    position object OBJ_CollissionDummy, camera position x(), camera position y(), camera position z()
     for t = 0 to cMaxEnemies-1
-        if object collision(OBJ_CollissionDummy, OBJ_Monster_Base+t) = 1
+        dx# = abs(object position x(OBJ_Monster_Base+t) - camera position x())
+        dy# = abs(object position y(OBJ_Monster_Base+t) - camera position y())
+        dz# = abs(object position z(OBJ_Monster_Base+t) - camera position z())
+        if dx# < scorpCollissionX# and dy# < scorpCollissionY# and dz# < scorpCollissionZ#
             collcounter = collcounter + 1
-            print "Attacking enemy: ", t
-        endif
+            print "DEBUG: Attacking enemy: X", dx#, ", Y", dy#, ", Z", dz#
+        endif    
     NEXT
-    print "Collision counter: ", collcounter
-    set object collision off OBJ_CollissionDummy
+    print "DEBUG: Collision counter: ", collcounter
         
     if collcounter >= HitInterval
         collcounter = 0
@@ -331,11 +337,6 @@ _setup_camera:
     Set camera range 1, camerarange
     AUTOMATIC CAMERA COLLISION 0,collissionboxsize#,0 : rem scorpione stoßen den spieler nicht weg, wenn keine taste gedrückt wird? syntax mit 4 parametern funktioniert im neuen dbpro free nicht!
     Autocam off
-    
-    rem TODO: zylinder
-    MAKE OBJECT SPHERE OBJ_CollissionDummy, collissionboxsize#
-    rem hide object OBJ_CollissionDummy
-    set object collision off OBJ_CollissionDummy
 return
 
 _setup_player_position:
