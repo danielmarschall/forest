@@ -113,7 +113,7 @@ begin
 
     miniatureFactor := ini.ReadInteger('MapViewer', 'miniatureFactor', 20);
 
-    Caption := Format(LNG_TITLE, [ini.ReadString('Game', 'Title', '')]);
+    Caption := Format(LNG_TITLE, [ini.ReadString('Product', 'Title', '')]);
   finally
     ini.Free;
   end;

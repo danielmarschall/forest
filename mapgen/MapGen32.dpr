@@ -43,7 +43,11 @@ var
 begin
   ini := TMemIniFile.Create(filename);
   try
+    {$IF CompilerVersion >= 20.0} // Version guessed
+    FormatSettings.DecimalSeparator := '.';
+    {$ELSE}
     DecimalSeparator := '.';
+    {$ENDIF}
 
     cMaxBranchLength                   := ini.ReadInteger('MapGen32', 'MaxBranchLength',                   200   );
     cPathFlexibility                   := ini.ReadInteger('MapGen32', 'PathFlexibility',                    15   );
@@ -237,7 +241,6 @@ function GenerateMap(nTrees, treeRadius, mapX, mapY: integer;
   memblockTrees, memblockWayPoints: PDWordArray): DWORD; cdecl;
 var
   pathSize: integer;
-  aryTrees, aryWaypoints: TDWordArray;
   i, j, k: integer;
   p, q: TPoint;
   ok: boolean;
@@ -248,16 +251,6 @@ begin
     result := ERR_NO_INI_LOADED;
     Exit;
   end;
-
-  if memblockTrees <> nil then
-    aryTrees := TDWordArray(memblockTrees)
-  else
-    SetLength(aryTrees, 0); // prevent compiler warning
-
-  if memblockWayPoints <> nil then
-    aryWaypoints := TDWordArray(memblockWayPoints)
-  else
-    SetLength(aryWaypoints, 0); // prevent compiler warning
 
   pathSize := Round(cPathWidthFactor * treeRadius);
   nFreespots := GetWaypointArrayElements(nTrees);
@@ -300,9 +293,8 @@ begin
           end;
         end;
       until ok or (k > cTreePlacementMaxAttempts);
-
-      aryTrees[i*2]   := p.x;
-      aryTrees[i*2+1] := p.y;
+      CopyMemory(PByte(memblockTrees) + i*8, @p.X, 4);
+      CopyMemory(PByte(memblockTrees) + i*8+4, @p.Y, 4);
     end;
   end;
 
@@ -310,8 +302,8 @@ begin
   begin
     for i := 0 to nFreespots-1 do
     begin
-      aryWaypoints[i*2]   := FreeSpots[i].X;
-      aryWaypoints[i*2+1] := FreeSpots[i].Y;
+      CopyMemory(PByte(memblockWayPoints) + i*8, @FreeSpots[i].X, 4);
+      CopyMemory(PByte(memblockWayPoints) + i*8+4, @FreeSpots[i].Y, 4);
     end;
   end;
 

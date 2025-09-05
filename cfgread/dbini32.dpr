@@ -59,5 +59,9 @@ exports
   UnloadINI name 'UnloadINI';
 
 begin
+  {$IF CompilerVersion >= 20.0} // Version guessed
+  FormatSettings.DecimalSeparator := '.';
+  {$ELSE}
   DecimalSeparator := '.';
+  {$ENDIF}
 end.
