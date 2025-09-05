@@ -166,12 +166,6 @@ cEnemySpawnMapBorderPadding = call dll(DLL_DBIni, "ReadInt",   "Game", "EnemySpa
 call dll DLL_DBIni, "UnloadINI"
 delete dll DLL_DBIni
 
-
-fogColorR = 0
-fogColorG = 0
-fogColorB = 0
-
-
 rem Setup & Startbildschirm
 if check display mode( desktop width(), desktop height(), screen depth() )
     set display mode desktop width(), desktop height(), screen depth()
@@ -189,18 +183,11 @@ rem Sync twice at application start for friendliness with dbpro's double bufferi
 rem (Required for newer versions of DB Pro)
 sync : sync
 
-
-
-rem Deaktiviert. TODO: das menü lieber in Delphi machen
-rem gosub _menu
-
-
-
-
 _startgame:
 
 ink rgb(255, 230, 0), 0
 PASTE IMAGE IMG_TitleScreen, 0, 0
+set text font "arial" : set text size 30 : set text transparent
 text 28, 550, LNG_StartingGame
 
 sync
@@ -217,6 +204,9 @@ clockSeconds = beginClockSeconds
 collcounter = 0
 hits = 0
 LastAttackSound = 0
+fogColorR = 0
+fogColorG = 0
+fogColorB = 0
 
 draw to front
 
@@ -314,7 +304,7 @@ _pausemenu:
                 
         rem Text
         ink rgb(255,255,255),1
-        text 100,100,"text"
+        rem text 100,100,"text"
                 
         text 28, 550, "Pause. ESC=Weiter. Runter=Ende."
         sync
@@ -680,57 +670,6 @@ _update_trees:
     endif
 return
 
-_fademenu:
-    if fade# > 100 then fadedir = 0
-    if fade# < 50 then fadedir = 1
-    if fadedir = 1
-        fade# = fade# + 2.5
-    else
-        fade# = fade# - 2.5
-    endif
-    rem Beleuchtet
-    ink rgb(255, fade#, 0), 0
-    set text font "Tahoma"
-    set text size 26
-    if menu = 1
-        if pos = 1 then text 260, 255, "Neues Spiel starten"
-        if pos = 2 then text 260, 285, "Spiel laden"
-        if pos = 3 then text 260, 315, "Einstellungen"
-        if pos = 4 then text 260, 345, "Spiel beenden"
-    endif
-    if menu = 3
-        if pos = 1
-            if sound = 1 then text 260, 255, "Ton: An"
-            if sound = 0 then text 260, 255, "Ton: Aus"
-        endif
-        if pos = 2
-            if music = 1 then text 260, 285, "Musik: An"
-            if music = 0 then text 260, 285, "Musik: Aus"
-        endif
-        if pos = 3 then text 260, 315, "Hauptmenü"
-    endif
-    rem Normal
-    ink rgb(255, 230, 0), 0
-    if menu = 1
-        if pos <> 1 then text 260, 255, "Neues Spiel starten"
-        if pos <> 2 then text 260, 285, "Spiel laden"
-        if pos <> 3 then text 260, 315, "Einstellungen"
-        if pos <> 4 then text 260, 345, "Spiel beenden"
-    endif
-    if menu = 3
-        if pos <> 1
-            if sound = 1 then text 260, 255, "Ton: An"
-            if sound = 0 then text 260, 255, "Ton: Aus"
-        endif
-        if pos <> 2
-            if music = 1 then text 260, 285, "Musik: An"
-            if music = 0 then text 260, 285, "Musik: Aus"
-        endif
-        if pos <> 3 then text 260, 315, "Hauptmenü"
-    endif
-    sync
-return
-
 _handle_radar:
 	rem TODO: the player dot should always stay at the same position
 	rem TODO: don't show far away enemies
@@ -854,74 +793,6 @@ _create_trees:
     delete dll DLL_MapGen
 return
 
-_menu:
-    PASTE IMAGE IMG_TitleScreen, 0, 0
-    set text font "times"
-    set text size 27
-    fade = 100
-    pos = 1
-    menu = 1
-    sound = 1
-    do
-        gosub _fademenu
-        if ( downkey() = 1 and pos < 4 and menu = 1 ) or ( downkey() = 1 and pos < 3 and menu = 3 )
-            inc pos
-            while downkey() = 1
-                gosub _fademenu
-            endwhile
-        endif
-        if upkey() = 1 and pos > 1
-            dec pos
-            while upkey() = 1
-                gosub _fademenu
-            endwhile
-        endif
-        if returnkey() = 1
-            if menu = 1
-                if pos = 1 then gosub _startgame
-                if pos = 2
-                    rem PASTE IMAGE IMG_TitleScreen, 0, 0
-                    rem menu = 2
-                    rem pos = 1
-                endif
-                if pos = 3
-                    PASTE IMAGE IMG_TitleScreen, 0, 0
-                    menu = 3
-                    pos = 1
-                endif
-                if pos = 4 then end
-            else
-                if menu = 3
-                    if pos = 1
-                        if sound = 1
-                            sound = 0
-                        else
-                            sound = 1
-                        endif
-                        PASTE IMAGE IMG_TitleScreen, 0, 0
-                    endif
-                    if pos = 2
-                        if music = 1
-                            music = 0
-                        else
-                            music = 1
-                        endif
-                        PASTE IMAGE IMG_TitleScreen, 0, 0
-                    endif
-                    if pos = 3
-                        PASTE IMAGE IMG_TitleScreen, 0, 0
-                        menu = 1
-                        pos = 1
-                    endif
-                endif
-            endif
-            while returnkey() = 1
-                gosub _fademenu
-            endwhile
-        endif
-    loop
-return
-
 _create_enemies:
     dim enemy(cMaxEnemies-1) as enemyType
     for t = 0 to cMaxEnemies-1
@@ -987,8 +858,6 @@ scorpChangeToWalk:
 return
 
 _setupClock:
-    set text font "arial" : set text size 30 : set text transparent
-    
     // Session variables
     clockTickCounter=0
     clockCurrentMidDot=0
@@ -1000,6 +869,7 @@ _handleClock:
         clockCurrentMidDot = 1 - clockCurrentMidDot
     endif
     
+	rem TODO: for some reason, clockSpeedFactor cannot be very high, probably we cannot go faster than the framerate, otherwise we need to add more than +1 to seconds???
     if mod(clockTickCounter*clockSpeedFactor, clockTicksPerSecond) = 0
         clockSeconds = (clockSeconds + 1) mod (24*60*60)
     endif
