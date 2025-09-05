@@ -39,7 +39,6 @@ rem NICE TO HAVE
 rem - radar breitbild
 rem - wassermatrix bewegt sich nur in 1 richtung
 rem - mausumkehrung einstellbar
-rem - stars.bmp (5000px) braucht lange zum laden. 1000px ist verpixelt
 rem - besserer bluteffekt
 
 rem ToDo:
@@ -58,7 +57,6 @@ rem TODO: vervollständigen
 rem TODO: auch dateinamen als konstanten
 
 #constant IMG_ForestFloor 1
-#constant IMG_Stars 2
 #constant IMG_Water 3
 #constant IMG_Tree 4
 #constant IMG_MapBackground 5
@@ -66,7 +64,6 @@ rem TODO: auch dateinamen als konstanten
 #constant IMG_TitleScreen 96
 #constant IMG_BLOOD 97
 
-#constant OBJ_Skybox 2
 #constant OBJ_Tent 10
 #constant OBJ_MapGhostObject 51
 #constant OBJ_TreeTemplate 52
@@ -120,7 +117,6 @@ rem TODO: auch dateinamen als konstanten
 #constant FN_GFX_MapBackground "map\ST01L01a.bmp"
 #constant FN_GFX_TitleScreen "bitmap\titlescreen.jpg"
 #constant FN_GFX_FloorTexture "bitmap\forest_floor_texture.jpg"
-#constant FN_GFX_Stars "bitmap\stars.bmp"
 #constant FN_GFX_Water "bitmap\water.bmp"
 #constant FN_GFX_Tree "bitmap\tree.bmp"
 #constant FN_GFX_BLOOD "bitmap\blood.png"
@@ -169,6 +165,12 @@ initialEnemySafezone#       = call dll(DLL_DBIni, "ReadFloat", "Game", "InitialE
 cEnemySpawnMapBorderPadding = call dll(DLL_DBIni, "ReadInt",   "Game", "EnemySpawnMapBorderPadding",  0)
 call dll DLL_DBIni, "UnloadINI"
 delete dll DLL_DBIni
+
+
+fogColorR = 0
+fogColorG = 0
+fogColorB = 0
+
 
 rem Setup & Startbildschirm
 if check display mode( desktop width(), desktop height(), screen depth() )
@@ -221,7 +223,6 @@ draw to front
 gosub _setup_camera
 gosub _create_floor
 gosub _setup_player_position
-gosub _create_sky
 gosub _create_trees
 gosub _draw_trees
 gosub _create_water
@@ -355,15 +356,54 @@ _setup_player_position:
 return
 
 _handle_weather:
-    rem Wetter
+
+    rem TODO: Konstanten in INI einstellbar machen
+    sunriseStart = 5 * 3600    : rem Dämmerungsbeginn (z.B. 05:00)
+    sunriseEnd   = 7 * 3600    : rem Sonnenaufgang voll (z.B. 07:00)
+    sunsetStart  = 17 * 3600   : rem Sonnenuntergang beginnt (z.B. 17:00)
+    sunsetEnd    = 19 * 3600   : rem Dämmerungsende (z.B. 19:00)
+    nightLevel#  = 0.0          : rem Minimale Helligkeit nachts (z.B. Mondschein)
+    dayPeak#     = 255.0         : rem Helligkeit am Mittag
+    if clockSeconds < sunriseStart or clockSeconds > sunsetEnd
+        lightValue = INT(nightLevel# + 0.5)
+    else
+        rem gesamte Tagesspanne von Dämmerungsbeginn bis -ende
+        daySpanStart = sunriseStart
+        daySpanEnd   = sunsetEnd
+
+        duration# = (daySpanEnd - daySpanStart) * 1.0    : rem float-sicher
+        u# = (clockSeconds - daySpanStart) / duration#   : rem 0..1
+        if u# < 0.0 then u# = 0.0
+        if u# > 1.0 then u# = 1.0
+
+        rem Sinuskurve: 0 am Dämmerungsbeginn, 1 in der Mitte (Mittag), 0 am Dämmerungsende
+        daylightFactor# = sin(u# * 180)
+    
+        rem Auf Zielbereich (nightLevel .. dayPeak) skalieren
+        lightValue# = nightLevel# + daylightFactor# * (dayPeak# - nightLevel#)
+
+        rem numerische Sicherheit & auf 0..255 clampen
+        if lightValue# < 0.0 then lightValue# = 0.0
+        if lightValue# > 255.0 then lightValue# = 255.0
+
+        lightValue = INT(lightValue# + 0.5)
+    endif
+    rem print "clockSeconds:", clockSeconds, " => lightValue:", lightValue
+
+    fogColorR = lightValue
+    fogColorG = lightValue
+    fogColorB = lightValue
    
+    backdrop on
+    color backdrop rgb(fogColorR, fogColorG, fogColorB)
+
     color ambient light rgb(64,64,128)
     rem set ambient light 1
     set ambient light 50
     if fog available() = 1
         fog on
         fog distance fogdistance
-        fog color rgb(0, 0, 0)
+        fog color rgb(fogColorR, fogColorG, fogColorB)
     endif
    
     if test = 1
@@ -371,9 +411,7 @@ _handle_weather:
         SET MATRIX WIREFRAME ON MAT_Water
     endif
    
-    rem Stars are moving
-    scroll object texture OBJ_Skybox, 0.00002, 0    
-    
+   
     rem Water movement
     rem TODO: wasser soll sich langsamer bewegen, aber das ist schwierig. wenn man die bewegung nur zu bestimmten ticks
     rem       durchführt, dann ruckelt es.
@@ -598,38 +636,16 @@ _handle_player:
     Rem Position Listener
     Position Listener X#, Y#, Z#
     Rotate Listener 0, cAY#, 0   : rem todo warum 0 statt cAZ# etc ?
-
-    rem Sky sphere follows player
-rem    position object OBJ_Skybox, X#, Y#, Z#
-    position object OBJ_Skybox, X#, FloorHeight#(X#,Z#), Z#
     
     
     
-rem Sollte man aus irgendeinem Grund die Skybox verlassen, soll man trotzdem zur Erde schauen können
-backdrop on
-color backdrop rgb(0,0,128) : rem TODO: schwarz + auslagern
-set object cull OBJ_Skybox, 1
 
-rem texture backdrop IMG_Stars
-rem hide object OBJ_Skybox
-rem set object fog OBJ_Skybox, 0
+    rem if onGround = 0
+    rem     jumpheight#=Y#-FloorHeight#(X#,Z#)
+    rem else
+    rem     jumpheight#=0
+    rem endif
 
-    rem TEST: extend skybox if player jumps
-    if onGround = 0
-        jumpheight#=Y#-FloorHeight#(X#,Z#)
-    else
-        jumpheight#=0
-    endif
-
-    rem TODO: beim springen sieht man am boden den backdrop    
-    
-    rem 500 = die originalgröße der box, vor der ersten scalisierung (setup sky)
-    rem 600,120,600 = die originale skalierung als referenz
-    rem *2 , da es von beiden seiten erweitert wird
-    scalX# = 100.0*(500.0*6.00 + jumpheight#*2)/500.0
-    scalY# = 100.0*(500.0*1.20 + jumpheight#*2)/500.0
-    scalZ# = 100.0*(500.0*6.00 + jumpheight#*2)/500.0
-    scale object OBJ_Skybox, scalX#, scalY#, scalZ#
 return    
 
 _WorldBoundCheck:
@@ -985,7 +1001,7 @@ _handleClock:
     endif
     
     if mod(clockTickCounter*clockSpeedFactor, clockTicksPerSecond) = 0
-        clockSeconds = clockSeconds + 1
+        clockSeconds = (clockSeconds + 1) mod (24*60*60)
     endif
     
     gosub _printClock
@@ -1063,33 +1079,6 @@ _create_floor:
     next z
     update matrix currentmatrix
     remend
-return
-
-_create_sky:
-    if test = 1 
-        load image FN_GFX_Tree, IMG_Stars : rem Any small picture - it doesn't matter since we only show wireframe
-    else
-        load image FN_GFX_Stars, IMG_Stars
-    endif
-
-rem TODO: landsize undefined
-    make object sphere OBJ_Skybox, (landsize * 2) - 500
-
-    rem make object sphere OBJ_Skybox, -4000
-    
-    set object collision off OBJ_Skybox
-    rem scale object OBJ_Skybox, 2000, 750, 2000
-    scale object OBJ_Skybox, 600, 120, 600
-    set object OBJ_Skybox, 1, 0, 0, 0, 0, 1, 1
-    texture object OBJ_Skybox, IMG_Stars
-    rem fade object OBJ_Skybox, 0
-    
-    if test = 1
-        backdrop on
-        set object wireframe OBJ_Skybox, 1
-    else
-        backdrop off
-    endif
 return
 
 _create_radar:
