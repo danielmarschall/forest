@@ -1130,6 +1130,7 @@ function resizeImage(image as dword, width as dword, height as dword)
     make memblock from image MEM_ResizeSrc, image
     size = call dll(DLL_Resize32, "DestSize", get memblock ptr(MEM_ResizeSrc), width, height)
     
+    rem TODO: windows 7, I get an error here that size is invalid?
     make memblock MEM_ResizeDest, size
 
     call dll DLL_Resize32, "Resize", get memblock ptr(MEM_ResizeSrc), get memblock ptr(MEM_ResizeDest), width, height
