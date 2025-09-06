@@ -18,18 +18,12 @@ rem - Im Sprung sollte man eigentlich nicht steuern dürfen...?
 rem TODO: clone -> INSTANCE 
 rem TODO: ambient light wird falsch verwendet. es ist viel zu blau, und alle objekte haben es deaktiviert, weil es die farben zerstört
 rem TODO: mehr konfigurierbar machen
-rem TODO: everything seems so slow!
 rem TODO: map außenlinie ist nicht gesperrt mit bäumen oder eine grafik für einen waldrand
-rem TODO: use float everywhere
 
 rem TODO
-rem - HUD
-rem - Health meter instead of hit counter
-rem - Death screen (Kevin artwork)
-rem - Win at sunrise
 rem - Delphi Launcher with Settings and Mapgen preview (optional)
 rem - swimming
-rem - walk slower in the water
+rem - walk slower in the water (also the enemies?)
 
 rem Enemies:
 rem - rascheln im busch
@@ -72,8 +66,10 @@ rem - rennen verhindern, wenn man außer puste
 #constant IMG_Water 3
 #constant IMG_Tree 4
 #constant IMG_MapBackground 5
-#constant IMG_PauseScreen 95
-#constant IMG_TitleScreen 96
+#constant IMG_TitleScreen 95
+#constant IMG_PauseScreen 96
+#constant IMG_DeathScreen 97
+#constant IMG_WinScreen 98
 
 #constant OBJ_Tent 10
 #constant OBJ_MapGhostObject 51
@@ -87,10 +83,13 @@ rem - rennen verhindern, wenn man außer puste
 #constant MAT_Water 3
 
 #constant SFX_ForestBG 1
-#constant SFX_PauseMusic 5
 #constant SFX_Walk_Earth 10
 #constant SFX_Walk_Water 11
 #constant SFX_Attack_Base 20
+#constant SFX_TitleMusic 95
+#constant SFX_PauseMusic 96
+#constant SFX_DeathScreen 97
+#constant SFX_WinScreen 98
 #constant SFX_Monster_Base 1000
 
 #constant DLL_MapGen 1
@@ -110,25 +109,30 @@ rem - rennen verhindern, wenn man außer puste
 #constant FN_DLL_DBIni            "cfgread\dbini32.dll"
 
 #constant FN_SFX_ForestBG         "sound\forestbg.wav"
-#constant FN_SFX_PauseMusic       "music\pause.wav"
 #constant FN_SFX_Walk_Earth       "sound\walk.wav"
 #constant FN_SFX_Walk_Water       "sound\walk_water.wav"
-#constant FN_SFX_ScorpWalk        "sound\scorp_walk.wav"
 #constant FN_SFX_ScorpionAttack1  "sound\scorpionAttack\attack1.wav"
 #constant FN_SFX_ScorpionAttack2  "sound\scorpionAttack\attack2.wav"
 #constant FN_SFX_ScorpionAttack3  "sound\scorpionAttack\attack3.wav"
 #constant FN_SFX_ScorpionAttack4  "sound\scorpionAttack\attack4.wav"
+#constant FN_SFX_TitleMusic       "music\title.wav"
+#constant FN_SFX_PauseMusic       "music\pause.wav"
+#constant FN_SFX_Deathscreen      "sound\deathscreen.wav"
+#constant FN_SFX_Winscreen        "sound\winscreen.wav"
+#constant FN_SFX_ScorpWalk        "sound\scorp_walk.wav"
 
 #constant FN_OBJ_ScorpIdle        "obj\scorpion\ScorpIdle.x"
 #constant FN_OBJ_ScorpWalk        "obj\scorpion\ScorpWalk.x"
 #constant FN_OBJ_Tent             "obj\tent\Tent.x"
 
-#constant FN_GFX_PauseScreen      "bitmap\titlescreen.jpg"
-#constant FN_GFX_MapBackground    "bitmap\radar.bmp"
-#constant FN_GFX_TitleScreen      "bitmap\titlescreen.jpg"
 #constant FN_GFX_FloorTexture     "bitmap\forest_floor_texture.jpg"
 #constant FN_GFX_Water            "bitmap\water.bmp"
 #constant FN_GFX_Tree             "bitmap\tree.bmp"
+#constant FN_GFX_MapBackground    "bitmap\radar.bmp"
+#constant FN_GFX_TitleScreen      "bitmap\titlescreen.jpg"
+#constant FN_GFX_PauseScreen      "bitmap\pausescreen.jpg"
+#constant FN_GFX_DeathScreen      "bitmap\deathscreen.jpg"
+#constant FN_GFX_WinScreen        "bitmap\winscreen.jpg"
 
 #constant FN_INI_SETTINGS         "forest.ini"
 #constant FN_INI_SEED             "seed.ini"
@@ -146,7 +150,8 @@ screenResB                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenRe
 clockSpeedFactor            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockSpeedFactor",            1)
 clockBlinksPerSecond        = call dll(DLL_DBIni, "ReadInt",   "Game", "clockBlinksPerSecond",        0)
 clockShowSeconds            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockShowSeconds",            0)
-beginClockSeconds           = call dll(DLL_DBIni, "ReadInt",   "Game", "beginClockSeconds",           0)
+beginClockSeconds           = call dll(DLL_DBIni, "ReadInt",   "Game", "beginClockSeconds",           22*60*60)
+surviveTill                 = call dll(DLL_DBIni, "ReadInt",   "Game", "surviveTill",                 7*60*60)
 enemyRotateSmoothness       = call dll(DLL_DBIni, "ReadInt",   "Game", "enemyRotateSmoothness",       0)
 maxRunEnergy                = call dll(DLL_DBIni, "ReadInt",   "Game", "maxRunEnergy",                0)
 waterLevel                  = call dll(DLL_DBIni, "ReadInt",   "Game", "waterLevel",                  0)
@@ -169,8 +174,9 @@ cMapSizeZ                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSize
 cTreeRadius                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cTreeRadius",                 0)
 cMaxEnemies                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxEnemies",                 0)
 HitInterval                 = call dll(DLL_DBIni, "ReadInt",   "Game", "HitInterval",                 0)
-initialEnemySafezone#       = call dll(DLL_DBIni, "ReadFloat", "Game", "InitialEnemySafezone",        0.0)
-cEnemySpawnMapBorderPadding = call dll(DLL_DBIni, "ReadInt",   "Game", "EnemySpawnMapBorderPadding",  0)
+maxHitsTillDeath            = call dll(DLL_DBIni, "ReadInt",   "Game", "maxHitsTillDeath",            20);
+initialEnemySafezone#       = call dll(DLL_DBIni, "ReadFloat", "Game", "InitialEnemySafezone",        1000.0)
+cEnemySpawnMapBorderPadding = call dll(DLL_DBIni, "ReadInt",   "Game", "EnemySpawnMapBorderPadding",  1000)
 call dll DLL_DBIni, "UnloadINI"
 delete dll DLL_DBIni
 
@@ -199,9 +205,15 @@ PASTE IMAGE IMG_TitleScreen, 0, 0
 set text font "Arial" : set text size 30 : set text transparent
 text 28, 550, "Starting game..."
 
+load sound FN_SFX_TitleMusic, SFX_TitleMusic
+loop sound SFX_TitleMusic
+
 sync
 
 randomize timer()
+
+rem To test title screen
+rem sleep 5*1000
 
 rem Working variables ONLY
 JumpKeyStatePrev = 0
@@ -217,6 +229,8 @@ fogColorR = 0
 fogColorG = 0
 fogColorB = 0
 radarpointcolor = 150
+underAttack = 0
+attackHudColorStrength = 0
 
 draw to front
 
@@ -238,11 +252,12 @@ make light 1
 gosub _create_enemies
 gosub _setupClock
 
-Rem Forest atmo
 load sound FN_SFX_ForestBG,   SFX_ForestBG
-load sound FN_SFX_PauseMusic, SFX_PauseMusic
 load sound FN_SFX_Walk_Earth, SFX_Walk_Earth
 load sound FN_SFX_Walk_Water, SFX_Walk_Water
+load sound FN_SFX_PauseMusic, SFX_PauseMusic
+load sound FN_SFX_DeathScreen, SFX_DeathScreen
+load sound FN_SFX_WinScreen, SFX_WinScreen
 
 #constant NumberOfAttackSounds 4
 load sound FN_SFX_ScorpionAttack1, SFX_Attack_Base+0
@@ -251,9 +266,12 @@ load sound FN_SFX_ScorpionAttack3, SFX_Attack_Base+2
 load sound FN_SFX_ScorpionAttack4, SFX_Attack_Base+3
 
 LoadImageFullscreen(FN_GFX_PauseScreen, IMG_PauseScreen)
+LoadImageFullscreen(FN_GFX_DeathScreen, IMG_DeathScreen)
+LoadImageFullscreen(FN_GFX_WinScreen,   IMG_WinScreen)
 
 Disable EscapeKey
 
+stop sound SFX_TitleMusic
 loop sound SFX_ForestBG
 
 rem Hauptschleife
@@ -288,7 +306,13 @@ do
         inc hits, 1
         gosub _play_attack_sound
     endif
-    print "Hits: ", hits
+    rem print "Hits: ", hits
+    
+    health# = 100.0 - hits*100.0/maxHitsTillDeath
+    print "Health: ", Floor(health#), "%"    
+
+    if hits >= maxHitsTillDeath then gosub _deathscreen
+    if clockSeconds >= surviveTill and clockSeconds < surviveTill+1*60*60 then gosub _winscreen
     
     if EscapeKey() = 1
         repeat
@@ -303,7 +327,7 @@ loop
 _pausemenu:
     gosub _stop_game_sounds
     loop sound SFX_PauseMusic
-    show mouse 
+    rem show mouse 
     
     repeat
         cls
@@ -324,12 +348,52 @@ _pausemenu:
     repeat
         sync
     until not (EscapeKey() = 1)
-    hide mouse
+    rem hide mouse
     stop sound SFX_PauseMusic
     loop sound SFX_ForestBG
     
     rem TODO: das bringt nix. wenn man die maus bewegt, wird nach der pause die kamera gescrollt
     set cursor 0, 0
+return
+
+_deathscreen:
+    gosub _stop_game_sounds
+    play sound SFX_DeathScreen
+    rem show mouse 
+    
+    cls
+    
+    paste image IMG_DeathScreen, 0, 0
+            
+    rem Text
+    ink rgb(255,255,255),1
+    rem text 100,100,"text"
+            
+    sync
+    
+    Sleep 7*1000
+    
+    goto _exit    
+return
+
+_winscreen:
+    gosub _stop_game_sounds
+    play sound SFX_WinScreen
+    rem show mouse 
+    
+    cls
+    
+    paste image IMG_WinScreen, 0, 0
+            
+    rem Text
+    ink rgb(255,255,255),1
+    rem text 100,100,"text"
+            
+    sync
+    
+    Sleep 7*1000
+    
+    goto _exit    
 return
 
 _setup_camera:
@@ -347,10 +411,10 @@ _setup_player_position:
     rem TODO zelt ist winzig klein!
     rem TODO zelt ist schwarz schattiert
     rem TODO zelt beleuchten
-    Load object FN_OBJ_Tent, OBJ_Tent
-    show object OBJ_Tent
-    scale object OBJ_Tent, 10000, 5000, 5000
-    position object OBJ_Tent, X#-20, Y#, Z#-10
+    rem Load object FN_OBJ_Tent, OBJ_Tent
+    rem show object OBJ_Tent
+    rem scale object OBJ_Tent, 10000, 5000, 5000
+    rem position object OBJ_Tent, X#-20, Y#, Z#-10
 return
 
 _handle_weather:
@@ -392,17 +456,22 @@ _handle_weather:
     fogColorG = lightValue
     fogColorB = lightValue
     
-    attackStrength = sin(collcounter * 180.0 / HitInterval) * 255.0;
-    rem print "DEBUG: attack strength = ", attackStrength
+    if underAttack > 0
+        attackHudColorStrength = attackHudColorStrength + 10
+        if attackHudColorStrength > 255 then attackHudColorStrength = 255
+    else
+        attackHudColorStrength = attackHudColorStrength - 10
+        if attackHudColorStrength < 0 then attackHudColorStrength = 0
+    endif
     
-    fogColorR = fogColorR + attackStrength
-    if fogColorR > 255.0 then fogColorR = 255.0
+    fogColorR = fogColorR + attackHudColorStrength
+    if fogColorR > 255 then fogColorR = 255
     
-    fogColorG = fogColorG - attackStrength
-    if fogColorG < 0.0 then fogColorG = 0.0
+    fogColorG = fogColorG - attackHudColorStrength
+    if fogColorG < 0 then fogColorG = 0
    
-    fogColorB = fogColorB - attackStrength
-    if fogColorB < 0.0 then fogColorB = 0.0
+    fogColorB = fogColorB - attackHudColorStrength
+    if fogColorB < 0 then fogColorB = 0
    
     backdrop on
     color backdrop rgb(fogColorR, fogColorG, fogColorB)
@@ -536,7 +605,7 @@ _handle_player:
     set cursor 0, 0
     oldcAY# = cAY#
     oldcAX# = cAX#
-   
+       
     X# = camera position x()
     Y# = camera position y()
     Z# = camera position z()
@@ -625,7 +694,9 @@ _handle_player:
         endif
     endif
     if runEnergy# > maxRunEnergy then runEnergy# = maxRunEnergy
-    print "Run energy: ", runEnergy#
+    
+    runEnergyPercent# = runEnergy#*100.0/maxRunEnergy
+    print "Run Energy: ", Floor(runEnergyPercent#), "%"
 
     Rem Rotate camera
     cTestX# = WrapValue(cAX# - 180)
@@ -1003,6 +1074,12 @@ _printClock:
         secsText$ = ""
     endif
     print "Time: ", TwoDigit$(mod(hours,24)), middle$, TwoDigit$(mod(mind,60)), secsText$
+
+    middle$ = ":"
+    mind = surviveTill/60
+    hours = mind/60
+    secsText$ = ""
+    print "Survive till ", TwoDigit$(mod(hours,24)), middle$, TwoDigit$(mod(mind,60)), secsText$
 return
 
 rem Rotate smooth, and rotate in the direction with the lowest distance

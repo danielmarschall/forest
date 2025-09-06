@@ -5,7 +5,7 @@ project name=Nightmare Forest
 
 ; **** source file information ****
 main=Forest.DBA
-LineMain=1135
+LineMain=13
 
 ; **** Executable Information  ***
 ; build types: exe, media, installer, alone
@@ -38,7 +38,7 @@ window resolution=640x480
 
 ; **** Media ****
 ; Example entries: media1=graphics\*.jpg
-media root path=C:\Users\DELL User\SVN\Forest\
+media root path=C:\Users\danie\DBP\Projects\Forest\trunk\
 
 ; **** Icons ****
 icon1=Forest.ico
