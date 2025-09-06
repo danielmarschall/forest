@@ -101,10 +101,10 @@ begin
 
   ini := TMemIniFile.Create(filename);
   try
-    treeradius := ini.ReadInteger('Forest', 'cTreeRadius', 100);
-    ntrees := ini.ReadInteger('Forest', 'cMaxTrees', 3000);
-    mapX := ini.ReadInteger('Forest', 'cMapSizeX', 10000);
-    mapY := ini.ReadInteger('Forest', 'cMapSizeZ', 10000);
+    treeradius := ini.ReadInteger('Game', 'cTreeRadius', 100);
+    ntrees := ini.ReadInteger('Game', 'cMaxTrees', 3000);
+    mapX := ini.ReadInteger('Game', 'cMapSizeX', 10000);
+    mapY := ini.ReadInteger('Game', 'cMapSizeZ', 10000);
 
     if not drawn then
     begin
