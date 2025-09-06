@@ -10,7 +10,6 @@ MATRIX
 IMAGE
 
 1	bitmap\forest_floor_texture.jpg
-2	bitmap\stars.jpg
 3	bitmap\water.bmp
 4	bitmap\Baum.bmp
 5	map\map.bmp

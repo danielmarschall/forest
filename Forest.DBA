@@ -39,7 +39,6 @@ rem NICE TO HAVE
 rem - radar breitbild
 rem - wassermatrix bewegt sich nur in 1 richtung
 rem - mausumkehrung einstellbar
-rem - besserer bluteffekt
 
 rem ToDo:
 rem   Radar wackelt
@@ -62,12 +61,10 @@ rem TODO: auch dateinamen als konstanten
 #constant IMG_MapBackground 5
 #constant IMG_PauseScreen 95
 #constant IMG_TitleScreen 96
-#constant IMG_BLOOD 97
 
 #constant OBJ_Tent 10
 #constant OBJ_MapGhostObject 51
 #constant OBJ_TreeTemplate 52
-#constant OBJ_BloodParticle_Base 100
 #constant OBJ_Monster_Base 1000
 #constant OBJ_Tree_Base 1500
 
@@ -119,7 +116,6 @@ rem TODO: auch dateinamen als konstanten
 #constant FN_GFX_FloorTexture "bitmap\forest_floor_texture.jpg"
 #constant FN_GFX_Water "bitmap\water.bmp"
 #constant FN_GFX_Tree "bitmap\tree.bmp"
-#constant FN_GFX_BLOOD "bitmap\blood.png"
 
 // --------------------------------
 // Language specific
@@ -207,6 +203,7 @@ LastAttackSound = 0
 fogColorR = 0
 fogColorG = 0
 fogColorB = 0
+underAttack = 0
 
 draw to front
 
@@ -230,7 +227,6 @@ radarpointcolor = 150
 
 gosub _create_enemies
 gosub _setupClock
-gosub _setup_blood
 
 Rem Forest atmo
 load sound FN_SFX_ForestBG, SFX_ForestBG
@@ -261,24 +257,28 @@ do
     gosub _handle_radar
     gosub _handle_enemies
     gosub _handleClock
-    gosub _handle_blood
    
+    underAttack = 0
     for t = 0 to cMaxEnemies-1
         dx# = abs(object position x(OBJ_Monster_Base+t) - camera position x())
         dy# = abs(object position y(OBJ_Monster_Base+t) - camera position y())
         dz# = abs(object position z(OBJ_Monster_Base+t) - camera position z())
         if dx# < scorpCollissionX# and dy# < scorpCollissionY# and dz# < scorpCollissionZ#
             collcounter = collcounter + 1
+            underAttack = 1
             print "DEBUG: Attacking enemy: X", dx#, ", Y", dy#, ", Z", dz#
-        endif    
+        endif
     NEXT
     print "DEBUG: Collision counter: ", collcounter
+    
+    if underAttack = 0
+        collcounter = 0
+    endif
         
     if collcounter >= HitInterval
         collcounter = 0
         inc hits, 1
         gosub _play_attack_sound
-        gosub _splat_blood
     endif
     print "Hits: ", hits
     
@@ -383,6 +383,18 @@ _handle_weather:
     fogColorR = lightValue
     fogColorG = lightValue
     fogColorB = lightValue
+    
+    attackStrength = sin(collcounter * 180.0 / HitInterval) * 255.0;
+    print "DEBUG: attack strength = ", attackStrength
+    
+    fogColorR = fogColorR + attackStrength
+    if fogColorR > 255.0 then fogColorR = 255.0
+    
+    fogColorG = fogColorG - attackStrength
+    if fogColorG < 0.0 then fogColorG = 0.0
+   
+    fogColorB = fogColorB - attackStrength
+    if fogColorB < 0.0 then fogColorB = 0.0
    
     backdrop on
     color backdrop rgb(fogColorR, fogColorG, fogColorB)
@@ -1151,133 +1163,6 @@ _play_attack_sound:
     LastAttackSound=r
     play sound SFX_Attack_Base+r
 return
-
-_setup_blood:
-    // Make 100 particle objects
-    particleIndex = 0
-    #constant PARTICLEMAX = 500
-    dim particle(PARTICLEMAX) as particleType
-    
-    rem TODO: mehr
-    rem http://nobacks.com/blood-splatter-eighty-eight/
-    load image FN_GFX_BLOOD, IMG_BLOOD
-    
-    for i = 0 to PARTICLEMAX-1
-        make object plain OBJ_BloodParticle_Base+i, 2, 2
-        set object ambient OBJ_BloodParticle_Base+i, 0
-        set object collision off OBJ_BloodParticle_Base+i
-        
-        rem color object OBJ_BloodParticle_Base+i, rgb(128, 0, 0)
-        texture object OBJ_BloodParticle_Base+i, IMG_BLOOD
-        set object cull OBJ_BloodParticle_Base+i, 0
-        set object transparency OBJ_BloodParticle_Base+i, 6
-        
-        rem TEST
-rem        rotate object OBJ_BloodParticle_Base+i, RndBetween(0,359), RndBetween(0,359), RndBetween(0,359)
-        
-        exclude object on OBJ_BloodParticle_Base+i
-    next i
-return
-
-_handle_blood:
-   // Update particles
-   for i = 0 to PARTICLEMAX-1
-      UpdateParticle(i)
-   next i
-return
-
-_splat_blood:
-    rem https://forum.thegamecreators.com/thread/160210#msg1886513 , modified
-    
-    rem TODO: sieht einfach nur scheiße aus. außerdem ist der strahl in 2 himmelsrichtungen schmal (seitlich)
-    
-rem    yoff = rnd(SPREAD1_MAX*2)-SPREAD1_MAX;
-
-    // Activate blood particles around box
-    for i = 0 to PARTICLEMAX-1
-        // The angle particles should fly
-        a#=camera angle y()
-rem        yAng# = a#+rnd(SPREAD2_MAX*2)-SPREAD2_MAX+yoff
-        yAng#=a#
-
-        // Calculate directions
-        xSpeed# = sin(yAng#)
-        zSpeed# = cos(yAng#)
-                
-        // Calculate speeds
-        xSpeed# = xSpeed# * (rnd(20)/5.0)
-        ySpeed# = ((rnd(20)-rnd(20))/10.0)
-        zSpeed# = zSpeed# * (rnd(20)/5.0)
-        // Activate particle
-         
-        x# = camera position x()
-        y# = camera position y()
-        z# = camera position z()
-        
-        life = 30+rnd(30)
-         
-        particleIndex = ActivateParticle(particleIndex, life, x#, y#, z#, xSpeed#, ySpeed#, zSpeed#)
-    next i
-return
- 
-// Activate the specified particle and give it an initial position/velocity
-function ActivateParticle(i, life, x#, y#, z#, xSpeed#, ySpeed#, zSpeed#)
-    // Cycle through the particle objects to use
-    inc i
-    if i > PARTICLEMAX-1 then dec i, PARTICLEMAX-1
-    
-    // Set particle variables
-    particle(i).life = life
-    particle(i).x = x#
-    particle(i).y = y#
-    particle(i).z = z#
-    particle(i).xSpeed = xSpeed#
-    particle(i).ySpeed = ySpeed#
-    particle(i).zSpeed = zSpeed#
-    
-    // Show particle object
-    exclude object off OBJ_BloodParticle_Base+i
-endfunction i
- 
-// Update positioning for specified particle
-function UpdateParticle(i)
-    // Only update particles that are alive
-    if particle(i).life > 0
-        // Apply gravity
-rem        dec particle(i).ySpeed, 0.098
-        dec particle(i).ySpeed, 0.200
- 
-        // Move the particle
-        inc particle(i).x, particle(i).xSpeed
-        inc particle(i).y, particle(i).ySpeed
-        inc particle(i).z, particle(i).zSpeed
- 
-        // Position particle
-        position object OBJ_BloodParticle_Base+i, particle(i).x, particle(i).y, particle(i).z
-rem         point object OBJ_BloodParticle_Base+i, camera position x(), camera position y(), camera position z()
-
-
- 
-        // Lower particle's life
-        dec particle(i).life
- 
-        // Hide particles when they die
-        if particle(i).life <= 0
-            exclude object on OBJ_BloodParticle_Base+i
-        endif
-    endif
-endfunction
- 
-// Data type used by particles
-type particleType
-   life as integer      // Remaining life of particle (0=Dead)
-   x as float           // Position
-   y as float           // ...
-   z as float           // ...
-   xSpeed as float      // Velocity
-   ySpeed as float      // ...
-   zSpeed as float      // ...
-endtype
 
 rem -- MUST STAY AT THE END OF THE PROGRAM --
 _exit:
