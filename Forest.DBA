@@ -1,14 +1,11 @@
 rem Nightmare Forest by Daniel Marschall
-rem Revision: 05 Sep 2025
+rem Revision: 06 Sep 2025
 
 rem ---------------------
 
 rem SPRUNG-PHYSIK:
 rem - wenn man auf einem baum landet, kann man von dort aus nicht springen, und glitched manchmal auf dem boden
-rem - im baum wird man trotzdem von skorpionen angefressen
 rem ... scheinbar ist die jumpheight = 0 dann!
-
-rem Der Himmel ist zu niedrig. Die Tannen sieht man nicht bis ganz oben
 
 rem TODO: clone -> INSTANCE 
 
@@ -20,10 +17,9 @@ rem TODO: ambient light wird falsch verwendet. es ist viel zu blau, und alle obj
 
 rem TODO: screen or desktop?
 rem TODO: mehr konfigurierbar machen
-rem TODO: alles einrücken
 
 rem TODO: lahm?
-rem TODO: map außenlinie ist nicht gesperrt mit bäumen
+rem TODO: map außenlinie ist nicht gesperrt mit bäumen oder eine grafik für einen waldrand
 rem TODO: überall float verwenden
 
 rem TODO
@@ -40,6 +36,11 @@ rem - radar breitbild
 rem - wassermatrix bewegt sich nur in 1 richtung
 rem - mausumkehrung einstellbar
 
+rem TODO Radar
+rem - should be round, since it moves like in GTA
+rem - Don't show distant enemies
+rem - blue point should always be in the center
+
 rem ToDo:
 rem   Radar wackelt
 rem   :startgame weglassen
@@ -52,8 +53,8 @@ rem   Menü: musik aus --> an: loop von position 0!
 // --------------------------------
 // Numerical Resources
 // --------------------------------
-rem TODO: vervollständigen
-rem TODO: auch dateinamen als konstanten
+
+#constant CAM_DEFAULT 0
 
 #constant IMG_ForestFloor 1
 #constant IMG_Water 3
@@ -92,44 +93,40 @@ rem TODO: auch dateinamen als konstanten
 // File names
 // --------------------------------
 
-#constant FN_DLL_Resize32 "dll_resize\Resize32.dll"
-#constant FN_DLL_MapGen32 "mapgen\mapgen32.dll"
-#constant FN_DLL_DBIni "cfgread\dbini32.dll"
+#constant FN_DLL_Resize32         "dll_resize\Resize32.dll"
+#constant FN_DLL_MapGen32         "mapgen\mapgen32.dll"
+#constant FN_DLL_DBIni            "cfgread\dbini32.dll"
 
-#constant FN_SFX_ForestBG "sound\forestbg.wav"
-#constant FN_SFX_PauseMusic "music\pause.wav"
-#constant FN_SFX_Walk_Earth "sound\walk.wav"
-#constant FN_SFX_Walk_Water "sound\walk_water.wav"
-#constant FN_SFX_ScorpWalk "test.wav"
-#constant FN_SFX_ScorpionAttack1 "sound\scorpionAttack\attack1.wav"
-#constant FN_SFX_ScorpionAttack2 "sound\scorpionAttack\attack2.wav"
-#constant FN_SFX_ScorpionAttack3 "sound\scorpionAttack\attack3.wav"
-#constant FN_SFX_ScorpionAttack4 "sound\scorpionAttack\attack4.wav"
+#constant FN_SFX_ForestBG         "sound\forestbg.wav"
+#constant FN_SFX_PauseMusic       "music\pause.wav"
+#constant FN_SFX_Walk_Earth       "sound\walk.wav"
+#constant FN_SFX_Walk_Water       "sound\walk_water.wav"
+#constant FN_SFX_ScorpWalk        "test.wav"
+#constant FN_SFX_ScorpionAttack1  "sound\scorpionAttack\attack1.wav"
+#constant FN_SFX_ScorpionAttack2  "sound\scorpionAttack\attack2.wav"
+#constant FN_SFX_ScorpionAttack3  "sound\scorpionAttack\attack3.wav"
+#constant FN_SFX_ScorpionAttack4  "sound\scorpionAttack\attack4.wav"
 
-#constant FN_OBJ_ScorpIdle "obj\scorpion\ScorpIdle.x"
-#constant FN_OBJ_ScorpWalk "obj\scorpion\ScorpWalk.x"
-#constant FN_OBJ_Tent "obj\tent\Tent.x"
-#constant FN_GFX_PauseScreen "bitmap\titlescreen.jpg"
+#constant FN_OBJ_ScorpIdle        "obj\scorpion\ScorpIdle.x"
+#constant FN_OBJ_ScorpWalk        "obj\scorpion\ScorpWalk.x"
+#constant FN_OBJ_Tent             "obj\tent\Tent.x"
+#constant FN_GFX_PauseScreen      "bitmap\titlescreen.jpg"
 
-#constant FN_GFX_MapBackground "map\ST01L01a.bmp"
-#constant FN_GFX_TitleScreen "bitmap\titlescreen.jpg"
-#constant FN_GFX_FloorTexture "bitmap\forest_floor_texture.jpg"
-#constant FN_GFX_Water "bitmap\water.bmp"
-#constant FN_GFX_Tree "bitmap\tree.bmp"
+#constant FN_GFX_MapBackground    "map\ST01L01a.bmp"
+#constant FN_GFX_TitleScreen      "bitmap\titlescreen.jpg"
+#constant FN_GFX_FloorTexture     "bitmap\forest_floor_texture.jpg"
+#constant FN_GFX_Water            "bitmap\water.bmp"
+#constant FN_GFX_Tree             "bitmap\tree.bmp"
 
-// --------------------------------
-// Language specific
-// --------------------------------
-
-rem TODO: vervollständigen. multilang per DLL
-#constant LNG_StartingGame "Starting game..."
+#constant FN_INI_SETTINGS         "forest.ini"
+#constant FN_INI_SEED             "seed.ini"
 
 // --------------------------------
 // Read configuration
 // --------------------------------
 
 load dll FN_DLL_DBIni, DLL_DBIni
-call dll DLL_DBIni, "LoadINI", "forest.ini"
+call dll DLL_DBIni, "LoadINI", FN_INI_SETTINGS
 framerate                   = call dll(DLL_DBIni, "ReadInt",   "Game", "framerate",                   0)
 clockSpeedFactor            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockSpeedFactor",            0)
 clockBlinksPerSecond        = call dll(DLL_DBIni, "ReadInt",   "Game", "clockBlinksPerSecond",        0)
@@ -183,8 +180,8 @@ _startgame:
 
 ink rgb(255, 230, 0), 0
 PASTE IMAGE IMG_TitleScreen, 0, 0
-set text font "arial" : set text size 30 : set text transparent
-text 28, 550, LNG_StartingGame
+set text font "Arial" : set text size 30 : set text transparent
+text 28, 550, "Starting game..."
 
 sync
 
@@ -203,7 +200,6 @@ LastAttackSound = 0
 fogColorR = 0
 fogColorG = 0
 fogColorB = 0
-underAttack = 0
 
 draw to front
 
@@ -265,14 +261,15 @@ do
         dz# = abs(object position z(OBJ_Monster_Base+t) - camera position z())
         if dx# < scorpCollissionX# and dy# < scorpCollissionY# and dz# < scorpCollissionZ#
             collcounter = collcounter + 1
-            underAttack = 1
-            print "DEBUG: Attacking enemy: X", dx#, ", Y", dy#, ", Z", dz#
+            underAttack = underAttack + 1
+            rem print "DEBUG: Attacking enemy: X", dx#, ", Y", dy#, ", Z", dz#
         endif
     NEXT
-    print "DEBUG: Collision counter: ", collcounter
+    rem print "DEBUG: Collision counter: ", collcounter
     
     if underAttack = 0
-        collcounter = 0
+        collcounter = collcounter - 1
+        if collcounter < 0 then collcounter = 0
     endif
         
     if collcounter >= HitInterval
@@ -306,7 +303,7 @@ _pausemenu:
         ink rgb(255,255,255),1
         rem text 100,100,"text"
                 
-        text 28, 550, "Pause. ESC=Weiter. Runter=Ende."
+        text 28, 550, "Pause. ESC=Continue. DownKey=End."
         sync
         
         if DownKey() = 1
@@ -326,7 +323,7 @@ return
 
 _setup_camera:
     Set camera range 1, camerarange
-    AUTOMATIC CAMERA COLLISION 0,collissionboxsize#,0 : rem scorpione stoßen den spieler nicht weg, wenn keine taste gedrückt wird? syntax mit 4 parametern funktioniert im neuen dbpro free nicht!
+    AUTOMATIC CAMERA COLLISION CAM_DEFAULT, collissionboxsize#, 0 : rem scorpione stoßen den spieler nicht weg, wenn keine taste gedrückt wird? syntax mit 4 parametern funktioniert im neuen dbpro free nicht!
     Autocam off
 return
 
@@ -352,8 +349,8 @@ _handle_weather:
     sunriseEnd   = 7 * 3600    : rem Sonnenaufgang voll (z.B. 07:00)
     sunsetStart  = 17 * 3600   : rem Sonnenuntergang beginnt (z.B. 17:00)
     sunsetEnd    = 19 * 3600   : rem Dämmerungsende (z.B. 19:00)
-    nightLevel#  = 0.0          : rem Minimale Helligkeit nachts (z.B. Mondschein)
-    dayPeak#     = 255.0         : rem Helligkeit am Mittag
+    nightLevel#  = 0.0         : rem Minimale Helligkeit nachts (z.B. Mondschein)
+    dayPeak#     = 255.0       : rem Helligkeit am Mittag
     if clockSeconds < sunriseStart or clockSeconds > sunsetEnd
         lightValue = INT(nightLevel# + 0.5)
     else
@@ -378,14 +375,14 @@ _handle_weather:
 
         lightValue = INT(lightValue# + 0.5)
     endif
-    rem print "clockSeconds:", clockSeconds, " => lightValue:", lightValue
+    rem print "DEBUG: clockSeconds:", clockSeconds, " => lightValue:", lightValue
 
     fogColorR = lightValue
     fogColorG = lightValue
     fogColorB = lightValue
     
     attackStrength = sin(collcounter * 180.0 / HitInterval) * 255.0;
-    print "DEBUG: attack strength = ", attackStrength
+    rem print "DEBUG: attack strength = ", attackStrength
     
     fogColorR = fogColorR + attackStrength
     if fogColorR > 255.0 then fogColorR = 255.0
@@ -511,17 +508,17 @@ return
 #constant GROUNDTYPE_WATER 2
 rem #constant GROUNDTYPE_DEEPWATER 3
 function groundType(onGround, waterLevel)
-	if onGround = 0
-		ret = GROUNDTYPE_AIR
-	else
-    	X# = camera position x()
-    	Z# = camera position z()
-		if floorHeight#(X#,Z#) > waterLevel
-			ret = GROUNDTYPE_EARTH
-		else
-			ret = GROUNDTYPE_WATER
-		endif
-	endif
+    if onGround = 0
+        ret = GROUNDTYPE_AIR
+    else
+        X# = camera position x()
+        Z# = camera position z()
+        if floorHeight#(X#,Z#) > waterLevel
+            ret = GROUNDTYPE_EARTH
+        else
+            ret = GROUNDTYPE_WATER
+        endif
+    endif
 endfunction ret
 
 _handle_player:
@@ -564,23 +561,23 @@ _handle_player:
         stop sound SFX_Walk_Earth
         stop sound SFX_Walk_Water
     else
-		if gt = GROUNDTYPE_EARTH
-			stop sound SFX_Walk_Water
-        	if not sound playing(SFX_Walk_Earth)
-               	loop sound SFX_Walk_Earth
-        	endif
-		endif
-		if gt = GROUNDTYPE_WATER
-			stop sound SFX_Walk_Earth
-        	if not sound playing(SFX_Walk_Water)
-               	loop sound SFX_Walk_Water
-        	endif
-		endif
-    	if gt = GROUNDTYPE_AIR
-        	stop sound SFX_Walk_Earth
-        	stop sound SFX_Walk_Water
-    	endif
-		energyChanged = 0
+        if gt = GROUNDTYPE_EARTH
+            stop sound SFX_Walk_Water
+            if not sound playing(SFX_Walk_Earth)
+                   loop sound SFX_Walk_Earth
+            endif
+        endif
+        if gt = GROUNDTYPE_WATER
+            stop sound SFX_Walk_Earth
+            if not sound playing(SFX_Walk_Water)
+                   loop sound SFX_Walk_Water
+            endif
+        endif
+        if gt = GROUNDTYPE_AIR
+            stop sound SFX_Walk_Earth
+            stop sound SFX_Walk_Water
+        endif
+        energyChanged = 0
         if ShiftKey()+ControlKey() = 1 : rem shift+control at the same time = walk normal
             rem TODO: es ruckelt trotzdem noch
             if ControlKey()=1 and runEnergy#>0 : rem Energy >1 , damit es nicht ruckelt (run-walk-run-walk-run-walk) . 3 = walk regain
@@ -683,9 +680,9 @@ _update_trees:
 return
 
 _handle_radar:
-	rem TODO: the player dot should always stay at the same position
-	rem TODO: don't show far away enemies
-	
+    rem TODO: the player dot should always stay at the same position
+    rem TODO: don't show far away enemies
+    
     rem Leuchtpunkt
     if radarpointrev = 0
         inc radarpointcolor, 3
@@ -703,20 +700,20 @@ _handle_radar:
     rem Bäume
     for t = 0 to cMaxTrees-1
         if tree(t).drawn
-        	x = tree(t).x
-        	y = tree(t).z
+            x = tree(t).x
+            y = tree(t).z
 
-	        x0 = camera position x()
-	        y0 = camera position z()
-	        ang = camera angle y()
-	        tx = x0 + (x-x0)*cos(ang) - (y-y0)*sin(ang)
-			ty = y0 + (x-x0)*sin(ang) + (y-y0)*cos(ang)
-			x = tx
-			y = ty
-        	
-    	    x = (x / 62.5) + 7.5
-	        y = screen height() - 7.5 - (y / 62.5)
-	        
+            x0 = camera position x()
+            y0 = camera position z()
+            ang = camera angle y()
+            tx = x0 + (x-x0)*cos(ang) - (y-y0)*sin(ang)
+            ty = y0 + (x-x0)*sin(ang) + (y-y0)*cos(ang)
+            x = tx
+            y = ty
+            
+            x = (x / 62.5) + 7.5
+            y = screen height() - 7.5 - (y / 62.5)
+            
             rem ink rgb(0, radarpointcolor, 0), 0
             ink rgb(0, 50, 0), 0
             circle x, y, 1
@@ -731,17 +728,17 @@ _handle_radar:
     circle x, y, 0
     rem Enemies
     for t = 0 to cMaxEnemies-1
-    	x = object position x(OBJ_Monster_Base+t)
-    	y = object position z(OBJ_Monster_Base+t)
-    	
-	    x0 = camera position x()
-	    y0 = camera position z()
-	    ang = camera angle y()
-	    tx = x0 + (x-x0)*cos(ang) - (y-y0)*sin(ang)
-		ty = y0 + (x-x0)*sin(ang) + (y-y0)*cos(ang)
-		x = tx
-		y = ty
-    	
+        x = object position x(OBJ_Monster_Base+t)
+        y = object position z(OBJ_Monster_Base+t)
+        
+        x0 = camera position x()
+        y0 = camera position z()
+        ang = camera angle y()
+        tx = x0 + (x-x0)*cos(ang) - (y-y0)*sin(ang)
+        ty = y0 + (x-x0)*sin(ang) + (y-y0)*cos(ang)
+        x = tx
+        y = ty
+        
         x = (x / 62.5) + 7.5
         y = screen height() - 7.5 - (y / 62.5)
         
@@ -776,10 +773,10 @@ _create_trees:
        
     rem TODO: wegbreite definieren
     load dll FN_DLL_MapGen32, DLL_MapGen
-    call dll DLL_MapGen, "LoadParametersFromINI", "forest.ini"
+    call dll DLL_MapGen, "LoadParametersFromINI", FN_INI_SETTINGS
 
     load dll FN_DLL_DBIni, DLL_DBIni
-    call dll DLL_DBIni, "LoadINI", "seed.ini"
+    call dll DLL_DBIni, "LoadINI", FN_INI_SEED
     onetimeseed = call dll(DLL_DBIni, "ReadInt", "Seed", "onetime", 0)
     staticseed  = call dll(DLL_DBIni, "ReadInt", "Seed", "value", 0)
     seedactive  = call dll(DLL_DBIni, "ReadInt", "Seed", "active", 0)
@@ -881,7 +878,7 @@ _handleClock:
         clockCurrentMidDot = 1 - clockCurrentMidDot
     endif
     
-	rem TODO: for some reason, clockSpeedFactor cannot be very high, probably we cannot go faster than the framerate, otherwise we need to add more than +1 to seconds???
+    rem TODO: for some reason, clockSpeedFactor cannot be very high, probably we cannot go faster than the framerate, otherwise we need to add more than +1 to seconds???
     if mod(clockTickCounter*clockSpeedFactor, clockTicksPerSecond) = 0
         clockSeconds = (clockSeconds + 1) mod (24*60*60)
     endif
@@ -914,7 +911,7 @@ _create_floor:
     
     rem TEST
     rem TODO: aber man kann 40,40 nicht updaten?!
-    set matrix height MAT_Ground, 10, 10, 1000
+    rem set matrix height MAT_Ground, 10, 10, 1000
     
     update matrix MAT_Ground
     
@@ -1116,7 +1113,6 @@ JumpUpdate:
         dec velocityY#, gravity#
         inc JumpPosition#, velocityY#
         
-        rem TODO: man kann sich dann durch die decke glitchen
         curFloorHeight# = floorHeight#(X#,Z#)
         if JumpPosition# < curFloorHeight#
             rem TODO: aufprallsound
@@ -1128,24 +1124,24 @@ JumpUpdate:
 return
 
 function resizeImage(image as dword, width as dword, height as dword)
-	if DLL EXIST(DLL_Resize32) = 0
-		load dll FN_DLL_Resize32, DLL_Resize32
-	endif
-	
-	make memblock from image MEM_ResizeSrc, image
-	size = call dll(DLL_Resize32, "DestSize", get memblock ptr(MEM_ResizeSrc), width, height)
-	
-	make memblock MEM_ResizeDest, size
+    if DLL EXIST(DLL_Resize32) = 0
+        load dll FN_DLL_Resize32, DLL_Resize32
+    endif
+    
+    make memblock from image MEM_ResizeSrc, image
+    size = call dll(DLL_Resize32, "DestSize", get memblock ptr(MEM_ResizeSrc), width, height)
+    
+    make memblock MEM_ResizeDest, size
 
-	call dll DLL_Resize32, "Resize", get memblock ptr(MEM_ResizeSrc), get memblock ptr(MEM_ResizeDest), width, height
-	
-	
-	make image from memblock image, MEM_ResizeDest
-	
-	delete memblock MEM_ResizeSrc
-	delete memblock MEM_ResizeDest
-	
-	REM delete dll DLL_Resize
+    call dll DLL_Resize32, "Resize", get memblock ptr(MEM_ResizeSrc), get memblock ptr(MEM_ResizeDest), width, height
+    
+    
+    make image from memblock image, MEM_ResizeDest
+    
+    delete memblock MEM_ResizeSrc
+    delete memblock MEM_ResizeDest
+    
+    REM delete dll DLL_Resize
 
 endfunction
 

@@ -5,7 +5,7 @@ project name=Nightmare Forest
 
 ; **** source file information ****
 main=Forest.DBA
-LineMain=386
+LineMain=1165
 
 ; **** Executable Information  ***
 ; build types: exe, media, installer, alone
@@ -51,7 +51,7 @@ VerCompany=Daniel Marschall, ViaThinkSoft
 VerFileDesc=Nightmare Forest
 VerFileNumber=v1.0
 VerInternal=v1.0
-VerCopyright=(C)Copyright 2001 - 2015 Daniel Marschall.
+VerCopyright=(C)Copyright 2001 - 2025 Daniel Marschall.
 VerTrademark=
 VerFilename=
 VerProduct=

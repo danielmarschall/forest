@@ -2,11 +2,11 @@
 Music
 	CoMa (Pause theme)
 
-Script Proof-Reading
-	Luke O'Neill
+Sounds
+	various Sources
 
 Screen artwork
 	Kevin B. Gener
 	Daniel Marschall
 
-Developed with TGC DarkBasic Professional and Borland Delphi
+Developed with TGC DarkBasic Professional and Embarcadero Delphi
