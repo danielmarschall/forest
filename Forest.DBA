@@ -3,7 +3,12 @@ rem Revision: 06 Sep 2025
 
 rem ---------------------
 
+rem Severe Problems:
+rem - DELL: MemBlock crash after resize dll gave size
+rem - ELY3: extreme performance problems even with most modern graphics card!
+
 rem SPRUNG-PHYSIK:
+rem - wenn man die taste gedrückt hält, kann man gigantisch hoch springen
 rem - wenn man auf einem baum landet, kann man von dort aus nicht springen, und glitched manchmal auf dem boden
 rem   ... scheinbar ist die jumpheight = 0 dann!
 rem - Sprung wirkt unrealistisch
@@ -134,8 +139,11 @@ rem - rennen verhindern, wenn man außer puste
 
 load dll FN_DLL_DBIni, DLL_DBIni
 call dll DLL_DBIni, "LoadINI", FN_INI_SETTINGS
-framerate                   = call dll(DLL_DBIni, "ReadInt",   "Game", "framerate",                   0)
-clockSpeedFactor            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockSpeedFactor",            0)
+maxFramerate                = call dll(DLL_DBIni, "ReadInt",   "Game", "maxFramerate",                30)
+screenResW                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResW",                  800)
+screenResH                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResH",                  600)
+screenResB                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResB",                  16)
+clockSpeedFactor            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockSpeedFactor",            1)
 clockBlinksPerSecond        = call dll(DLL_DBIni, "ReadInt",   "Game", "clockBlinksPerSecond",        0)
 clockShowSeconds            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockShowSeconds",            0)
 beginClockSeconds           = call dll(DLL_DBIni, "ReadInt",   "Game", "beginClockSeconds",           0)
@@ -166,14 +174,15 @@ cEnemySpawnMapBorderPadding = call dll(DLL_DBIni, "ReadInt",   "Game", "EnemySpa
 call dll DLL_DBIni, "UnloadINI"
 delete dll DLL_DBIni
 
-rem Setup & Startbildschirm
-if check display mode( desktop width(), desktop height(), screen depth() )
-    set display mode desktop width(), desktop height(), screen depth()
-endif
+rem TODO: Even on a NVIDIA GeForce RTX 5080 and resolution 1024x768,
+rem       I cannot get 30 FPS! What is going on?! And with higher resolutions such as 2560x1440,
+rem       it is unplayable!
+set display mode screenResW, screenResH, screenResB
+
 hide mouse
 
 Sync On
-Sync Rate framerate
+Sync Rate maxFramerate
 
 LoadImageFullscreen(FN_GFX_TitleScreen, IMG_TitleScreen)
 
@@ -805,7 +814,8 @@ _create_enemies:
     dim enemy(cMaxEnemies-1) as enemyType
     for t = 0 to cMaxEnemies-1
         if t=0
-            Load 3Dsound FN_SFX_ScorpWalk,SFX_Monster_Base+t
+            rem NOTE: 3DSound requires Mono audio!
+            Load 3Dsound FN_SFX_ScorpWalk, SFX_Monster_Base+t
         else
             Clone Sound SFX_Monster_Base+t, SFX_Monster_Base
         endif
@@ -869,7 +879,7 @@ _setupClock:
     // Session variables
     clockTickCounter=0
     clockCurrentMidDot=0
-    clockTicksPerSecond = framerate
+    clockTicksPerSecond = maxFramerate
 return
 
 _handleClock:
@@ -1147,8 +1157,8 @@ endfunction
 
 function LoadImageFullscreen(imgFN as string, imgID)
     Load Image imgFN, imgID
-    width  = desktop width()
-    height = image height(imgID)*desktop width()/1.0/image width(imgID);
+    width  = screen width()
+    height = image height(imgID)*screen width()/1.0/image width(imgID);
     resizeImage(imgID, width, height)
 ENDFUNCTION
 
