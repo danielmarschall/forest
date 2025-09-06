@@ -5,50 +5,57 @@ rem ---------------------
 
 rem SPRUNG-PHYSIK:
 rem - wenn man auf einem baum landet, kann man von dort aus nicht springen, und glitched manchmal auf dem boden
-rem ... scheinbar ist die jumpheight = 0 dann!
+rem   ... scheinbar ist die jumpheight = 0 dann!
+rem - Sprung wirkt unrealistisch
+rem - Anlaufsprung beim Rennen
+rem - Im Sprung sollte man eigentlich nicht steuern dürfen...?
 
 rem TODO: clone -> INSTANCE 
-
-rem TODO: scorpion schiebt stehenden spieler nicht weg
-
-rem TODO: scorpion soll nicht so nah rankommen, sodass er im spieler stehen würde, wenn der spieler eingeklemmt ist
-
 rem TODO: ambient light wird falsch verwendet. es ist viel zu blau, und alle objekte haben es deaktiviert, weil es die farben zerstört
-
-rem TODO: screen or desktop?
 rem TODO: mehr konfigurierbar machen
-
-rem TODO: lahm?
+rem TODO: everything seems so slow!
 rem TODO: map außenlinie ist nicht gesperrt mit bäumen oder eine grafik für einen waldrand
-rem TODO: überall float verwenden
+rem TODO: use float everywhere
 
 rem TODO
 rem - HUD
-rem - schwimmen
-rem - im wasser langsamer
-rem - menü am anfang und pause mit maus bedienen
+rem - Health meter instead of hit counter
+rem - Death screen (Kevin artwork)
+rem - Win at sunrise
+rem - Delphi Launcher with Settings and Mapgen preview (optional)
+rem - swimming
+rem - walk slower in the water
+
+rem Enemies:
 rem - rascheln im busch
-rem - die gegner kommen erst nach einer bestimmten zeit. spawnen weit weg vom spieler
-rem - tag und nachtzeiten?
+rem - die gegner kommen erst nach einer bestimmten zeit. spawnen mit entwas entfernung vom spieler
+rem - scorpion schiebt stehenden spieler nicht weg
+rem - scorpion soll nicht so nah rankommen, sodass er im spieler stehen würde, wenn der spieler eingeklemmt ist
 
-rem NICE TO HAVE
-rem - radar breitbild
-rem - wassermatrix bewegt sich nur in 1 richtung
-rem - mausumkehrung einstellbar
-
-rem TODO Radar
+rem Radar:
 rem - should be round, since it moves like in GTA
+rem - should not be affected from resolution (i.e. on widescreen it must stay a circle)
 rem - Don't show distant enemies
 rem - blue point should always be in the center
+rem - Radar wackelt?
+rem - Radar lieber als Matrix anstelle als bild? Viele Probleme wie z.B. mit Skorpion transparenz
+rem - Unscharfes Radar, Radar ganz dyn. zeichnen? Rader stay on top
 
-rem ToDo:
-rem   Radar wackelt
-rem   :startgame weglassen
-rem   Streifen am Boden und am Himmel...
-rem   Baum teiltransparenz
-rem   Radar lieber als Matrix. Viele Probleme wie z.B. mit Skorpion transparenz
-rem   Unscharfes Radar, Radar ganz dyn. zeichnen? Rader stay on top
-rem   Menü: musik aus --> an: loop von position 0!
+rem Items:
+rem - Karte
+rem - Radar
+
+rem MapGen32:
+rem - Wegbreite konfigurierbar machen (INI)
+
+rem Sonstiges:
+rem - :startgame weglassen
+rem - Streifen am Boden und am Himmel...
+rem - Baum teiltransparenz
+rem - Menü: musik aus --> an: loop von position 0!
+rem - wassermatrix bewegt sich nur in 1 richtung
+rem - mausumkehrung einstellbar
+rem - rennen verhindern, wenn man außer puste
 
 // --------------------------------
 // Numerical Resources
@@ -101,7 +108,7 @@ rem   Menü: musik aus --> an: loop von position 0!
 #constant FN_SFX_PauseMusic       "music\pause.wav"
 #constant FN_SFX_Walk_Earth       "sound\walk.wav"
 #constant FN_SFX_Walk_Water       "sound\walk_water.wav"
-#constant FN_SFX_ScorpWalk        "test.wav"
+#constant FN_SFX_ScorpWalk        "sound\scorp_walk.wav"
 #constant FN_SFX_ScorpionAttack1  "sound\scorpionAttack\attack1.wav"
 #constant FN_SFX_ScorpionAttack2  "sound\scorpionAttack\attack2.wav"
 #constant FN_SFX_ScorpionAttack3  "sound\scorpionAttack\attack3.wav"
@@ -110,9 +117,9 @@ rem   Menü: musik aus --> an: loop von position 0!
 #constant FN_OBJ_ScorpIdle        "obj\scorpion\ScorpIdle.x"
 #constant FN_OBJ_ScorpWalk        "obj\scorpion\ScorpWalk.x"
 #constant FN_OBJ_Tent             "obj\tent\Tent.x"
-#constant FN_GFX_PauseScreen      "bitmap\titlescreen.jpg"
 
-#constant FN_GFX_MapBackground    "map\ST01L01a.bmp"
+#constant FN_GFX_PauseScreen      "bitmap\titlescreen.jpg"
+#constant FN_GFX_MapBackground    "bitmap\radar.bmp"
 #constant FN_GFX_TitleScreen      "bitmap\titlescreen.jpg"
 #constant FN_GFX_FloorTexture     "bitmap\forest_floor_texture.jpg"
 #constant FN_GFX_Water            "bitmap\water.bmp"
@@ -200,6 +207,7 @@ LastAttackSound = 0
 fogColorR = 0
 fogColorG = 0
 fogColorB = 0
+radarpointcolor = 150
 
 draw to front
 
@@ -215,17 +223,14 @@ rem Bildschirm neu aufbauen
 cls
 sync
 
-rem Lichtversuch
+rem TODO: Lichtversuch
 make light 1
-
-rem Radar vorbereiten
-radarpointcolor = 150
 
 gosub _create_enemies
 gosub _setupClock
 
 Rem Forest atmo
-load sound FN_SFX_ForestBG, SFX_ForestBG
+load sound FN_SFX_ForestBG,   SFX_ForestBG
 load sound FN_SFX_PauseMusic, SFX_PauseMusic
 load sound FN_SFX_Walk_Earth, SFX_Walk_Earth
 load sound FN_SFX_Walk_Water, SFX_Walk_Water
@@ -237,9 +242,6 @@ load sound FN_SFX_ScorpionAttack3, SFX_Attack_Base+2
 load sound FN_SFX_ScorpionAttack4, SFX_Attack_Base+3
 
 LoadImageFullscreen(FN_GFX_PauseScreen, IMG_PauseScreen)
-
-#constant SPREAD1_MAX 10
-#constant SPREAD2_MAX 15
 
 Disable EscapeKey
 
@@ -345,11 +347,11 @@ return
 _handle_weather:
 
     rem TODO: Konstanten in INI einstellbar machen
-    sunriseStart = 5 * 3600    : rem Dämmerungsbeginn (z.B. 05:00)
-    sunriseEnd   = 7 * 3600    : rem Sonnenaufgang voll (z.B. 07:00)
-    sunsetStart  = 17 * 3600   : rem Sonnenuntergang beginnt (z.B. 17:00)
-    sunsetEnd    = 19 * 3600   : rem Dämmerungsende (z.B. 19:00)
-    nightLevel#  = 0.0         : rem Minimale Helligkeit nachts (z.B. Mondschein)
+    sunriseStart = 5 * 3600    : rem Dämmerungsbeginn, z.B. 05:00
+    sunriseEnd   = 7 * 3600    : rem Sonnenaufgang voll, z.B. 07:00
+    sunsetStart  = 17 * 3600   : rem Sonnenuntergang beginnt, z.B. 17:00
+    sunsetEnd    = 19 * 3600   : rem Dämmerungsende, z.B. 19:00
+    nightLevel#  = 0.0         : rem Minimale Helligkeit nachts, z.B. Mondschein
     dayPeak#     = 255.0       : rem Helligkeit am Mittag
     if clockSeconds < sunriseStart or clockSeconds > sunsetEnd
         lightValue = INT(nightLevel# + 0.5)
@@ -396,9 +398,9 @@ _handle_weather:
     backdrop on
     color backdrop rgb(fogColorR, fogColorG, fogColorB)
 
-    color ambient light rgb(64,64,128)
+    rem color ambient light rgb(64,64,128)
     rem set ambient light 1
-    set ambient light 50
+    rem set ambient light 50
     if fog available() = 1
         fog on
         fog distance fogdistance
@@ -635,9 +637,6 @@ _handle_player:
     Rem Position Listener
     Position Listener X#, Y#, Z#
     Rotate Listener 0, cAY#, 0   : rem todo warum 0 statt cAZ# etc ?
-    
-    
-    
 
     rem if onGround = 0
     rem     jumpheight#=Y#-FloorHeight#(X#,Z#)
@@ -1011,7 +1010,6 @@ function smoothRotate#(von#, nach#, smoothness)
 endfunction ret#
 
 function floorHeight#(X#, Z#)
-    rem TODO: implement water
     ret# = Get Ground Height(MAT_Ground, X#, Z#)
 ENDFUNCTION ret#
 
@@ -1091,6 +1089,7 @@ type enemyType
     MaxSpeed as float
     Angle as float
     CurrentAnim as float
+    rem TODO: also "Drawn as boolean" to unload enemies that are too far away?
 endtype
 
 PressJumpKey:
