@@ -1,38 +1,74 @@
 
-=== 3D Art ===
+# Sources of the game files
 
-obj\scorpion\ScorpIdle.x
-obj\scorpion\ScorpWalk.x
-	Taken from DarkBASIC Classic Demo "room"
-	Modified to fix minor problems
+## Code
 
-=== Graphics ===
+forest.exe
+	Author: Daniel Marschall
+	License: Apache 2.0 License
 
-picture/forestfloor.bmp
-	Source: http://imagestack.co/176005802-forest-floor-texture-seamless.html
-	Source: http://texturify.com/content/8695/Forest%20Soiltt-005.jpg
-	Photo credit / source: club-balalaika.de
+cfgread/dbini32.dll
+	Author: Daniel Marschall
+	License: Apache 2.0 License
 
-screen artwork
-	Kevin B. Gener - Spinoff of the artwork "Carnage"
+dll_resize/resize32.dll
+	Author: Daniel Marschall
+	License: Apache 2.0 License
+
+mapgen/mapgen32.dll and mapgen/mapgentest.exe
+	Author: Daniel Marschall
+	License: Apache 2.0 License
+
+## Graphics
+
+bitmap/titlescreen.jpg
 	Tree picture taken from following screenshot:
 		http://www.turbosquid.com/3d-models/3d-pine-tree/390457
 		"Pine Tree Collection" by ryrod88 at turbosquid.com
+	Moon picture taken from
+		https://si.wikipedia.org/wiki/%E0%B6%9C%E0%B7%9C%E0%B6%B1%E0%B7%94%E0%B7%80:Moon14day-1985c.jpg
+		"Assumed to be a student or staff member of the University of Colombo in Sri Lanka"
+	Composition by Daniel Marschall
+	
+bitmap/deathscreen.jpg
+	Scorpion taken from the artwork "Carnage" (commission) by Kevin B. Gener, all permissions granted
+	Font "Mid Night" (by ???)
+	Background the same as titlescreen.jpg
+	Composition by Daniel Marschall
 
-bitmap/stars.bmp
-	Source: http://www.psdgraphics.com/file/stars.jpg
-	Source: http://www.psdgraphics.com/backgrounds/night-sky-stars-background/
+bitmap/forest_floor_texture.jpg
+	Source: http://imagestack.co/176005802-forest-floor-texture-seamless.html
+	Source: http://texturify.com/content/8695/Forest%20Soiltt-005.jpg
+	Photo credit / source: club-balalaika.de
+	Modified with Photoshop to make it more seamless
 
-=== Music ===
+bitmap/radar.jpg (currently unused)
+	Daniel Marschall
 
-music/pause.wav
-	Loop for the pause menu
-	Source: https://freesound.org/people/rockerfaerie/sounds/163644/
-	Artist name: CoMa
-	License: http://creativecommons.org/publicdomain/zero/1.0/
-	Modified to make the loop work
+bitmap/tree.bmp
+	From DarkBasic Classic Demo "Tank"
 
-=== Sound effects ===
+bitmap/water.bmp
+	???
+
+## Music
+
+music/title.wav
+	Part from "Necropolis" intro video by mavrick
+
+## 3D Models
+
+obj/scorpion/scorpwalk.x and obj/scorpion/scorpidle.x
+	From DarkBasic Classic Demo "Room", modified to fix minor problems
+
+obj/tent/tent.x
+	From DarkBasic Classic Media CD ROM "tent3.x"
+	DV8710 Copyright Viewpoint Datalabs Intl., Inc.
+
+## Sound effects
+
+sound/deathscreen.wav
+	Mix between Media\Sounds\Monsters\CaveCreatue.wav and Media\Sounds\Monsters\Dragon.wav, both from the Dark Game Studio
 
 sound/forestbg.wav
 	Source: https://freesound.org/people/caquet/sounds/157495/
@@ -41,12 +77,39 @@ sound/forestbg.wav
 	License: http://creativecommons.org/licenses/by/3.0/
 	Amplified and modified to make the loop work
 
-sound/walk.wav
+sound/hit_soil.wav
+	Short segment taken from walk_soil.wav (source see below)
+
+sound/hit_water.wav
+	Media\Sounds\Impacts\HitWater.wav from the Dark Game Studio CD (reduced volume)
+
+sound/jump.wav
+	https://freesound.org/people/Artmasterrich/sounds/345426/
+	Male_Jump_03 by Artmasterrich
+	License: Creative Commons 0
+	Edited with Audition, transposed -2.5 half steps down
+
+sound/scorp_attack1.wav
+sound/scorp_attack2.wav
+sound/scorp_attack3.wav
+sound/scorp_attack4.wav
+	Mostly taken from "Sonic_Melon Stabbing Sample Remix" by "CGEffex"
+		Source: https://freesound.org/people/cgeffex/sounds/93102/
+		License: http://creativecommons.org/licenses/by/3.0/
+	Extracted small parts out of the source material
+		The source material was a remix of: https://freesound.org/people/sonic/sounds/2883/
+		Author: sonic
+		License: http://creativecommons.org/licenses/sampling+/1.0/
+
+sound/scorp_walk.wav
+	Mix between Media\Sounds\Monsters\ItsEatingMe.wav and Media\Sounds\Aliens\GalacticDriver.wav, both from the Dark Game Studio
+
+sound/walk_soil.wav
 	Source: https://freesound.org/people/freefire66/sounds/175955/
 	Author: freefire66
 	License: http://creativecommons.org/publicdomain/zero/1.0/
 	Modified to make the loop work
-	
+
 sound/walk_water.wav
 	Source: http://www.orangefreesounds.com/footsteps-walking-in-water/
 	Footsteps Walking In Water
@@ -55,15 +118,5 @@ sound/walk_water.wav
 	License: Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
 	Extracted a loop
 
-sound/scorpionAttack/attack1.wav
-sound/scorpionAttack/attack2.wav
-sound/scorpionAttack/attack3.wav
-sound/scorpionAttack/attack4.wav
-	Source: https://freesound.org/people/cgeffex/sounds/93102/
-	Author: cgeffex
-	License: http://creativecommons.org/licenses/by/3.0/
-	Extracted small parts out of the source material
-
-	The source material was a remix of: https://freesound.org/people/sonic/sounds/2883/
-	Author: sonic
-	License: http://creativecommons.org/licenses/sampling+/1.0/
+sound/woosh.wav
+	Part of Media\Sounds\Sci-fi-fx\TimeBoxLoop2.wav from the Dark Game Studio CD

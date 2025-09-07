@@ -1,9 +1,0 @@
-
-Sounds
-	various Sources
-
-Screen artwork
-	Kevin B. Gener
-	Daniel Marschall
-
-Developed with TGC DarkBasic Professional and Embarcadero Delphi
