@@ -4,7 +4,6 @@ rem Revision: 07 Sep 2025
 rem ----------------------------------------------------------------
 
 rem Important!!!
-rem - Trees should not draw into the tent
 rem - It is extremely hard to escape once a scorpion has you in their claws
 rem - Severe performance problems if there are too many trees or too high resolution (fix with instance object instead of clone objects? Only draw monsters nearby?)
 
@@ -28,6 +27,8 @@ rem - blue point should always be in the center
 rem - Radar wackelt?
 rem - Radar lieber als Matrix anstelle als bild? Viele Probleme wie z.B. mit Skorpion transparenz
 rem - Unscharfes Radar, Radar ganz dyn. zeichnen? Rader stay on top
+rem - the player dot should always stay at the same position
+rem - don't show far away enemies (as you also don't see far away trees)
 
 rem Items:
 rem - Map (only trees) and/or Enemy Radar
@@ -128,6 +129,8 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 
 load dll FN_DLL_DBIni, DLL_DBIni
 call dll DLL_DBIni, "LoadINI", FN_INI_SETTINGS
+
+debugShowCoords             = call dll(DLL_DBIni, "ReadInt",   "Game", "debugShowCoords",             0)
 maxFramerate                = call dll(DLL_DBIni, "ReadInt",   "Game", "maxFramerate",                30)
 screenResW                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResW",                  800)
 screenResH                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResH",                  600)
@@ -146,23 +149,24 @@ fogdistance                 = call dll(DLL_DBIni, "ReadInt",   "Game", "fogdista
 waterMovementMaxDistance    = call dll(DLL_DBIni, "ReadInt",   "Game", "waterMovementMaxDistance",    30)
 gravity#                    = call dll(DLL_DBIni, "ReadFloat", "Game", "gravity",                     0.6)
 JumpStartVelocity#          = call dll(DLL_DBIni, "ReadFloat", "Game", "JumpStartVelocity",           15.0)
+EmergencyJumpFactor#        = call dll(DLL_DBIni, "ReadFloat", "Game", "EmergencyJumpFactor",         1.3)
 MinFallVelocity#            = call dll(DLL_DBIni, "ReadFloat", "Game", "MinFallVelocity",             6.0)
 scorpCollissionX#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionX",            150.0)
 scorpCollissionY#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionY",            250.0)
 scorpCollissionZ#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionZ",            150.0)
+HitInterval                 = call dll(DLL_DBIni, "ReadInt",   "Game", "HitInterval",                 15)
+maxHitsTillDeath            = call dll(DLL_DBIni, "ReadInt",   "Game", "maxHitsTillDeath",            40)
 playerEyeHeight#            = call dll(DLL_DBIni, "ReadFloat", "Game", "playerEyeHeight",             135)
 cMaxTrees                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxTrees",                   1200)
 cMapSizeX                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeX",                   10000)
 cMapSizeZ                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeZ",                   10000)
 cTreeRadius                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cTreeRadius",                 100)
 cMaxEnemies                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxEnemies",                 50)
-HitInterval                 = call dll(DLL_DBIni, "ReadInt",   "Game", "HitInterval",                 10)
-maxHitsTillDeath            = call dll(DLL_DBIni, "ReadInt",   "Game", "maxHitsTillDeath",            30)
 initialEnemySafezone#       = call dll(DLL_DBIni, "ReadFloat", "Game", "InitialEnemySafezone",        1000.0)
 cEnemySpawnMapBorderPadding = call dll(DLL_DBIni, "ReadInt",   "Game", "EnemySpawnMapBorderPadding",  1000)
 stage1ClockStart            = call dll(DLL_DBIni, "ReadInt",   "Game", "stage1ClockStart",            15)
 stage1TinyForestFactor#     = call dll(DLL_DBIni, "ReadFloat", "Game", "stage1TinyForestFactor",      0.35)
-stage1Distance#             = call dll(DLL_DBIni, "ReadFloat", "Game", "stage1Distance",              1350.0)
+stage1Distance#             = call dll(DLL_DBIni, "ReadFloat", "Game", "stage1Distance",              1450.0)
 stage3ClockStart            = call dll(DLL_DBIni, "ReadInt",   "Game", "stage3ClockStart",            22)
 stage4ClockStart            = call dll(DLL_DBIni, "ReadInt",   "Game", "stage4ClockStart",            7)
 stage4RunAwayFactor#        = call dll(DLL_DBIni, "ReadFloat", "Game", "stage4RunAwayFactor",         1.5)
@@ -180,9 +184,9 @@ rem These are some variables required for the tent
 rem It makes no sense to add them to the INI file, I think.
 
 tentDryRadius = 120
-tentSizeX     = 10000*2
-tentSizeY     = 5000*3
-tentSizeZ     = 5000*2
+tentSizeX     = 20000
+tentSizeY     = 15000
+tentSizeZ     = 10000
 tentMoveX     = 0
 tentMoveY     = -30
 tentMoveZ     = 0
@@ -190,6 +194,7 @@ tentRotateX   = 0
 tentRotateY   = 180
 tentRotateZ   = 0
 tentCameraDistanceStage4 = 60
+tentMinTreeDistance = 400
 
 rem These are some variables required for the scorpion model
 rem It makes no sense to add them to the INI file, I think.
@@ -376,6 +381,8 @@ _update_hud:
             endif
         endif
     endif
+    
+    if debugShowCoords = 1 then print "DEBUG Coords: X", X#, " / Y", Y#, " / Z", Z#
 return
 
 _handle_stage:
@@ -882,13 +889,16 @@ _update_trees:
             endif
             if incircle <> tree(t).drawn
                 if incircle = 1
-                    if object exist(OBJ_Tree_Base+t)
-                        show object OBJ_Tree_Base+t
-                    else
-                        make object OBJ_Tree_Base+t, MSH_TreeTemplate, IMG_Tree
-                        position object OBJ_Tree_Base+t, rx#, floorHeight#(rx#, rz#)+190, rz#
-                        set object OBJ_Tree_Base+t, 1, 1, 0
-                        rotate object OBJ_Tree_Base+t, 0, RndBetween(0,359), 0
+                    incircle = IsInCircle(rx#, rz#, object position x(OBJ_TENT), object position z(OBJ_TENT), tentMinTreeDistance)
+                    if incircle = 0                
+                        if object exist(OBJ_Tree_Base+t)
+                            show object OBJ_Tree_Base+t
+                        else
+                            make object OBJ_Tree_Base+t, MSH_TreeTemplate, IMG_Tree
+                            position object OBJ_Tree_Base+t, rx#, floorHeight#(rx#, rz#)+190, rz#
+                            set object OBJ_Tree_Base+t, 1, 1, 0
+                            rotate object OBJ_Tree_Base+t, 0, RndBetween(0,359), 0
+                        endif
                     endif
                 else
                     delete object OBJ_Tree_Base+t
@@ -902,9 +912,6 @@ _update_trees:
 return
 
 _handle_radar:
-    rem TODO: the player dot should always stay at the same position
-    rem TODO: don't show far away enemies
-    
     rem Leuchtpunkt
     if radarpointrev = 0
         inc radarpointcolor, 3
@@ -973,7 +980,6 @@ _handle_radar:
 return
 
 _draw_trees:
-    rem TODO: da ist ein baum an offset 0,0,0
     load image FN_GFX_Tree, IMG_Tree
     
     make object plain OBJ_TreeTemplate, 2*cTreeRadius, 400
@@ -1331,6 +1337,8 @@ PressJumpKey:
         play sound SFX_Jump
         JumpPosition#=floorHeight#(X#,Z#)
         velocityY# = JumpStartVelocity#
+        rem When being under attack, you can jump higher (otherwise it is nearly impossible to get out of the claws)
+        if underAttack = 1 then velocityY# = velocityY# * EmergencyJumpFactor#
         onGround = 0
     endif
 return
