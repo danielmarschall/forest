@@ -1,14 +1,13 @@
 rem Nightmare Forest by Daniel Marschall
 rem Revision: 07 Sep 2025
 
-rem ---------------------
+rem ----------------------------------------------------------------
 
 rem Important!!!
 rem - Fix moon jump
-rem - Severe performance problems if there are too many trees or too high resolution (fix with instance instead of clone objects? Only draw monsters nearby?)
+rem - Severe performance problems if there are too many trees or too high resolution (fix with instance object instead of clone objects? Only draw monsters nearby?)
 rem - cleanup files and code
-rem - Edge of the map with wall-graphics (attention: dark forest wall does not fit to daylight scene!)
-rem - Walk slower in water
+rem - Edge of the map with wall-graphics; attention: dark forest wall does not fit to daylight scene!
 
 rem Nice to have!!!
 rem - Delphi Launcher with Settings (such as mouse inverting) and Mapgen preview (optional)
@@ -23,13 +22,8 @@ rem - Sprung wirkt unrealistisch
 rem - Anlaufsprung beim Rennen
 rem - Im Sprung sollte man eigentlich nicht steuern dürfen...?
 
-rem TODO: clone -> INSTANCE 
-rem TODO: ambient light wird falsch verwendet. es ist viel zu blau, und alle objekte haben es deaktiviert, weil es die farben zerstört
-rem TODO: mehr konfigurierbar machen
-rem TODO: map außenlinie ist nicht gesperrt mit bäumen oder eine grafik für einen waldrand
-
 rem Enemies:
-rem - rascheln im busch
+rem - rascheln im busch?
 rem - scorpion schiebt stehenden spieler nicht weg
 
 rem Radar:
@@ -48,9 +42,8 @@ rem - Medikit
 rem MapGen32:
 rem - Wegbreite konfigurierbar machen (INI)
 
-rem Sonstiges:
-rem - Streifen am Boden und am Himmel...
-rem - Baum teiltransparenz
+rem Nit picking:
+rem - Tree partial transparency
 
 // --------------------------------
 // Numerical Resources
@@ -63,9 +56,7 @@ rem - Baum teiltransparenz
 #constant IMG_Tree 4
 #constant IMG_MapBackground 5
 #constant IMG_TitleScreen 95
-rem #constant IMG_PauseScreen 96
 #constant IMG_DeathScreen 97
-rem #constant IMG_WinScreen 98
 
 #constant OBJ_Tent 10
 #constant OBJ_MapGhostObject 51
@@ -82,11 +73,12 @@ rem #constant IMG_WinScreen 98
 #constant SFX_Walk_Earth 10
 #constant SFX_Walk_Water 11
 #constant SFX_Woosh 12
+#constant SFX_HIT_SOIL 13
+#constant SFX_HIT_WATER 14
+#constant SFX_Jump 15
 #constant SFX_Attack_Base 20
 #constant SFX_TitleMusic 95
-rem #constant SFX_PauseMusic 96
 #constant SFX_DeathScreen 97
-rem #constant SFX_WinScreen 98
 #constant SFX_Monster_Base 1000
 
 #constant DLL_MapGen 1
@@ -106,17 +98,18 @@ rem #constant SFX_WinScreen 98
 #constant FN_DLL_DBIni            "cfgread\dbini32.dll"
 
 #constant FN_SFX_ForestBG         "sound\forestbg.wav"
-#constant FN_SFX_Walk_Earth       "sound\walk.wav"
+#constant FN_SFX_Walk_Earth       "sound\walk_soil.wav"
 #constant FN_SFX_Walk_Water       "sound\walk_water.wav"
 #constant FN_SFX_Woosh            "sound\woosh.wav"
-#constant FN_SFX_ScorpionAttack1  "sound\scorpionAttack\attack1.wav"
-#constant FN_SFX_ScorpionAttack2  "sound\scorpionAttack\attack2.wav"
-#constant FN_SFX_ScorpionAttack3  "sound\scorpionAttack\attack3.wav"
-#constant FN_SFX_ScorpionAttack4  "sound\scorpionAttack\attack4.wav"
+#constant FN_SFX_HIT_SOIL         "sound\hit_soil.wav"
+#constant FN_SFX_HIT_WATER        "sound\hit_water.wav"
+#constant FN_SFX_Jump             "sound\jump.wav"
+#constant FN_SFX_ScorpionAttack1  "sound\scorp_attack1.wav"
+#constant FN_SFX_ScorpionAttack2  "sound\scorp_attack2.wav"
+#constant FN_SFX_ScorpionAttack3  "sound\scorp_attack3.wav"
+#constant FN_SFX_ScorpionAttack4  "sound\scorp_attack4.wav"
 #constant FN_SFX_TitleMusic       "music\title.wav"
-rem #constant FN_SFX_PauseMusic       "music\pause.wav"
 #constant FN_SFX_Deathscreen      "sound\deathscreen.wav"
-rem #constant FN_SFX_Winscreen        "sound\winscreen.wav"
 #constant FN_SFX_ScorpWalk        "sound\scorp_walk.wav"
 
 #constant FN_OBJ_ScorpIdle        "obj\scorpion\ScorpIdle.x"
@@ -128,9 +121,7 @@ rem #constant FN_SFX_Winscreen        "sound\winscreen.wav"
 #constant FN_GFX_Tree             "bitmap\tree.bmp"
 #constant FN_GFX_MapBackground    "bitmap\radar.bmp"
 #constant FN_GFX_TitleScreen      "bitmap\titlescreen.jpg"
-rem #constant FN_GFX_PauseScreen      "bitmap\pausescreen.jpg"
 #constant FN_GFX_DeathScreen      "bitmap\deathscreen.jpg"
-rem #constant FN_GFX_WinScreen        "bitmap\winscreen.jpg"
 
 #constant FN_INI_SETTINGS         "forest.ini"
 #constant FN_INI_SEED             "seed.ini"
@@ -186,6 +177,9 @@ sunsetEnd                   = call dll(DLL_DBIni, "ReadInt",   "Game", "sunsetEn
 call dll DLL_DBIni, "UnloadINI"
 delete dll DLL_DBIni
 
+if stage3ClockStart < stage1ClockStart then stage3ClockStart = stage3ClockStart + 24
+if stage4ClockStart < stage3ClockStart then stage4ClockStart = stage4ClockStart + 24
+
 rem These are some variables required for the tent
 rem It makes no sense to add them to the INI file, I think.
 
@@ -201,8 +195,10 @@ tentRotateY   = 180
 tentRotateZ   = 0
 tentCameraDistanceStage4 = 60
 
-if stage3ClockStart < stage1ClockStart then stage3ClockStart = stage3ClockStart + 24
-if stage4ClockStart < stage3ClockStart then stage4ClockStart = stage4ClockStart + 24
+rem These are some variables required for the scorpion model
+rem It makes no sense to add them to the INI file, I think.
+
+scorpMinDistance = 100
 
 rem TODO: Even on a NVIDIA GeForce RTX 5080 and resolution 1024x768,
 rem       I cannot get 30 FPS! What is going on?! And with higher resolutions such as 2560x1440,
@@ -257,13 +253,14 @@ gosub _create_water
 gosub _create_radar
 gosub _setupClock
 
-load sound FN_SFX_ForestBG,   SFX_ForestBG
-load sound FN_SFX_Walk_Earth, SFX_Walk_Earth
-load sound FN_SFX_Walk_Water, SFX_Walk_Water
-load sound FN_SFX_Woosh,      SFX_Woosh
-rem load sound FN_SFX_PauseMusic, SFX_PauseMusic
-load sound FN_SFX_DeathScreen, SFX_DeathScreen
-rem load sound FN_SFX_WinScreen, SFX_WinScreen
+load sound FN_SFX_ForestBG,        SFX_ForestBG
+load sound FN_SFX_Walk_Earth,      SFX_Walk_Earth
+load sound FN_SFX_Walk_Water,      SFX_Walk_Water
+load sound FN_SFX_Woosh,           SFX_Woosh
+load sound FN_SFX_Hit_Soil,        SFX_Hit_Soil
+load sound FN_SFX_Hit_Water,       SFX_Hit_Water
+load sound FN_SFX_Jump,            SFX_Jump
+load sound FN_SFX_DeathScreen,     SFX_DeathScreen
 
 #constant NumberOfAttackSounds 4
 load sound FN_SFX_ScorpionAttack1, SFX_Attack_Base+0
@@ -271,9 +268,7 @@ load sound FN_SFX_ScorpionAttack2, SFX_Attack_Base+1
 load sound FN_SFX_ScorpionAttack3, SFX_Attack_Base+2
 load sound FN_SFX_ScorpionAttack4, SFX_Attack_Base+3
 
-rem LoadImageFullscreen(FN_GFX_PauseScreen, IMG_PauseScreen)
 LoadImageFullscreen(FN_GFX_DeathScreen, IMG_DeathScreen)
-rem LoadImageFullscreen(FN_GFX_WinScreen,   IMG_WinScreen)
 
 rem Bildschirm neu aufbauen
 cls
@@ -290,7 +285,7 @@ do
     gosub _handle_radar
     gosub _handle_enemies
     gosub _handleClock
-    gosub _update_health_meter
+    gosub _update_hud
     if hits >= maxHitsTillDeath then gosub _deathscreen
     if EscapeKey() = 1
         repeat
@@ -300,6 +295,8 @@ do
     endif
     sync
 loop
+
+rem ----------------------------------------------------------------
 
 _show_legend:
     LoadImageFullscreen(FN_GFX_TitleScreen, IMG_TitleScreen)
@@ -340,9 +337,47 @@ _show_legend:
     endif
 return
 
-_update_health_meter:
+_update_hud:
+    runEnergyPercent# = runEnergy#*100.0/maxRunEnergy
+    print "Run Energy: ", Floor(runEnergyPercent#), "%"
+
     health# = 100.0 - hits*100.0/maxHitsTillDeath
     print "Health: ", Floor(health#), "%"    
+
+    if clockCurrentMidDot = 0
+        middle$ = " "
+    else
+        middle$ = ":"
+    endif
+    mind = clockSeconds/60
+    hours = mind/60
+    if clockShowSeconds
+        secsText$ = middle$+TwoDigit$(mod(clockSeconds,60))
+    else
+        secsText$ = ""
+    endif
+    print "Time: ", TwoDigit$(mod(hours,24)), middle$, TwoDigit$(mod(mind,60)), secsText$
+
+    if stage = 1
+        print "Rest in the tent!"
+    else
+        if stage = 2
+            print "Waiting for the night..."
+        else
+            if stage = 3
+                middle$ = ":"
+                surviveTill = (stage4ClockStart*60*60) mod (24*60*60)
+                mind = surviveTill/60
+                hours = mind/60
+                secsText$ = ""
+                print "Survive till ", TwoDigit$(mod(hours,24)), middle$, TwoDigit$(mod(mind,60)), secsText$
+            else
+                if stage = 4
+                    print "You survived! Escape from the forest!"
+                endif
+            endif
+        endif
+    endif
 return
 
 _handle_stage:
@@ -434,10 +469,7 @@ _pausemenu:
         
         paste image IMG_TitleScreen, 0, 0
                 
-        rem Text
         ink rgb(255,255,255),1
-        rem text 100,100,"text"
-                
         text 28, 550, "Pause. ESC=Continue. DownKey=End."
         sync
         
@@ -453,9 +485,6 @@ _pausemenu:
         stop sound SFX_TitleMusic
         loop sound SFX_ForestBG
     endif
-    
-    rem TODO: das bringt nix. wenn man die maus bewegt, wird nach der pause die kamera gescrollt
-    rem set cursor 0, 0
 return
 
 _deathscreen:
@@ -467,10 +496,6 @@ _deathscreen:
     cls
     
     paste image IMG_DeathScreen, 0, 0
-            
-    rem Text
-    ink rgb(255,255,255),1
-    rem text 100,100,"text"
             
     sync
     
@@ -484,13 +509,11 @@ _winscreen:
     enable escapekey
 
     gosub _stop_game_sounds_keep_music
-    rem play sound SFX_WinScreen
     
     cls
     
     paste image IMG_TitleScreen, 0, 0
             
-    rem Text
     ink rgb(255,255,255),1
     text 100,140,"Thank you for playing Nightmare Forest !"
     text 100,180,"Created by Daniel Marschall 2001 - 2025"
@@ -506,7 +529,7 @@ return
 
 _setup_camera:
     Set camera range 1, camerarange
-    AUTOMATIC CAMERA COLLISION CAM_DEFAULT, collissionboxsize#, 0 : rem scorpione stoßen den spieler nicht weg, wenn keine taste gedrückt wird? syntax mit 4 parametern funktioniert im neuen dbpro free nicht!
+    AUTOMATIC CAMERA COLLISION CAM_DEFAULT, collissionboxsize#, 0 : rem TODO: scorpione stoßen den spieler nicht weg, wenn keine taste gedrückt wird? syntax mit 4 parametern funktioniert im neuen dbpro free nicht!
     Autocam off
 return
 
@@ -516,17 +539,27 @@ _setup_player_position:
     Z# = cMapSizeZ / 2
     position camera X#, Y#, Z#
     
-    rem TODO zelt ist ganz schwarz, warum?
-    rem TODO zelt beleuchten bei nacht
     Load object FN_OBJ_Tent, OBJ_Tent
     show object OBJ_Tent
     scale object OBJ_Tent, tentSizeX, tentSizeY, tentSizeZ
     rotate object  OBJ_TENT, tentRotateX, tentRotateY, tentRotateZ
     position object OBJ_Tent, X#+tentMoveX, floorHeight#(X#, Z#)+tentMoveY, Z#+tentMoveZ
+
+    rem TODO: for some reason, the tent does not react to light. the scorpions do, but the trees, tent, and floor do not. why?!
+    remstart
+    set ambient light 50
+    set object light OBJ_TENT, 1
+    set object normals OBJ_Tent
+    set object effect OBJ_Tent, 0
+    make light 1
+    color light 1,255,255,200
+    set point light 1, object position x(OBJ_TENT), object position y(OBJ_TENT)+600, object position z(OBJ_TENT)
+    set light range 1,3000
+    show light 1
+    remend
 return
 
 _handle_weather:
-
     clockSecondsReal = clockSeconds mod (24*60*60)
     if clockSecondsReal < (sunriseStart*3600) or clockSecondsReal > (sunsetEnd*3600)
         lightValue = INT(nightLightLevel# + 0.5)
@@ -578,9 +611,6 @@ _handle_weather:
     backdrop on
     color backdrop rgb(fogColorR, fogColorG, fogColorB)
 
-    rem color ambient light rgb(64,64,128)
-    rem set ambient light 1
-    rem set ambient light 50
     if fog available() = 1
         fog on
         fog distance fogdistance
@@ -598,9 +628,6 @@ _handle_enemies:
     pZ# = Camera Position Z()
     
     if stage = 3
-    
-        rem TODO: gegner sollen sich nicht überschneiden
-        
         underAttack = 0        
         for t = 0 to cMaxEnemies-1
             rem rx# = object position x(OBJ_Monster_Base+t)
@@ -643,11 +670,6 @@ _handle_enemies:
             rem The mixing of 3dsound is bullshit (too loud from far distance, and not very loud on close distance),
             rem so we mix the volume ourself
             if sound3dVolumeCor>0 and dist#<sound3dVolumeCor then set sound volume SFX_Monster_Base+t, (1-(dist#/sound3dVolumeCor))*100
-            
-            rem TODO: 100 dynamisch machen
-            rem at least a distance of 10 so that atanfull() does not bug, when deltas becomes 0
-            rem Verhindern, dass der Skorpion in einem "drin" steht. Er soll mit den Scheren angreifen
-            scorpMinDistance = 100
             
             if dist# > scorpMinDistance
                 if dist# < enemy(t).AwarenessRadius
@@ -784,7 +806,7 @@ _handle_player:
             energyChanged = 0
             if ShiftKey()+ControlKey() = 1 : rem shift+control at the same time = walk normal
                 rem TODO: es ruckelt trotzdem noch
-                if ControlKey()=1 and runEnergy#>0 : rem Energy >1 , damit es nicht ruckelt (run-walk-run-walk-run-walk) . 3 = walk regain
+                if ControlKey()=1 and runEnergy#>0 and gt=GROUNDTYPE_EARTH : rem Energy >1 , damit es nicht ruckelt (run-walk-run-walk-run-walk) . 3 = walk regain
                     speedboost# = 2
                     runEnergy# = runEnergy# - 1
                     energyChanged = 1
@@ -819,9 +841,6 @@ _handle_player:
         endif
         if runEnergy# > maxRunEnergy then runEnergy# = maxRunEnergy
         
-        runEnergyPercent# = runEnergy#*100.0/maxRunEnergy
-        print "Run Energy: ", Floor(runEnergyPercent#), "%"
-    
         Rem Rotate camera
         cTestX# = WrapValue(cAX# - 180)
         if cTestX# > 225 then cAX# = 45
@@ -1066,7 +1085,6 @@ _create_enemies:
 return
 
 scorpChangeToIdle:
-    rem TODO: smoothness (interpolation)
     if enemy(t).CurrentAnim <> 1
         loop object OBJ_Monster_Base+t, animScorpIdleStart, animScorpIdleEnd
         enemy(t).CurrentAnim = 1
@@ -1074,7 +1092,6 @@ scorpChangeToIdle:
 return
 
 scorpChangeToWalk:
-    rem TODO: smoothness (interpolation)
     if enemy(t).CurrentAnim <> 2
         loop object OBJ_Monster_Base+t, animScorpWalkStart, animScorpWalkEnd
         enemy(t).CurrentAnim = 2
@@ -1100,8 +1117,6 @@ _handleClock:
         endif
     endif
     
-    gosub _printClock
-
     clockTickCounter = clockTickCounter + 1
 RETURN
 
@@ -1208,39 +1223,6 @@ _create_radar:
     texture object OBJ_MapGhostObject, IMG_MapBackground
 return
 
-_printClock:
-    if clockCurrentMidDot = 0
-        middle$ = " "
-    else
-        middle$ = ":"
-    endif
-    mind = clockSeconds/60
-    hours = mind/60
-    if clockShowSeconds
-        secsText$ = middle$+TwoDigit$(mod(clockSeconds,60))
-    else
-        secsText$ = ""
-    endif
-    print "Time: ", TwoDigit$(mod(hours,24)), middle$, TwoDigit$(mod(mind,60)), secsText$
-
-    if stage = 1
-        print "Rest in the tent!"
-    else
-        if stage = 3
-            middle$ = ":"
-            surviveTill = (stage4ClockStart*60*60) mod (24*60*60)
-            mind = surviveTill/60
-            hours = mind/60
-            secsText$ = ""
-            print "Survive till ", TwoDigit$(mod(hours,24)), middle$, TwoDigit$(mod(mind,60)), secsText$
-        else
-            if stage = 4
-                print "You survived! Escape from the forest!"
-            endif
-        endif
-    endif
-return
-
 rem Rotate smooth, and rotate in the direction with the lowest distance
 rem "turn object left" ist das kommando
 function smoothRotate#(von#, nach#, smoothness)
@@ -1316,9 +1298,7 @@ ENDFUNCTION ret
 _stop_game_sounds:
     gosub _stop_game_sounds_keep_music
     Stop Sound SFX_TitleMusic
-    rem Stop Sound SFX_PauseMusic
     Stop Sound SFX_DeathScreen
-    rem Stop Sound SFX_WinScreen
 return
 
 _stop_game_sounds_keep_music:
@@ -1326,6 +1306,9 @@ _stop_game_sounds_keep_music:
     Stop Sound SFX_Walk_Earth
     Stop Sound SFX_Walk_Water
     Stop Sound SFX_Woosh
+    Stop Sound SFX_HIT_SOIL
+    Stop Sound SFX_HIT_WATER
+    Stop Sound SFX_Jump
     if stage >= 3
         for t = 0 to cMaxEnemies-1
             Stop Sound SFX_Monster_Base+t
@@ -1354,7 +1337,7 @@ endtype
 
 PressJumpKey:
     if onGround=1
-        rem TODO: absprungsound
+        play sound SFX_Jump
         JumpPosition#=floorHeight#(X#,Z#)
         velocityY# = JumpStartVelocity#
         onGround = 0
@@ -1374,10 +1357,14 @@ JumpUpdate:
         
         curFloorHeight# = floorHeight#(X#,Z#)
         if JumpPosition# < curFloorHeight#
-            rem TODO: aufprallsound
             JumpPosition# = curFloorHeight#
             velocityY# = 0.0
             onGround = 1
+            gt = groundType(onGround, waterLevel)
+            if gt = GROUNDTYPE_EARTH then
+                play sound SFX_HIT_SOIL
+            if gt = GROUNDTYPE_WATER then
+                play sound SFX_HIT_WATER
         endif
     endif
 return
