@@ -4,7 +4,6 @@ rem Revision: 06 Sep 2025
 rem ---------------------
 
 rem Severe Problems:
-rem - DELL: MemBlock crash after resize dll gave size
 rem - ELY3: extreme performance problems even with most modern graphics card!
 
 rem SPRUNG-PHYSIK:
@@ -1216,17 +1215,15 @@ function resizeImage(image as dword, width as dword, height as dword)
     
     make memblock from image MEM_ResizeSrc, image
     size = call dll(DLL_Resize32, "DestSize", get memblock ptr(MEM_ResizeSrc), width, height)
-    
-    rem TODO: windows 7, I get an error here that size is invalid?
-    make memblock MEM_ResizeDest, size
 
-    call dll DLL_Resize32, "Resize", get memblock ptr(MEM_ResizeSrc), get memblock ptr(MEM_ResizeDest), width, height
-    
-    
-    make image from memblock image, MEM_ResizeDest
-    
-    delete memblock MEM_ResizeSrc
-    delete memblock MEM_ResizeDest
+    rem TODO: Also allow 16bit color depth
+    if size > 0
+        make memblock MEM_ResizeDest, size
+        call dll DLL_Resize32, "Resize", get memblock ptr(MEM_ResizeSrc), get memblock ptr(MEM_ResizeDest), width, height
+        make image from memblock image, MEM_ResizeDest
+        delete memblock MEM_ResizeSrc
+        delete memblock MEM_ResizeDest
+    endif
     
     REM delete dll DLL_Resize
 
