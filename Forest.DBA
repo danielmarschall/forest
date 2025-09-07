@@ -1,5 +1,5 @@
 rem Nightmare Forest by Daniel Marschall
-rem Revision: 06 Sep 2025
+rem Revision: 07 Sep 2025
 
 rem ---------------------
 
@@ -40,8 +40,8 @@ rem - Radar lieber als Matrix anstelle als bild? Viele Probleme wie z.B. mit Sko
 rem - Unscharfes Radar, Radar ganz dyn. zeichnen? Rader stay on top
 
 rem Items:
-rem - Karte
-rem - Radar
+rem - Map (only trees) and/or Enemy Radar
+rem - Medikit
 
 rem MapGen32:
 rem - Wegbreite konfigurierbar machen (INI)
@@ -51,7 +51,6 @@ rem - :startgame weglassen
 rem - Streifen am Boden und am Himmel...
 rem - Baum teiltransparenz
 rem - Menü: musik aus --> an: loop von position 0!
-rem - wassermatrix bewegt sich nur in 1 richtung
 rem - mausumkehrung einstellbar
 rem - rennen verhindern, wenn man außer puste
 
@@ -66,9 +65,9 @@ rem - rennen verhindern, wenn man außer puste
 #constant IMG_Tree 4
 #constant IMG_MapBackground 5
 #constant IMG_TitleScreen 95
-#constant IMG_PauseScreen 96
+rem #constant IMG_PauseScreen 96
 #constant IMG_DeathScreen 97
-#constant IMG_WinScreen 98
+rem #constant IMG_WinScreen 98
 
 #constant OBJ_Tent 10
 #constant OBJ_MapGhostObject 51
@@ -86,9 +85,9 @@ rem - rennen verhindern, wenn man außer puste
 #constant SFX_Walk_Water 11
 #constant SFX_Attack_Base 20
 #constant SFX_TitleMusic 95
-#constant SFX_PauseMusic 96
+rem #constant SFX_PauseMusic 96
 #constant SFX_DeathScreen 97
-#constant SFX_WinScreen 98
+rem #constant SFX_WinScreen 98
 #constant SFX_Monster_Base 1000
 
 #constant DLL_MapGen 1
@@ -115,9 +114,9 @@ rem - rennen verhindern, wenn man außer puste
 #constant FN_SFX_ScorpionAttack3  "sound\scorpionAttack\attack3.wav"
 #constant FN_SFX_ScorpionAttack4  "sound\scorpionAttack\attack4.wav"
 #constant FN_SFX_TitleMusic       "music\title.wav"
-#constant FN_SFX_PauseMusic       "music\pause.wav"
+rem #constant FN_SFX_PauseMusic       "music\pause.wav"
 #constant FN_SFX_Deathscreen      "sound\deathscreen.wav"
-#constant FN_SFX_Winscreen        "sound\winscreen.wav"
+rem #constant FN_SFX_Winscreen        "sound\winscreen.wav"
 #constant FN_SFX_ScorpWalk        "sound\scorp_walk.wav"
 
 #constant FN_OBJ_ScorpIdle        "obj\scorpion\ScorpIdle.x"
@@ -129,9 +128,9 @@ rem - rennen verhindern, wenn man außer puste
 #constant FN_GFX_Tree             "bitmap\tree.bmp"
 #constant FN_GFX_MapBackground    "bitmap\radar.bmp"
 #constant FN_GFX_TitleScreen      "bitmap\titlescreen.jpg"
-#constant FN_GFX_PauseScreen      "bitmap\pausescreen.jpg"
+rem #constant FN_GFX_PauseScreen      "bitmap\pausescreen.jpg"
 #constant FN_GFX_DeathScreen      "bitmap\deathscreen.jpg"
-#constant FN_GFX_WinScreen        "bitmap\winscreen.jpg"
+rem #constant FN_GFX_WinScreen        "bitmap\winscreen.jpg"
 
 #constant FN_INI_SETTINGS         "forest.ini"
 #constant FN_INI_SEED             "seed.ini"
@@ -145,39 +144,65 @@ call dll DLL_DBIni, "LoadINI", FN_INI_SETTINGS
 maxFramerate                = call dll(DLL_DBIni, "ReadInt",   "Game", "maxFramerate",                30)
 screenResW                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResW",                  800)
 screenResH                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResH",                  600)
-screenResB                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResB",                  16)
+screenResB                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResB",                  32)
 clockSpeedFactor            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockSpeedFactor",            1)
-clockBlinksPerSecond        = call dll(DLL_DBIni, "ReadInt",   "Game", "clockBlinksPerSecond",        0)
+clockSecondsAdvance         = call dll(DLL_DBIni, "ReadInt",   "Game", "clockSecondsAdvance",         60)
+clockBlinksPerSecond        = call dll(DLL_DBIni, "ReadInt",   "Game", "clockBlinksPerSecond",        2)
 clockShowSeconds            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockShowSeconds",            0)
-beginClockSeconds           = call dll(DLL_DBIni, "ReadInt",   "Game", "beginClockSeconds",           22*60*60)
-surviveTill                 = call dll(DLL_DBIni, "ReadInt",   "Game", "surviveTill",                 7*60*60)
-enemyRotateSmoothness       = call dll(DLL_DBIni, "ReadInt",   "Game", "enemyRotateSmoothness",       0)
-maxRunEnergy                = call dll(DLL_DBIni, "ReadInt",   "Game", "maxRunEnergy",                0)
-waterLevel                  = call dll(DLL_DBIni, "ReadInt",   "Game", "waterLevel",                  0)
-sound3dVolumeCor            = call dll(DLL_DBIni, "ReadInt",   "Game", "sound3dVolumeCor",            0)
+enemyRotateSmoothness       = call dll(DLL_DBIni, "ReadInt",   "Game", "enemyRotateSmoothness",       10)
+maxRunEnergy                = call dll(DLL_DBIni, "ReadInt",   "Game", "maxRunEnergy",                300)
+waterLevel                  = call dll(DLL_DBIni, "ReadInt",   "Game", "waterLevel",                  60)
+sound3dVolumeCor            = call dll(DLL_DBIni, "ReadInt",   "Game", "sound3dVolumeCor",            3500)
 invertMouse                 = call dll(DLL_DBIni, "ReadInt",   "Game", "invertMouse",                 0)
-test                        = call dll(DLL_DBIni, "ReadInt",   "Game", "test",                        0)
-camerarange                 = call dll(DLL_DBIni, "ReadInt",   "Game", "camerarange",                 0)
-fogdistance                 = call dll(DLL_DBIni, "ReadInt",   "Game", "fogdistance",                 0)
-waterMovementMaxDistance    = call dll(DLL_DBIni, "ReadInt",   "Game", "waterMovementMaxDistance",    0)
-gravity#                    = call dll(DLL_DBIni, "ReadFloat", "Game", "gravity",                     0.0)
-JumpStartVelocity#          = call dll(DLL_DBIni, "ReadFloat", "Game", "JumpStartVelocity",           0.0)
-MinFallVelocity#            = call dll(DLL_DBIni, "ReadFloat", "Game", "MinFallVelocity",             0.0)
-scorpCollissionX#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionX",            0.0)
-scorpCollissionY#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionY",            0.0)
-scorpCollissionZ#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionZ",            0.0)
-playerEyeHeight#            = call dll(DLL_DBIni, "ReadFloat", "Game", "playerEyeHeight",             0.0)
-cMaxTrees                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxTrees",                   0)
-cMapSizeX                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeX",                   0)
-cMapSizeZ                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeZ",                   0)
-cTreeRadius                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cTreeRadius",                 0)
-cMaxEnemies                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxEnemies",                 0)
-HitInterval                 = call dll(DLL_DBIni, "ReadInt",   "Game", "HitInterval",                 0)
-maxHitsTillDeath            = call dll(DLL_DBIni, "ReadInt",   "Game", "maxHitsTillDeath",            20);
+camerarange                 = call dll(DLL_DBIni, "ReadInt",   "Game", "camerarange",                 2000)
+fogdistance                 = call dll(DLL_DBIni, "ReadInt",   "Game", "fogdistance",                 1000)
+waterMovementMaxDistance    = call dll(DLL_DBIni, "ReadInt",   "Game", "waterMovementMaxDistance",    30)
+gravity#                    = call dll(DLL_DBIni, "ReadFloat", "Game", "gravity",                     0.2)
+JumpStartVelocity#          = call dll(DLL_DBIni, "ReadFloat", "Game", "JumpStartVelocity",           25.0)
+MinFallVelocity#            = call dll(DLL_DBIni, "ReadFloat", "Game", "MinFallVelocity",             6.0)
+scorpCollissionX#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionX",            150.0)
+scorpCollissionY#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionY",            250.0)
+scorpCollissionZ#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionZ",            150.0)
+playerEyeHeight#            = call dll(DLL_DBIni, "ReadFloat", "Game", "playerEyeHeight",             135)
+cMaxTrees                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxTrees",                   1250)
+cMapSizeX                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeX",                   10000)
+cMapSizeZ                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeZ",                   10000)
+cTreeRadius                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cTreeRadius",                 100)
+cMaxEnemies                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxEnemies",                 50)
+HitInterval                 = call dll(DLL_DBIni, "ReadInt",   "Game", "HitInterval",                 10)
+maxHitsTillDeath            = call dll(DLL_DBIni, "ReadInt",   "Game", "maxHitsTillDeath",            20)
 initialEnemySafezone#       = call dll(DLL_DBIni, "ReadFloat", "Game", "InitialEnemySafezone",        1000.0)
 cEnemySpawnMapBorderPadding = call dll(DLL_DBIni, "ReadInt",   "Game", "EnemySpawnMapBorderPadding",  1000)
+stage1ClockStart            = call dll(DLL_DBIni, "ReadInt",   "Game", "stage1ClockStart",            15)
+stage1TinyForestFactor#     = call dll(DLL_DBIni, "ReadFloat", "Game", "stage1TinyForestFactor",      0.35)
+stage1Distance#             = call dll(DLL_DBIni, "ReadFloat", "Game", "stage1Distance",              1350.0)
+stage3ClockStart            = call dll(DLL_DBIni, "ReadInt",   "Game", "stage3ClockStart",            22)
+stage4ClockStart            = call dll(DLL_DBIni, "ReadInt",   "Game", "stage4ClockStart",            7)
+stage4RunAwayFactor#        = call dll(DLL_DBIni, "ReadFloat", "Game", "stage4RunAwayFactor",         1.5)
+nightLightLevel#            = call dll(DLL_DBIni, "ReadFloat", "Game", "nightLightLevel",             0.0)
+dayLightLevelPeak#          = call dll(DLL_DBIni, "ReadFloat", "Game", "dayLightLevelPeak",           255.0)
+sunriseStart                = call dll(DLL_DBIni, "ReadInt",   "Game", "sunriseStart",                4)
+sunsetEnd                   = call dll(DLL_DBIni, "ReadInt",   "Game", "sunsetEnd",                   20)
 call dll DLL_DBIni, "UnloadINI"
 delete dll DLL_DBIni
+
+rem These are some variables required for the tent
+rem It makes no sense to add them to the INI file, I think.
+
+tentDryRadius = 120
+tentSizeX     = 10000*2
+tentSizeY     = 5000*3
+tentSizeZ     = 5000*2
+tentMoveX     = 0
+tentMoveY     = -30
+tentMoveZ     = 0
+tentRotateX   = 0
+tentRotateY   = 180
+tentRotateZ   = 0
+tentCameraDistanceStage4 = 60
+
+if stage3ClockStart < stage1ClockStart then stage3ClockStart = stage3ClockStart + 24
+if stage4ClockStart < stage3ClockStart then stage4ClockStart = stage4ClockStart + 24
 
 rem TODO: Even on a NVIDIA GeForce RTX 5080 and resolution 1024x768,
 rem       I cannot get 30 FPS! What is going on?! And with higher resolutions such as 2560x1440,
@@ -189,30 +214,20 @@ hide mouse
 Sync On
 Sync Rate maxFramerate
 
-LoadImageFullscreen(FN_GFX_TitleScreen, IMG_TitleScreen)
-
-PASTE IMAGE IMG_TitleScreen, 0, 0
-
 rem Sync twice at application start for friendliness with dbpro's double buffering
 rem (Required for newer versions of DB Pro)
 sync : sync
+
+gosub _show_legend
 
 _startgame:
 
 ink rgb(255, 230, 0), 0
 PASTE IMAGE IMG_TitleScreen, 0, 0
-set text font "Arial" : set text size 30 : set text transparent
-text 28, 550, "Starting game..."
-
-load sound FN_SFX_TitleMusic, SFX_TitleMusic
-loop sound SFX_TitleMusic
-
-sync
+rem set text font "Arial" : set text size 30 : set text transparent
+rem text 28, 550, "Starting game..."
 
 randomize timer()
-
-rem To test title screen
-rem sleep 5*1000
 
 rem Working variables ONLY
 JumpKeyStatePrev = 0
@@ -220,7 +235,9 @@ JumpPosition# = 0.0
 onGround = 1
 velocityY# = 0.0
 runEnergy# = maxRunEnergy
-clockSeconds = beginClockSeconds
+prevTreeStage = -1
+stage = 0
+clockSeconds = -1
 collcounter = 0
 hits = 0
 LastAttackSound = 0
@@ -240,23 +257,14 @@ gosub _create_trees
 gosub _draw_trees
 gosub _create_water
 gosub _create_radar
-
-rem Bildschirm neu aufbauen
-cls
-sync
-
-rem TODO: Lichtversuch
-make light 1
-
-gosub _create_enemies
 gosub _setupClock
 
 load sound FN_SFX_ForestBG,   SFX_ForestBG
 load sound FN_SFX_Walk_Earth, SFX_Walk_Earth
 load sound FN_SFX_Walk_Water, SFX_Walk_Water
-load sound FN_SFX_PauseMusic, SFX_PauseMusic
+rem load sound FN_SFX_PauseMusic, SFX_PauseMusic
 load sound FN_SFX_DeathScreen, SFX_DeathScreen
-load sound FN_SFX_WinScreen, SFX_WinScreen
+rem load sound FN_SFX_WinScreen, SFX_WinScreen
 
 #constant NumberOfAttackSounds 4
 load sound FN_SFX_ScorpionAttack1, SFX_Attack_Base+0
@@ -264,74 +272,167 @@ load sound FN_SFX_ScorpionAttack2, SFX_Attack_Base+1
 load sound FN_SFX_ScorpionAttack3, SFX_Attack_Base+2
 load sound FN_SFX_ScorpionAttack4, SFX_Attack_Base+3
 
-LoadImageFullscreen(FN_GFX_PauseScreen, IMG_PauseScreen)
+rem LoadImageFullscreen(FN_GFX_PauseScreen, IMG_PauseScreen)
 LoadImageFullscreen(FN_GFX_DeathScreen, IMG_DeathScreen)
-LoadImageFullscreen(FN_GFX_WinScreen,   IMG_WinScreen)
+rem LoadImageFullscreen(FN_GFX_WinScreen,   IMG_WinScreen)
+
+rem Bildschirm neu aufbauen
+cls
+sync
 
 Disable EscapeKey
-
-stop sound SFX_TitleMusic
-loop sound SFX_ForestBG
 
 rem Hauptschleife
 do
     gosub _handle_weather
     gosub _handle_player
     gosub _update_trees
+    gosub _handle_stage
     gosub _handle_radar
     gosub _handle_enemies
     gosub _handleClock
-   
-    underAttack = 0
-    for t = 0 to cMaxEnemies-1
-        dx# = abs(object position x(OBJ_Monster_Base+t) - camera position x())
-        dy# = abs(object position y(OBJ_Monster_Base+t) - camera position y())
-        dz# = abs(object position z(OBJ_Monster_Base+t) - camera position z())
-        if dx# < scorpCollissionX# and dy# < scorpCollissionY# and dz# < scorpCollissionZ#
-            collcounter = collcounter + 1
-            underAttack = underAttack + 1
-            rem print "DEBUG: Attacking enemy: X", dx#, ", Y", dy#, ", Z", dz#
-        endif
-    NEXT
-    rem print "DEBUG: Collision counter: ", collcounter
-    
-    if underAttack = 0
-        collcounter = collcounter - 1
-        if collcounter < 0 then collcounter = 0
-    endif
-        
-    if collcounter >= HitInterval
-        collcounter = 0
-        inc hits, 1
-        gosub _play_attack_sound
-    endif
-    rem print "Hits: ", hits
-    
-    health# = 100.0 - hits*100.0/maxHitsTillDeath
-    print "Health: ", Floor(health#), "%"    
-
+    gosub _update_health_meter
     if hits >= maxHitsTillDeath then gosub _deathscreen
-    if clockSeconds >= surviveTill and clockSeconds < surviveTill+1*60*60 then gosub _winscreen
-    
     if EscapeKey() = 1
         repeat
             sync
         until not (EscapeKey() = 1)
         gosub _pausemenu
     endif
-    sceneInitialized=1
     sync
 loop
 
+_show_legend:
+    LoadImageFullscreen(FN_GFX_TitleScreen, IMG_TitleScreen)
+    PASTE IMAGE IMG_TitleScreen, 0, 0
+    
+    load sound FN_SFX_TitleMusic, SFX_TitleMusic
+    loop sound SFX_TitleMusic
+            
+    ink rgb(255, 100, 0), 0
+    set text font "Arial" : set text size 50 : set text transparent
+    print "The Tale of the Nightmare Forest"
+    
+    set text font "Arial" : set text size 30 : set text transparent
+    print ""
+    print "They say there's a grove outside the village."
+    print "By day it's small, nothing more than a patch of trees."
+    print "But when night falls, it opens into a forest without end."
+    print ""
+    print "A few have gone in after dark. None came back."
+    print "The elders whisper the forest doesn't lose you -"
+    print "it keeps you."
+    print ""
+    print "And each soul it takes makes the grove a little"
+    print "larger by morning."
+    print ""
+    print "Today you've set up your tent below the trees,"
+    print "waiting for nightfall... to see if the legend is true."
+    print ""
+    print ""
+    print "(Press Space to start your journey)"
+
+    sync    
+    
+    if jumpPressed() = 0
+        repeat
+            rem sync
+        until jumpPressed() = 1
+    endif
+return
+
+_update_health_meter:
+    health# = 100.0 - hits*100.0/maxHitsTillDeath
+    print "Health: ", Floor(health#), "%"    
+return
+
+_handle_stage:
+    if stage = 0
+        stage = 1
+        clockSeconds = stage1ClockStart*60*60
+        rem Move the camera so we can see the tiny forest; TODO: we could end up at a tree!
+        move camera -stage1Distance#
+        X# = camera position x()
+        Y# = camera position y()
+        Z# = camera position z()
+    else
+        if stage = 1
+            rem dx# = abs(object position x(OBJ_Tent) - camera position x())
+            rem dy# = abs(object position y(OBJ_Tent) - camera position y())
+            rem dz# = abs(object position z(OBJ_Tent) - camera position z())
+            rem if dx# < 300 and dy# < 300 and dz# < 300
+            rx# = object position x(OBJ_Tent)
+            ry# = object position y(OBJ_Tent)
+            rz# = object position z(OBJ_Tent)
+            if IsInCircle3D(rx#, ry#, rz#, X#, Y#, Z#, 300) = 1
+                gosub _stop_game_sounds
+                stage = 2
+            endif
+        else
+            if stage = 2
+                if clockSeconds < stage3ClockStart*60*60
+                    rem Advance in 5-minute steps until it is night (stage 3)
+                    clockSeconds = clockSeconds + 60*5
+                else
+                    loop sound SFX_ForestBG
+                    gosub _create_enemies
+                    clockSeconds = stage3ClockStart*60*60
+                    stage = 3
+                endif
+            else
+                if stage = 3                
+                    if clockSeconds >= stage4ClockStart*60*60
+                    
+                        stop sound SFX_ForestBG
+                        loop sound SFX_TitleMusic
+                    
+                        gosub _destroy_enemies
+                        rem Quickly teleport to the tent, so that the player do not notice it
+                        position camera object position x(OBJ_Tent), object position y(OBJ_Tent), object position z(OBJ_Tent)
+                        rem move the camera and pause for a little while so that the player realizes the tent; TODO: we could end up at a tree!
+                        move camera -tentCameraDistanceStage4
+                        sync
+                        rem TODO: loud sound effect! woosh! magic is away!
+                        sleep 1000
+                        X# = camera position x()
+                        Y# = camera position y()
+                        Z# = camera position z()
+                        stage = 4
+                    endif
+                else
+                    if stage = 4
+                        rx# = object position x(OBJ_Tent)
+                        rz# = object position z(OBJ_Tent)
+                        incircle = IsInCircle(rx#, rz#, X#, Z#, stage1Distance#*stage4RunAwayFactor#)
+                        if incircle = 0 then gosub _winscreen
+                    endif
+                endif
+            endif
+        endif
+    endif
+return
+
+_destroy_enemies:
+    for t = 0 to cMaxEnemies-1
+       Delete Object OBJ_Monster_Base+t
+    next
+    for t = 0 to cMaxEnemies-1
+        Stop Sound SFX_Monster_Base+t
+    next t
+return
+
 _pausemenu:
-    gosub _stop_game_sounds
-    loop sound SFX_PauseMusic
-    rem show mouse 
+    if stage = 3
+        gosub _stop_game_sounds
+        loop sound SFX_TitleMusic
+    else
+        gosub _stop_game_sounds_keep_music
+    endif
     
     repeat
         cls
         
-        paste image IMG_PauseScreen, 0, 0
+        paste image IMG_TitleScreen, 0, 0
                 
         rem Text
         ink rgb(255,255,255),1
@@ -347,19 +448,22 @@ _pausemenu:
     repeat
         sync
     until not (EscapeKey() = 1)
-    rem hide mouse
-    stop sound SFX_PauseMusic
-    loop sound SFX_ForestBG
+
+    if stage = 3
+        stop sound SFX_TitleMusic
+        loop sound SFX_ForestBG
+    endif
     
     rem TODO: das bringt nix. wenn man die maus bewegt, wird nach der pause die kamera gescrollt
-    set cursor 0, 0
+    rem set cursor 0, 0
 return
 
 _deathscreen:
+    enable escapekey
+
     gosub _stop_game_sounds
     play sound SFX_DeathScreen
-    rem show mouse 
-    
+
     cls
     
     paste image IMG_DeathScreen, 0, 0
@@ -372,27 +476,32 @@ _deathscreen:
     
     Sleep 7*1000
     
+    rem TODO: alternatively, start the game from beginning? (but might need some attention regarding initialization of variables/objects/sounds etc.)
     goto _exit    
 return
 
 _winscreen:
-    gosub _stop_game_sounds
-    play sound SFX_WinScreen
-    rem show mouse 
+    enable escapekey
+
+    gosub _stop_game_sounds_keep_music
+    rem play sound SFX_WinScreen
     
     cls
     
-    paste image IMG_WinScreen, 0, 0
+    paste image IMG_TitleScreen, 0, 0
             
     rem Text
     ink rgb(255,255,255),1
-    rem text 100,100,"text"
+    text 100,140,"Thank you for playing Nightmare Forest !"
+    text 100,180,"Created by Daniel Marschall 2001 - 2025"
+    text 100,220,"Developed with DarkBASIC Pro and Delphi"
             
     sync
     
     Sleep 7*1000
     
-    goto _exit    
+    rem TODO: alternatively, start the game from beginning? (but might need some attention regarding initialization of variables/objects/sounds etc.)
+    goto _exit
 return
 
 _setup_camera:
@@ -407,41 +516,35 @@ _setup_player_position:
     Z# = cMapSizeZ / 2
     position camera X#, Y#, Z#
     
-    rem TODO zelt ist winzig klein!
-    rem TODO zelt ist schwarz schattiert
-    rem TODO zelt beleuchten
-    rem Load object FN_OBJ_Tent, OBJ_Tent
-    rem show object OBJ_Tent
-    rem scale object OBJ_Tent, 10000, 5000, 5000
-    rem position object OBJ_Tent, X#-20, Y#, Z#-10
+    rem TODO zelt ist ganz schwarz, warum?
+    rem TODO zelt beleuchten bei nacht
+    Load object FN_OBJ_Tent, OBJ_Tent
+    show object OBJ_Tent
+    scale object OBJ_Tent, tentSizeX, tentSizeY, tentSizeZ
+    rotate object  OBJ_TENT, tentRotateX, tentRotateY, tentRotateZ
+    position object OBJ_Tent, X#+tentMoveX, floorHeight#(X#, Z#)+tentMoveY, Z#+tentMoveZ
 return
 
 _handle_weather:
 
-    rem TODO: Konstanten in INI einstellbar machen
-    sunriseStart = 5 * 3600    : rem Dämmerungsbeginn, z.B. 05:00
-    sunriseEnd   = 7 * 3600    : rem Sonnenaufgang voll, z.B. 07:00
-    sunsetStart  = 17 * 3600   : rem Sonnenuntergang beginnt, z.B. 17:00
-    sunsetEnd    = 19 * 3600   : rem Dämmerungsende, z.B. 19:00
-    nightLevel#  = 0.0         : rem Minimale Helligkeit nachts, z.B. Mondschein
-    dayPeak#     = 255.0       : rem Helligkeit am Mittag
-    if clockSeconds < sunriseStart or clockSeconds > sunsetEnd
-        lightValue = INT(nightLevel# + 0.5)
+    clockSecondsReal = clockSeconds mod (24*60*60)
+    if clockSecondsReal < (sunriseStart*3600) or clockSecondsReal > (sunsetEnd*3600)
+        lightValue = INT(nightLightLevel# + 0.5)
     else
         rem gesamte Tagesspanne von Dämmerungsbeginn bis -ende
-        daySpanStart = sunriseStart
-        daySpanEnd   = sunsetEnd
+        daySpanStart = (sunriseStart*3600)
+        daySpanEnd   = (sunsetEnd*3600)
 
         duration# = (daySpanEnd - daySpanStart) * 1.0    : rem float-sicher
-        u# = (clockSeconds - daySpanStart) / duration#   : rem 0..1
+        u# = (clockSecondsReal - daySpanStart) / duration#   : rem 0..1
         if u# < 0.0 then u# = 0.0
         if u# > 1.0 then u# = 1.0
 
         rem Sinuskurve: 0 am Dämmerungsbeginn, 1 in der Mitte (Mittag), 0 am Dämmerungsende
         daylightFactor# = sin(u# * 180)
     
-        rem Auf Zielbereich (nightLevel .. dayPeak) skalieren
-        lightValue# = nightLevel# + daylightFactor# * (dayPeak# - nightLevel#)
+        rem Auf Zielbereich (nightLightLevel# .. dayLightLevelPeak#) skalieren
+        lightValue# = nightLightLevel# + daylightFactor# * (dayLightLevelPeak# - nightLightLevel#)
 
         rem numerische Sicherheit & auf 0..255 clampen
         if lightValue# < 0.0 then lightValue# = 0.0
@@ -449,7 +552,7 @@ _handle_weather:
 
         lightValue = INT(lightValue# + 0.5)
     endif
-    rem print "DEBUG: clockSeconds:", clockSeconds, " => lightValue:", lightValue
+    rem print "DEBUG: clockSecondsReal:", clockSecondsReal, " => lightValue:", lightValue#
 
     fogColorR = lightValue
     fogColorG = lightValue
@@ -483,16 +586,8 @@ _handle_weather:
         fog distance fogdistance
         fog color rgb(fogColorR, fogColorG, fogColorB)
     endif
-   
-    if test = 1
-        SET MATRIX WIREFRAME ON MAT_Ground
-        SET MATRIX WIREFRAME ON MAT_Water
-    endif
-   
-   
+      
     rem Water movement
-    rem TODO: wasser soll sich langsamer bewegen, aber das ist schwierig. wenn man die bewegung nur zu bestimmten ticks
-    rem       durchführt, dann ruckelt es.
     waterdir = (waterdir + 1) mod 360;
     watermov = 0 + cos(waterdir)*waterMovementMaxDistance
     position matrix MAT_Water, watermov, waterLevel, watermov
@@ -502,84 +597,112 @@ _handle_enemies:
     pX# = Camera Position X()
     pZ# = Camera Position Z()
     
-    rem TODO: gegner sollen sich nicht überschneiden
+    if stage = 3
     
-    for t = 0 to cMaxEnemies-1
-        eX# = Object Position X(OBJ_Monster_Base+t)
-        eY# = Object Position Y(OBJ_Monster_Base+t)
-        eZ# = Object Position Z(OBJ_Monster_Base+t)
-       
-        eRX# = Object Angle X(OBJ_Monster_Base+t)
-        eRY# = Object Angle Y(OBJ_Monster_Base+t)
-        eRZ# = Object Angle Z(OBJ_Monster_Base+t)
-       
-        deltaX# = pX#-eX#
-        deltaZ# = pZ#-eZ#
+        rem TODO: gegner sollen sich nicht überschneiden
+        
+        underAttack = 0        
+        for t = 0 to cMaxEnemies-1
+            rem rx# = object position x(OBJ_Monster_Base+t)
+            rem ry# = object position y(OBJ_Monster_Base+t)
+            rem rz# = object position z(OBJ_Monster_Base+t)
+            rem if IsInCircle3D(rx#, ry#, rz#, X#, Y#, Z#, scorpCollissionZ#) = 1
+            dx# = abs(object position x(OBJ_Monster_Base+t) - camera position x())
+            dy# = abs(object position y(OBJ_Monster_Base+t) - camera position y())
+            dz# = abs(object position z(OBJ_Monster_Base+t) - camera position z())
+            if dx# < scorpCollissionX# and dy# < scorpCollissionY# and dz# < scorpCollissionZ#
+                collcounter = collcounter + 1
+                underAttack = underAttack + 1
+            endif
 
-        rem TODO: cor file
-        yPosOffset# = 20
-        
-        dist# = sqrt( deltaX#*deltaX# + deltaZ#*deltaZ# )
-        
-        if clockSeconds > 1
-            if not sound playing(SFX_Monster_Base+t)
-                set sound volume SFX_Monster_Base+t, 0
+            eX# = Object Position X(OBJ_Monster_Base+t)
+            eY# = Object Position Y(OBJ_Monster_Base+t)
+            eZ# = Object Position Z(OBJ_Monster_Base+t)
+           
+            eRX# = Object Angle X(OBJ_Monster_Base+t)
+            eRY# = Object Angle Y(OBJ_Monster_Base+t)
+            eRZ# = Object Angle Z(OBJ_Monster_Base+t)
+           
+            deltaX# = pX#-eX#
+            deltaZ# = pZ#-eZ#
+    
+            rem TODO: cor file
+            yPosOffset# = 20
+            
+            dist# = sqrt( deltaX#*deltaX# + deltaZ#*deltaZ# )
+            
+            if stage = 3
+                if not sound playing(SFX_Monster_Base+t)
+                    set sound volume SFX_Monster_Base+t, 0
+                    
+                    rem TODO: beliebiges startoffset?
+                    loop sound SFX_Monster_Base+t
+                endif
+            endif
+            
+            rem The mixing of 3dsound is bullshit (too loud from far distance, and not very loud on close distance),
+            rem so we mix the volume ourself
+            if sound3dVolumeCor>0 and dist#<sound3dVolumeCor then set sound volume SFX_Monster_Base+t, (1-(dist#/sound3dVolumeCor))*100
+            
+            rem TODO: 100 dynamisch machen
+            rem at least a distance of 10 so that atanfull() does not bug, when deltas becomes 0
+            rem Verhindern, dass der Skorpion in einem "drin" steht. Er soll mit den Scheren angreifen
+            scorpMinDistance = 100
+            
+            if dist# > scorpMinDistance
+                if dist# < enemy(t).AwarenessRadius
+                    enemy(t).Angle = atanfull(deltaX#, deltaZ#)
+                    enemy(t).Angle = WrapValue(enemy(t).Angle+180)
+                    enemy(t).CurSpeed = enemy(t).MaxSpeed
+                else
+                    if enemy(t).WalkTimeout <= 0
+                        enemy(t).WalkTimeout = RndBetween(enemy(t).WalkTimeoutMin, enemy(t).WalkTimeoutMax)
+                        enemy(t).Angle = RndBetween(0,359)
+                        enemy(t).CurSpeed = RndBetween(0, enemy(t).MaxSpeed)
+                    ENDIF
+                    enemy(t).WalkTimeout = enemy(t).WalkTimeout - 1
+                endif
                 
-                rem TODO: beliebiges startoffset?
-                loop sound SFX_Monster_Base+t
-            endif
-        endif
-        
-        rem The mixing of 3dsound is bullshit (too loud from far distance, and not very loud on close distance),
-        rem so we mix the volume ourself
-        if sound3dVolumeCor>0 and dist#<sound3dVolumeCor then set sound volume SFX_Monster_Base+t, (1-(dist#/sound3dVolumeCor))*100
-        
-        rem TODO: 100 dynamisch machen
-        rem at least a distance of 10 so that atanfull() does not bug, when deltas becomes 0
-        rem Verhindern, dass der Skorpion in einem "drin" steht. Er soll mit den Scheren angreifen
-        scorpMinDistance = 100
-        
-        if dist# > scorpMinDistance
-            if dist# < enemy(t).AwarenessRadius
-                enemy(t).Angle = atanfull(deltaX#, deltaZ#)
-                enemy(t).Angle = WrapValue(enemy(t).Angle+180)
-                enemy(t).CurSpeed = enemy(t).MaxSpeed
-            else
-                if enemy(t).WalkTimeout <= 0
-                    enemy(t).WalkTimeout = RndBetween(enemy(t).WalkTimeoutMin, enemy(t).WalkTimeoutMax)
-                    enemy(t).Angle = RndBetween(0,359)
-                    enemy(t).CurSpeed = RndBetween(0, enemy(t).MaxSpeed)
-                ENDIF
-                enemy(t).WalkTimeout = enemy(t).WalkTimeout - 1
-            endif
-            
-            if enemy(t).CurSpeed = 0
-                gosub scorpChangeToIdle
-            else
-                gosub scorpChangeToWalk
-                rem TODO: also make animation slower/faster
-            endif
-
-            a# = WrapValue(enemy(t).Angle + 180)
-            XTest# = Newxvalue(eX#, a#, enemy(t).CurSpeed)
-            ZTest# = Newzvalue(eZ#, a#, enemy(t).CurSpeed)
-            if XTest# > 0 and XTest# < cMapSizeX then eX# = XTest#
-            if ZTest# > 0 and ZTest# < cMapSizeZ then eZ# = ZTest#
-            if XTest# <= 0 or XTest# >= cMapSizeX or ZTest# <= 0 or ZTest# >= cMapSizeZ
-                rem Kehrtwende, um den Kartenrand zu verlassen
-                enemy(t).Angle = WrapValue(enemy(t).Angle+180)
-                enemy(t).WalkTimeout = RndBetween(enemy(t).WalkTimeoutMin, enemy(t).WalkTimeoutMax)
-                enemy(t).CurSpeed = RndBetween(0, enemy(t).MaxSpeed)
-            endif
+                if enemy(t).CurSpeed = 0
+                    gosub scorpChangeToIdle
+                else
+                    gosub scorpChangeToWalk
+                    rem TODO: also make animation slower/faster
+                endif
     
-            eY# = floorHeight#(eX#, eZ#) + yPosOffset#
-            Position Object OBJ_Monster_Base+t, eX#, eY#, eZ#
-            Position Sound SFX_Monster_Base+t, eX#, eY#, eZ#
-            
-            eRY# = smoothRotate#(eRY#, enemy(t).Angle, enemyRotateSmoothness)
-            rotate object OBJ_Monster_Base+t, eRX#, eRY#, eRZ#
-        endif
-    next
+                a# = WrapValue(enemy(t).Angle + 180)
+                XTest# = Newxvalue(eX#, a#, enemy(t).CurSpeed)
+                ZTest# = Newzvalue(eZ#, a#, enemy(t).CurSpeed)
+                if XTest# > 0 and XTest# < cMapSizeX then eX# = XTest#
+                if ZTest# > 0 and ZTest# < cMapSizeZ then eZ# = ZTest#
+                if XTest# <= 0 or XTest# >= cMapSizeX or ZTest# <= 0 or ZTest# >= cMapSizeZ
+                    rem Kehrtwende, um den Kartenrand zu verlassen
+                    enemy(t).Angle = WrapValue(enemy(t).Angle+180)
+                    enemy(t).WalkTimeout = RndBetween(enemy(t).WalkTimeoutMin, enemy(t).WalkTimeoutMax)
+                    enemy(t).CurSpeed = RndBetween(0, enemy(t).MaxSpeed)
+                endif
+        
+                eY# = floorHeight#(eX#, eZ#) + yPosOffset#
+                Position Object OBJ_Monster_Base+t, eX#, eY#, eZ#
+                Position Sound SFX_Monster_Base+t, eX#, eY#, eZ#
+                
+                eRY# = smoothRotate#(eRY#, enemy(t).Angle, enemyRotateSmoothness)
+                rotate object OBJ_Monster_Base+t, eRX#, eRY#, eRZ#
+            endif
+        next
+    endif
+
+    if underAttack = 0
+        collcounter = collcounter - 1
+        if collcounter < 0 then collcounter = 0
+    endif
+        
+    if collcounter >= HitInterval
+        collcounter = 0
+        inc hits, 1
+        gosub _play_attack_sound
+    endif
+    rem print "Hits: ", hits    
 return
 
 #constant GROUNDTYPE_AIR 0
@@ -604,125 +727,128 @@ _handle_player:
     set cursor 0, 0
     oldcAY# = cAY#
     oldcAX# = cAX#
-       
-    X# = camera position x()
-    Y# = camera position y()
-    Z# = camera position z()
-
-    if invertMouse = 1
-        cAX# = WrapValue(cAX# - MousemoveY() * 0.2)
-    else
-        cAX# = WrapValue(cAX# + MousemoveY() * 0.2)
-    endif
-    cAY# = WrapValue(cAY# + MousemoveX() * 0.2)
-    cAZ# = Camera angle Z()   
-
-    rem Sprungroutine
-    rem TODO: + Anlaufsprung
-   
-    JumpKeyStateNow=jumpPressed()
-    if (JumpKeyStatePrev=0) and (JumpKeyStateNow=1)
-        gosub PressJumpKey
-    ENDIF
-    if (JumpKeyStatePrev=1) and (JumpKeyStateNow=0)
-        gosub ReleaseJumpKey
-    ENDIF
-    JumpKeyStatePrev = JumpKeyStateNow
-    gosub JumpUpdate
-       
-    rem Laufen
-    speedboost# = 1
     
-    gt = groundType(onGround, waterLevel)
+    if (stage <> 0) and (stage <> 2)
+           
+        X# = camera position x()
+        Y# = camera position y()
+        Z# = camera position z()
     
-    if upPressed()+downPressed()+leftPressed()+rightPressed() = 0
-        runEnergy# = runEnergy# + 2
-        stop sound SFX_Walk_Earth
-        stop sound SFX_Walk_Water
-    else
-        if gt = GROUNDTYPE_EARTH
-            stop sound SFX_Walk_Water
-            if not sound playing(SFX_Walk_Earth)
-                   loop sound SFX_Walk_Earth
-            endif
+        if invertMouse = 1
+            cAX# = WrapValue(cAX# - MousemoveY() * 0.2)
+        else
+            cAX# = WrapValue(cAX# + MousemoveY() * 0.2)
         endif
-        if gt = GROUNDTYPE_WATER
-            stop sound SFX_Walk_Earth
-            if not sound playing(SFX_Walk_Water)
-                   loop sound SFX_Walk_Water
-            endif
-        endif
-        if gt = GROUNDTYPE_AIR
+        cAY# = WrapValue(cAY# + MousemoveX() * 0.2)
+        cAZ# = Camera angle Z()   
+    
+        rem Sprungroutine
+        rem TODO: + Anlaufsprung
+       
+        JumpKeyStateNow=jumpPressed()
+        if (JumpKeyStatePrev=0) and (JumpKeyStateNow=1)
+            gosub PressJumpKey
+        ENDIF
+        if (JumpKeyStatePrev=1) and (JumpKeyStateNow=0)
+            gosub ReleaseJumpKey
+        ENDIF
+        JumpKeyStatePrev = JumpKeyStateNow
+        gosub JumpUpdate
+           
+        rem Laufen
+        speedboost# = 1
+        
+        gt = groundType(onGround, waterLevel)
+        
+        if upPressed()+downPressed()+leftPressed()+rightPressed() = 0
+            runEnergy# = runEnergy# + 2
             stop sound SFX_Walk_Earth
             stop sound SFX_Walk_Water
-        endif
-        energyChanged = 0
-        if ShiftKey()+ControlKey() = 1 : rem shift+control at the same time = walk normal
-            rem TODO: es ruckelt trotzdem noch
-            if ControlKey()=1 and runEnergy#>0 : rem Energy >1 , damit es nicht ruckelt (run-walk-run-walk-run-walk) . 3 = walk regain
-                speedboost# = 2
-                runEnergy# = runEnergy# - 1
-                energyChanged = 1
+        else
+            if gt = GROUNDTYPE_EARTH
+                stop sound SFX_Walk_Water
+                if not sound playing(SFX_Walk_Earth)
+                       loop sound SFX_Walk_Earth
+                endif
             endif
-            if ShiftKey()=1
-                speedboost# = 0.5
-                runEnergy# = runEnergy# + 0.5
-                energyChanged = 1
+            if gt = GROUNDTYPE_WATER
+                stop sound SFX_Walk_Earth
+                if not sound playing(SFX_Walk_Water)
+                       loop sound SFX_Walk_Water
+                endif
+            endif
+            if gt = GROUNDTYPE_AIR
+                stop sound SFX_Walk_Earth
+                stop sound SFX_Walk_Water
+            endif
+            energyChanged = 0
+            if ShiftKey()+ControlKey() = 1 : rem shift+control at the same time = walk normal
+                rem TODO: es ruckelt trotzdem noch
+                if ControlKey()=1 and runEnergy#>0 : rem Energy >1 , damit es nicht ruckelt (run-walk-run-walk-run-walk) . 3 = walk regain
+                    speedboost# = 2
+                    runEnergy# = runEnergy# - 1
+                    energyChanged = 1
+                endif
+                if ShiftKey()=1
+                    speedboost# = 0.5
+                    runEnergy# = runEnergy# + 0.5
+                    energyChanged = 1
+                endif
+            endif
+            if not energyChanged then runEnergy# = runEnergy# + 1
+            if upPressed()
+                XTest# = Newxvalue(X#, cAY#, 7*speedboost#)
+                ZTest# = Newzvalue(Z#, cAY#, 7*speedboost#)
+                gosub _WorldBoundCheck
+            endif
+            if downPressed()
+                XTest# = Newxvalue(X#, Wrapvalue(cAY# - 180), 5*(speedboost#/2))
+                ZTest# = Newzvalue(Z#, Wrapvalue(cAY# - 180), 5*(speedboost#/2))
+                gosub _WorldBoundCheck
+            endif
+            if leftPressed()
+                XTest# = Newxvalue(X#, Wrapvalue(cAY# - 90), 5*(speedboost#/1.3))
+                ZTest# = Newzvalue(Z#, Wrapvalue(cAY# - 90), 5*(speedboost#/1.3))
+                gosub _WorldBoundCheck
+            endif
+            if rightPressed()
+                XTest# = Newxvalue(X#, Wrapvalue(cAY# + 90), 5*(speedboost#/1.3))
+                ZTest# = Newzvalue(Z#, Wrapvalue(cAY# + 90), 5*(speedboost#/1.3))
+                gosub _WorldBoundCheck
             endif
         endif
-        if not energyChanged then runEnergy# = runEnergy# + 1
-        if upPressed()
-            XTest# = Newxvalue(X#, cAY#, 7*speedboost#)
-            ZTest# = Newzvalue(Z#, cAY#, 7*speedboost#)
-            gosub _WorldBoundCheck
-        endif
-        if downPressed()
-            XTest# = Newxvalue(X#, Wrapvalue(cAY# - 180), 5*(speedboost#/2))
-            ZTest# = Newzvalue(Z#, Wrapvalue(cAY# - 180), 5*(speedboost#/2))
-            gosub _WorldBoundCheck
-        endif
-        if leftPressed()
-            XTest# = Newxvalue(X#, Wrapvalue(cAY# - 90), 5*(speedboost#/1.3))
-            ZTest# = Newzvalue(Z#, Wrapvalue(cAY# - 90), 5*(speedboost#/1.3))
-            gosub _WorldBoundCheck
-        endif
-        if rightPressed()
-            XTest# = Newxvalue(X#, Wrapvalue(cAY# + 90), 5*(speedboost#/1.3))
-            ZTest# = Newzvalue(Z#, Wrapvalue(cAY# + 90), 5*(speedboost#/1.3))
-            gosub _WorldBoundCheck
-        endif
-    endif
-    if runEnergy# > maxRunEnergy then runEnergy# = maxRunEnergy
+        if runEnergy# > maxRunEnergy then runEnergy# = maxRunEnergy
+        
+        runEnergyPercent# = runEnergy#*100.0/maxRunEnergy
+        print "Run Energy: ", Floor(runEnergyPercent#), "%"
     
-    runEnergyPercent# = runEnergy#*100.0/maxRunEnergy
-    print "Run Energy: ", Floor(runEnergyPercent#), "%"
-
-    Rem Rotate camera
-    cTestX# = WrapValue(cAX# - 180)
-    if cTestX# > 225 then cAX# = 45
-    if cTestX# < 135 then cAX# = 315
-    YRotate camera CurveAngle(cAY#, oldcAY#, 24)
-    XRotate camera CurveAngle(cAX#, oldcAX#, 24)
-
-    Rem Position Camera
-    if onGround=1
-        Y#=floorHeight#(X#, Z#)
-    else
-        Y#=JumpPosition#
-    ENDIF
-    inc Y#, playerEyeHeight#
-    Position Camera X#, Y#, Z#
-
-    Rem Position Listener
-    Position Listener X#, Y#, Z#
-    Rotate Listener 0, cAY#, 0   : rem todo warum 0 statt cAZ# etc ?
-
-    rem if onGround = 0
-    rem     jumpheight#=Y#-FloorHeight#(X#,Z#)
-    rem else
-    rem     jumpheight#=0
-    rem endif
-
+        Rem Rotate camera
+        cTestX# = WrapValue(cAX# - 180)
+        if cTestX# > 225 then cAX# = 45
+        if cTestX# < 135 then cAX# = 315
+        YRotate camera CurveAngle(cAY#, oldcAY#, 24)
+        XRotate camera CurveAngle(cAX#, oldcAX#, 24)
+    
+        Rem Position Camera
+        if onGround=1
+            Y#=floorHeight#(X#, Z#)
+        else
+            Y#=JumpPosition#
+        ENDIF
+        inc Y#, playerEyeHeight#
+        Position Camera X#, Y#, Z#
+    
+        Rem Position Listener
+        Position Listener X#, Y#, Z#
+        Rotate Listener 0, cAY#, 0   : rem todo warum 0 statt cAZ# etc ?
+    
+        rem if onGround = 0
+        rem     jumpheight#=Y#-FloorHeight#(X#,Z#)
+        rem else
+        rem     jumpheight#=0
+        rem endif
+    endif
+    
 return    
 
 _WorldBoundCheck:
@@ -731,29 +857,37 @@ _WorldBoundCheck:
 return
     
 _update_trees:
-    if (ceil(X#) mod 10 = 0) or (ceil(Z#) mod 10 = 0) or (sceneInitialized=0)
+    if (ceil(X#) mod 10 = 0) or (ceil(Z#) mod 10 = 0) or (stage<>prevTreeStage)
         for t = 0 to cMaxTrees-1
-            rx = tree(t).x
-            rz = tree(t).z
-            incircle = IsInCircle(rx, rz, X#, Z#, camerarange)
-            rem incircle = IsInCircle(rx, rz, X#, Z#, fogdistance)
+            rx# = tree(t).x
+            rz# = tree(t).z
+            if stage = 3
+                rem Large forest (extending automatically)
+                incircle = IsInCircle(rx#, rz#, X#, Z#, camerarange)
+                rem incircle = IsInCircle(rx#, rz#, X#, Z#, fogdistance)
+            else
+                rem Tiny forest around tent (stay fixed)
+                incircle = IsInCircle(rx#, rz#, object position x(OBJ_TENT), object position z(OBJ_TENT), camerarange*stage1TinyForestFactor#)
+                rem incircle = IsInCircle(rx#, rz#, object position x(OBJ_TENT), object position z(OBJ_TENT), fogdistance*stage1TinyForestFactor#)
+            endif
             if incircle <> tree(t).drawn
                 if incircle = 1
                     if object exist(OBJ_Tree_Base+t)
                         show object OBJ_Tree_Base+t
                     else
                         make object OBJ_Tree_Base+t, MSH_TreeTemplate, IMG_Tree
-                        position object OBJ_Tree_Base+t, rx, floorHeight#(rx, rz)+190, rz
+                        position object OBJ_Tree_Base+t, rx#, floorHeight#(rx#, rz#)+190, rz#
                         set object OBJ_Tree_Base+t, 1, 1, 0
                         rotate object OBJ_Tree_Base+t, 0, RndBetween(0,359), 0
                     endif
                 else
                     delete object OBJ_Tree_Base+t
                     rem hide object OBJ_Tree_Base+t
-                endif 
+                endif
             ENDIF      
             tree(t).drawn = incircle
         next t
+        prevTreeStage = stage
     endif
 return
 
@@ -777,53 +911,55 @@ _handle_radar:
     endif
     rem Bäume
     for t = 0 to cMaxTrees-1
-        if tree(t).drawn
-            x = tree(t).x
-            y = tree(t).z
+        if tree(t).drawn = 1
+            x# = tree(t).x
+            y# = tree(t).z
 
-            x0 = camera position x()
-            y0 = camera position z()
-            ang = camera angle y()
-            tx = x0 + (x-x0)*cos(ang) - (y-y0)*sin(ang)
-            ty = y0 + (x-x0)*sin(ang) + (y-y0)*cos(ang)
-            x = tx
-            y = ty
+            x0# = camera position x()
+            y0# = camera position z()
+            ang# = camera angle y()
+            tx# = x0# + (x#-x0#)*cos(ang#) - (y#-y0#)*sin(ang#)
+            ty# = y0# + (x#-x0#)*sin(ang#) + (y#-y0#)*cos(ang#)
+            x# = tx#
+            y# = ty#
             
-            x = (x / 62.5) + 7.5
-            y = screen height() - 7.5 - (y / 62.5)
+            x# = (x# / 62.5) + 7.5
+            y# = screen height() - 7.5 - (y# / 62.5)
             
             rem ink rgb(0, radarpointcolor, 0), 0
             ink rgb(0, 50, 0), 0
-            circle x, y, 1
-            circle x, y, 0
+            circle x#, y#, 1
+            circle x#, y#, 0
         endif
     next i
     rem Player
-    x = (X# / 62.5) + 7.5
-    y = screen height() - 7.5 - (Z# / 62.5)
+    x# = (X# / 62.5) + 7.5
+    y# = screen height() - 7.5 - (Z# / 62.5)
     ink rgb(0, 0, radarpointcolor), 0
-    circle x, y, 1
-    circle x, y, 0
+    circle x#, y#, 1
+    circle x#, y#, 0
     rem Enemies
-    for t = 0 to cMaxEnemies-1
-        x = object position x(OBJ_Monster_Base+t)
-        y = object position z(OBJ_Monster_Base+t)
-        
-        x0 = camera position x()
-        y0 = camera position z()
-        ang = camera angle y()
-        tx = x0 + (x-x0)*cos(ang) - (y-y0)*sin(ang)
-        ty = y0 + (x-x0)*sin(ang) + (y-y0)*cos(ang)
-        x = tx
-        y = ty
-        
-        x = (x / 62.5) + 7.5
-        y = screen height() - 7.5 - (y / 62.5)
-        
-        ink rgb(radarpointcolor, 0, 0), 0
-        circle x, y, 1
-        circle x, y, 0
-    next
+    if stage = 3
+        for t = 0 to cMaxEnemies-1
+            x# = object position x(OBJ_Monster_Base+t)
+            y# = object position z(OBJ_Monster_Base+t)
+            
+            x0# = camera position x()
+            y0# = camera position z()
+            ang# = camera angle y()
+            tx# = x0# + (x#-x0#)*cos(ang#) - (y#-y0#)*sin(ang#)
+            ty# = y0# + (x#-x0#)*sin(ang#) + (y#-y0#)*cos(ang#)
+            x# = tx#
+            y# = ty#
+            
+            x# = (x# / 62.5) + 7.5
+            y# = screen height() - 7.5 - (y# / 62.5)
+            
+            ink rgb(radarpointcolor, 0, 0), 0
+            circle x#, y#, 1
+            circle x#, y#, 0
+        next
+    endif
 return
 
 _draw_trees:
@@ -957,9 +1093,11 @@ _handleClock:
         clockCurrentMidDot = 1 - clockCurrentMidDot
     endif
     
-    rem TODO: for some reason, clockSpeedFactor cannot be very high, probably we cannot go faster than the framerate, otherwise we need to add more than +1 to seconds???
-    if mod(clockTickCounter*clockSpeedFactor, clockTicksPerSecond) = 0
-        clockSeconds = (clockSeconds + 1) mod (24*60*60)
+    if stage = 3
+        rem TODO: for some reason, clockSpeedFactor cannot be very high, probably we cannot go faster than the framerate, otherwise we need to add more than +1 to seconds???
+        if mod(clockTickCounter*clockSpeedFactor, clockTicksPerSecond) = 0
+            clockSeconds = clockSeconds + clockSecondsAdvance
+        endif
     endif
     
     gosub _printClock
@@ -986,12 +1124,23 @@ _create_floor:
     prepare matrix texture MAT_Ground, IMG_ForestFloor, 1, 1
     fill matrix MAT_Ground, 0, 1
     set matrix MAT_Ground, 0, 0, 1, 1, 1, 1, 1
-    randomize matrix MAT_Ground, 130
     
-    rem TEST
-    rem TODO: aber man kann 40,40 nicht updaten?!
-    rem set matrix height MAT_Ground, 10, 10, 1000
-    
+    repeat
+        randomize matrix MAT_Ground, 130
+        update matrix MAT_Ground    
+        
+        tentIsDry = 1
+        if floorHeight#(cMapSizeX / 2 - tentDryRadius, cMapSizeZ / 2 - tentDryRadius) <= waterLevel then tentIsDry = 0
+        if floorHeight#(cMapSizeX / 2                , cMapSizeZ / 2 - tentDryRadius) <= waterLevel then tentIsDry = 0
+        if floorHeight#(cMapSizeX / 2 + tentDryRadius, cMapSizeZ / 2 - tentDryRadius) <= waterLevel then tentIsDry = 0
+        if floorHeight#(cMapSizeX / 2 - tentDryRadius, cMapSizeZ / 2                ) <= waterLevel then tentIsDry = 0
+        if floorHeight#(cMapSizeX / 2                , cMapSizeZ / 2                ) <= waterLevel then tentIsDry = 0
+        if floorHeight#(cMapSizeX / 2 + tentDryRadius, cMapSizeZ / 2                ) <= waterLevel then tentIsDry = 0
+        if floorHeight#(cMapSizeX / 2 - tentDryRadius, cMapSizeZ / 2 + tentDryRadius) <= waterLevel then tentIsDry = 0
+        if floorHeight#(cMapSizeX / 2                , cMapSizeZ / 2 + tentDryRadius) <= waterLevel then tentIsDry = 0
+        if floorHeight#(cMapSizeX / 2 + tentDryRadius, cMapSizeZ / 2 + tentDryRadius) <= waterLevel then tentIsDry = 0
+    until tentIsDry = 1
+        
     update matrix MAT_Ground
     
     remstart
@@ -1074,11 +1223,22 @@ _printClock:
     endif
     print "Time: ", TwoDigit$(mod(hours,24)), middle$, TwoDigit$(mod(mind,60)), secsText$
 
-    middle$ = ":"
-    mind = surviveTill/60
-    hours = mind/60
-    secsText$ = ""
-    print "Survive till ", TwoDigit$(mod(hours,24)), middle$, TwoDigit$(mod(mind,60)), secsText$
+    if stage = 1
+        print "Rest in the tent!"
+    else
+        if stage = 3
+            middle$ = ":"
+            surviveTill = (stage4ClockStart*60*60) mod (24*60*60)
+            mind = surviveTill/60
+            hours = mind/60
+            secsText$ = ""
+            print "Survive till ", TwoDigit$(mod(hours,24)), middle$, TwoDigit$(mod(mind,60)), secsText$
+        else
+            if stage = 4
+                print "You survived! Escape from the forest!"
+            endif
+        endif
+    endif
 return
 
 rem Rotate smooth, and rotate in the direction with the lowest distance
@@ -1145,18 +1305,31 @@ function RndBetween(a,b)
     ret = a+Rnd(b-a)
 ENDFUNCTION ret
 
-function isInCircle(pX#,pY#,cX#,cY#,cR#)
-    ret = sqrt( (pX#-cX#)*(pX#-cX#) + (pY#-cY#)*(pY#-cY#) ) <= cR#
+function isInCircle(pX#,pZ#,cX#,cZ#,cR#)
+    ret = sqrt( (pX#-cX#)*(pX#-cX#) + (pZ#-cZ#)*(pZ#-cZ#) ) <= cR#
+ENDFUNCTION ret
+
+function isInCircle3D(pX#,pY#,pZ#,cX#,cY#,cZ#,cR#)
+    ret = sqrt( (pX#-cX#)*(pX#-cX#) + (pY#-cY#)*(pY#-cY#) + (pZ#-cZ#)*(pZ#-cZ#) ) <= cR#
 ENDFUNCTION ret
 
 _stop_game_sounds:
+    gosub _stop_game_sounds_keep_music
+    Stop Sound SFX_TitleMusic
+    rem Stop Sound SFX_PauseMusic
+    Stop Sound SFX_DeathScreen
+    rem Stop Sound SFX_WinScreen
+return
+
+_stop_game_sounds_keep_music:
     Stop Sound SFX_ForestBG
-    Stop Sound SFX_PauseMusic
     Stop Sound SFX_Walk_Earth
     Stop Sound SFX_Walk_Water
-    for t = 0 to cMaxEnemies-1
-        Stop Sound SFX_Monster_Base+t
-    next t
+    if stage >= 3
+        for t = 0 to cMaxEnemies-1
+            Stop Sound SFX_Monster_Base+t
+        next t
+    endif
 return
 
 type treeType
@@ -1216,7 +1389,7 @@ function resizeImage(image as dword, width as dword, height as dword)
     make memblock from image MEM_ResizeSrc, image
     size = call dll(DLL_Resize32, "DestSize", get memblock ptr(MEM_ResizeSrc), width, height)
 
-    rem TODO: Also allow 16bit color depth
+    rem TODO: Also allow 16bit color depth in Resize32.dll
     if size > 0
         make memblock MEM_ResizeDest, size
         call dll DLL_Resize32, "Resize", get memblock ptr(MEM_ResizeSrc), get memblock ptr(MEM_ResizeDest), width, height
