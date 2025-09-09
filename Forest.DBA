@@ -1,5 +1,5 @@
 rem Nightmare Forest by Daniel Marschall
-rem Revision: 07 Sep 2025
+rem Revision: 09 Sep 2025
 
 rem ----------------------------------------------------------------
 
@@ -38,8 +38,8 @@ rem MapGen32:
 rem - Wegbreite konfigurierbar machen (INI)
 
 rem Nit picking:
-rem - Trees have a redish shine at dawn?? why?
-rem - Tree partial transparency
+rem - Tree transparent edges are so ugly, as it lets you look through other trees, which makes no sense! PNG did not help.
+rem - Trees have a redish shine at dawn?? why? ambient light?
 rem - wenn man auf einem baum landet, kann man von dort aus nicht springen, und glitched manchmal auf dem boden
 rem   ... scheinbar ist die jumpheight = 0 dann!
 
@@ -224,36 +224,17 @@ rem text 28, 550, "Starting game..."
 
 randomize timer()
 
-rem Working variables ONLY
-JumpKeyStatePrev = 0
-JumpPosition# = 0.0
-onGround = 1
-velocityY# = 0.0
-runEnergy# = maxRunEnergy
-prevTreeStage = -1
-stage = 0
-clockSeconds = -1
-collcounter# = 0.0
-hits = 0
-LastAttackSound = 0
-fogColorR = 0
-fogColorG = 0
-fogColorB = 0
-radarpointcolor = 150
-underAttack = 0
-attackHudColorStrength = 0
-
 draw to front
 
+gosub _init_working_variables
 gosub _setup_camera
 gosub _create_floor
-gosub _setup_player_position
-gosub _create_trees
-gosub _draw_trees
+gosub _create_tent
+gosub _create_trees : rem Requires tent to be created
 gosub _create_water
-rem TODO: removed radar for now, because it has a lot of problems
-rem gosub _create_radar
-gosub _setupClock
+gosub _create_radar
+
+gosub _draw_trees
 
 load sound FN_SFX_ForestBG,        SFX_ForestBG
 load sound FN_SFX_Walk_Earth,      SFX_Walk_Earth
@@ -284,8 +265,7 @@ do
     gosub _handle_player
     gosub _update_trees
     gosub _handle_stage
-    rem TODO: removed radar for now, because it has a lot of problems
-    rem gosub _handle_radar
+    gosub _handle_radar
     gosub _handle_enemies
     gosub _handleClock
     gosub _update_hud
@@ -300,6 +280,29 @@ do
 loop
 
 rem ----------------------------------------------------------------
+
+_init_working_variables:
+    JumpKeyStatePrev = 0
+    JumpPosition# = 0.0
+    onGround = 1
+    velocityY# = 0.0
+    runEnergy# = maxRunEnergy
+    prevTreeStage = -1
+    stage = 0
+    clockSeconds = -1
+    collcounter# = 0.0
+    hits = 0
+    LastAttackSound = 0
+    fogColorR = 0
+    fogColorG = 0
+    fogColorB = 0
+    radarpointcolor = 150
+    underAttack = 0
+    attackHudColorStrength = 0
+    clockTickCounter=0
+    clockCurrentMidDot=0
+    clockTicksPerSecond = maxFramerate
+return
 
 _show_legend:
     LoadImageFullscreen(FN_GFX_TitleScreen, IMG_TitleScreen)
@@ -393,6 +396,7 @@ return
 _handle_stage:
     if stage = 0
         stage = 1
+        gosub _setup_player_position
         clockSeconds = stage1ClockStart*60*60
         rem Move the camera so we can see the tiny forest; TODO: we could end up at a tree!
         move camera -stage1Distance#
@@ -460,9 +464,9 @@ return
 _destroy_enemies:
     for t = 0 to cMaxEnemies-1
        Delete Object OBJ_Monster_Base+t
-    next
-    for t = 0 to cMaxEnemies-1
-        Stop Sound SFX_Monster_Base+t
+       Stop Sound SFX_Monster_Base+t
+       Delete Sound SFX_Monster_Base+t
+       enemy(t).IsAttacking = 0
     next t
     underAttack = 0
 return
@@ -511,9 +515,16 @@ _deathscreen:
     sync
     
     Sleep 7*1000
-    
-    rem TODO: alternatively, start the game from beginning? (but might need some attention regarding initialization of variables/objects/sounds etc.)
-    goto _exit    
+
+    rem We could either exit the game ...
+    rem goto _exit
+
+    rem ... or continue another round
+    Disable EscapeKey
+    gosub _destroy_enemies
+    gosub _init_working_variables
+    gosub _stop_game_sounds
+    loop sound SFX_TitleMusic
 return
 
 _winscreen:
@@ -534,8 +545,16 @@ _winscreen:
     
     Sleep 7*1000
     
-    rem TODO: alternatively, start the game from beginning? (but might need some attention regarding initialization of variables/objects/sounds etc.)
+    rem We could either exit the game ...
     goto _exit
+
+    rem ... or continue another round
+    remstart
+    Disable EscapeKey
+    gosub _init_working_variables
+    gosub _stop_game_sounds
+    loop sound SFX_TitleMusic
+    remend
 return
 
 _setup_camera:
@@ -544,18 +563,17 @@ _setup_camera:
     Autocam off
 return
 
-_setup_player_position:
-    X# = cMapSizeX / 2
-    Y# = floorHeight#(X#, Z#) + playerEyeHeight
-    Z# = cMapSizeZ / 2
-    position camera X#, Y#, Z#
-    
+_create_tent:
+    tentX# = cMapSizeX / 2 + tentMoveY
+    tentZ# = cMapSizeZ / 2 + tentMoveZ
+    tentY# = floorHeight#(tentX#, tentZ#) + tentMoveY
+
     Load object FN_OBJ_Tent, OBJ_Tent
     show object OBJ_Tent
     scale object OBJ_Tent, tentSizeX, tentSizeY, tentSizeZ
     rotate object  OBJ_TENT, tentRotateX, tentRotateY, tentRotateZ
-    position object OBJ_Tent, X#+tentMoveX, floorHeight#(X#, Z#)+tentMoveY, Z#+tentMoveZ
-
+    position object OBJ_Tent, tentX#, tentY#, tentZ#
+    
     rem TODO: for some reason, the tent does not react to light. the scorpions do, but the trees, tent, and floor do not. why?!
     remstart
     set ambient light 50
@@ -568,6 +586,13 @@ _setup_player_position:
     set light range 1,3000
     show light 1
     remend
+return
+
+_setup_player_position:
+    X# = cMapSizeX / 2
+    Y# = floorHeight#(X#, Z#) + playerEyeHeight
+    Z# = cMapSizeZ / 2
+    position camera X#, Y#, Z#    
 return
 
 _handle_weather:
@@ -934,6 +959,9 @@ _update_trees:
 return
 
 _handle_radar:
+    rem TODO: removed radar for now, because it has a lot of problems
+
+    remstart
     rem Leuchtpunkt
     if radarpointrev = 0
         inc radarpointcolor, 3
@@ -999,6 +1027,7 @@ _handle_radar:
             circle x#, y#, 0
         next
     endif
+    remend
 return
 
 _draw_trees:
@@ -1057,6 +1086,17 @@ return
 _create_enemies:
     dim enemy(cMaxEnemies-1) as enemyType
     for t = 0 to cMaxEnemies-1
+        enemy(t).Speed = 0.0
+        enemy(t).WalkTimeout = 0.0
+        enemy(t).WalkTimeoutMin = 0.0
+        enemy(t).WalkTimeoutMax = 0.0
+        enemy(t).AwarenessRadius = 0.0
+        enemy(t).CurSpeed = 0.0
+        enemy(t).MaxSpeed = 0.0
+        enemy(t).Angle = 0.0
+        enemy(t).CurrentAnim = 0.0
+        enemy(t).IsAttacking = 0
+
         if t=0
             rem NOTE: 3DSound requires Mono audio!
             Load 3Dsound FN_SFX_ScorpWalk, SFX_Monster_Base+t
@@ -1115,13 +1155,6 @@ scorpChangeToWalk:
         loop object OBJ_Monster_Base+t, animScorpWalkStart, animScorpWalkEnd
         enemy(t).CurrentAnim = 2
     endif
-return
-
-_setupClock:
-    // Session variables
-    clockTickCounter=0
-    clockCurrentMidDot=0
-    clockTicksPerSecond = maxFramerate
 return
 
 _handleClock:
@@ -1223,7 +1256,9 @@ _create_floor:
 return
 
 _create_radar:
-    rem Karte - Abstand zur Kamera: 1.1
+    rem TODO: removed radar for now, because it has a lot of problems
+
+    rem Karte - Abstand zur Kamera: 1.1 (old)
     remstart
     load image FN_GFX_MapBackground, IMG_MapBackground
     make object plain OBJ_MapGhostObject, 0.352, 0.352
@@ -1234,12 +1269,14 @@ _create_radar:
     remend
     
     rem Karte - Abstand zur Kamera: 1.5
+    remstart
     load image FN_GFX_MapBackground, IMG_MapBackground
     make object plain OBJ_MapGhostObject, 0.48, 0.48
     lock object on OBJ_MapGhostObject
     position object OBJ_MapGhostObject, -0.942, -0.6375, 1.5
     ghost object on OBJ_MapGhostObject
     texture object OBJ_MapGhostObject, IMG_MapBackground
+    remend
 return
 
 rem Rotate smooth, and rotate in the direction with the lowest distance
