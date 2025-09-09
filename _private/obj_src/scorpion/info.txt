@@ -5,7 +5,8 @@ ScorpIdle_orig_bin.x and ScorpWalk_orig_bin.x are the original files from May 19
 
 Both of these models work in DarkBASIC, but there are a few small flaws with this models:
 1. The scorpion is too low. You need to increase its height, so that it stands on your plane floor.
-2. Limb #1 (named mid03) is either the pincer (not animated) or a coordinate marker. It is in the sky above the scorpion. It has to be hidden by the program code.
+2. Limb #1 (named mid03) is either the stinger or a coordinate marker.
+It is in the sky above the scorpion and is not animated. So, it has to be hidden by the program code.
 
 While ScorpIdle_orig_bin.x works in DarkBASIC Professional, ScorpWalk_orig_bin.x does not work, due to a bug in their engine.
 
