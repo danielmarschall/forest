@@ -5,7 +5,7 @@ rem ----------------------------------------------------------------
 
 rem Important!!!
 rem - Severe performance problems if there are too many trees or too high resolution (fix with instance object instead of clone objects? Only draw monsters nearby?)
-rem - The intro and outro text screen cannot be recorded using BandiCam, probably because we have no "sync" command. But with "sync", the image flickers?!
+rem - When the game is minimized (Alt+Tab) and restored, it exits. Is this an error in DarkBASIC, or our fault?
 
 rem Nice to have:
 rem - cleanup files and code
@@ -306,43 +306,52 @@ return
 
 _show_legend:
     LoadImageFullscreen(FN_GFX_TitleScreen, IMG_TitleScreen)
-    PASTE IMAGE IMG_TitleScreen, 0, 0
-    
+
     load sound FN_SFX_TitleMusic, SFX_TitleMusic
     loop sound SFX_TitleMusic
-            
-    ink rgb(255, 100, 0), 0
-    set text font "Arial" : set text size 50 : set text transparent
-    print "The Tale of the Nightmare Forest"
     
-    set text font "Arial" : set text size 30 : set text transparent
-    print ""
-    print "They say there's a grove outside the village."
-    print "By day it's small, nothing more than a patch of trees."
-    print "But when night falls, it opens into a forest without end."
-    print ""
-    print "A few have gone in after dark. None came back."
-    print "The elders whisper the forest doesn't lose you -"
-    print "it keeps you."
-    print ""
-    print "And each soul it takes makes the grove a little"
-    print "larger by morning."
-    print ""
-    print "Today you've set up your tent below the trees,"
-    print "waiting for nightfall... to see if the legend is true."
-    print ""
-    set text font "Arial" : set text size 23 : set text transparent
-    print ""
-    print "Press Space to start your journey."
-    print "Controls: WASD for walking, Hold CTRL for running (not while being in water),"
-    print "Space=Jump (press longer for higher jump)"
+    tmp = 0
+    repeat
+        cls
+ 
+        PASTE IMAGE IMG_TitleScreen, 0, 0
+    
+        ink rgb(255, 100, 0), 0
+        set text font "Arial" : set text size 50 : set text transparent
+        print "The Tale of the Nightmare Forest"
+        
+        set text font "Arial" : set text size 30 : set text transparent
+        print ""
+        print "They say there's a grove outside the village."
+        print "By day it's small, nothing more than a patch of trees."
+        print "But when night falls, it opens into a forest without end."
+        print ""
+        print "A few have gone in after dark. None came back."
+        print "The elders whisper the forest doesn't lose you -"
+        print "it keeps you."
+        print ""
+        print "And each soul it takes makes the grove a little"
+        print "larger by morning."
+        print ""
+        print "Today you've set up your tent below the trees,"
+        print "waiting for nightfall... to see if the legend is true."
+        print ""
+        set text font "Arial" : set text size 23 : set text transparent
+        print ""
+        print "Press Space to start your journey."
+        print "Controls: WASD for walking, Hold CTRL for running (not while being in water),"
+        print "Space=Jump (press longer for higher jump)"
+  
+        sync
 
-    sync    
-    
-    if jumpPressed() = 0
-        repeat
-        until jumpPressed() = 1
-    endif
+        if (tmp = 0) and (jumpPressed() = 1)
+            tmp = 1
+        else
+            if (tmp = 1) and (jumpPressed() = 0)
+                tmp = 2
+            endif
+        endif
+    until tmp = 2
 return
 
 _update_hud:
@@ -478,7 +487,8 @@ _pausemenu:
     else
         gosub _stop_game_sounds_keep_music
     endif
-    
+
+    tmp=0    
     repeat
         cls
         
@@ -491,10 +501,15 @@ _pausemenu:
         if DownKey() = 1
             goto _exit
         ENDIF
-    UNTIL EscapeKey() = 1
-    repeat
-        sync
-    until not (EscapeKey() = 1)
+
+        if (tmp = 0) and (EscapeKey() = 1)
+            tmp = 1
+        else
+            if (tmp = 1) and (EscapeKey() = 0)
+                tmp = 2
+            endif
+        endif
+    until tmp = 2
 
     if stage = 3
         stop sound SFX_TitleMusic
@@ -508,14 +523,13 @@ _deathscreen:
     gosub _stop_game_sounds
     play sound SFX_DeathScreen
 
-    cls
+    tmp=TIMER()
+    repeat
+        cls
+        paste image IMG_DeathScreen, 0, 0
+        sync
+    until abs(TIMER()-tmp) >= 5000
     
-    paste image IMG_DeathScreen, 0, 0
-            
-    sync
-    
-    Sleep 7*1000
-
     rem We could either exit the game ...
     rem goto _exit
 
@@ -532,18 +546,16 @@ _winscreen:
 
     gosub _stop_game_sounds_keep_music
     
-    cls
-    
-    paste image IMG_TitleScreen, 0, 0
-            
-    ink rgb(255,255,255),1
-    text 100,140,"Thank you for playing Nightmare Forest !"
-    text 100,180,"Created by Daniel Marschall 2001 - 2025"
-    text 100,220,"Developed with DarkBASIC Pro and Delphi"
-            
-    sync
-    
-    Sleep 7*1000
+    tmp=TIMER()    
+    repeat
+        cls        
+        paste image IMG_TitleScreen, 0, 0
+        ink rgb(255,255,255),1
+        text 100,140,"Thank you for playing Nightmare Forest !"
+        text 100,180,"Created by Daniel Marschall 2001 - 2025"
+        text 100,220,"Developed with DarkBASIC Pro and Delphi"
+        sync
+    until abs(TIMER()-tmp) >= 7500
     
     rem We could either exit the game ...
     goto _exit
