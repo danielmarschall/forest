@@ -136,6 +136,7 @@ maxFramerate                = call dll(DLL_DBIni, "ReadInt",   "Game", "maxFrame
 screenResW                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResW",                  800)
 screenResH                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResH",                  600)
 screenResB                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResB",                  32)
+screenVSync                 = call dll(DLL_DBIni, "ReadInt",   "Game", "screenVSync",                 0)
 clockSpeedFactor            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockSpeedFactor",            1)
 clockSecondsAdvance         = call dll(DLL_DBIni, "ReadInt",   "Game", "clockSecondsAdvance",         60)
 clockBlinksPerSecond        = call dll(DLL_DBIni, "ReadInt",   "Game", "clockBlinksPerSecond",        2)
@@ -212,7 +213,7 @@ rem It makes no sense to add them to the INI file, I think.
 scorpMinDistance = 100
 scorpYOffset#    = 20
 
-set display mode screenResW, screenResH, screenResB
+set display mode screenResW, screenResH, screenResB, screenVSync
 
 hide mouse
 
