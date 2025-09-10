@@ -1,5 +1,5 @@
 rem Nightmare Forest by Daniel Marschall
-rem Revision: 09 Sep 2025
+rem Revision: 10 Sep 2025
 
 rem ----------------------------------------------------------------
 
@@ -8,6 +8,7 @@ rem - Severe performance problems if there are too many trees or too high resolu
 rem - When the game is minimized (Alt+Tab) and restored, it exits. Is this an error in DarkBASIC, or our fault?
 
 rem Nice to have:
+rem - Fast walking (soil/water) sound
 rem - cleanup files and code
 rem - Edge of the map with wall-graphics; attention: dark forest wall does not fit to daylight scene!
 rem - Delphi Launcher with Settings (such as mouse inverting) and Mapgen preview (optional)
@@ -176,6 +177,13 @@ nightLightLevel#            = call dll(DLL_DBIni, "ReadFloat", "Game", "nightLig
 dayLightLevelPeak#          = call dll(DLL_DBIni, "ReadFloat", "Game", "dayLightLevelPeak",           255.0)
 sunriseStart                = call dll(DLL_DBIni, "ReadInt",   "Game", "sunriseStart",                4)
 sunsetEnd                   = call dll(DLL_DBIni, "ReadInt",   "Game", "sunsetEnd",                   20)
+runEnergyDeltaRunning#      = call dll(DLL_DBIni, "ReadFloat", "Game", "runEnergyDeltaRunning",      -1.00)
+runEnergyDeltaWalking#      = call dll(DLL_DBIni, "ReadFloat", "Game", "runEnergyDeltaWalking",       1.00)
+runEnergyDeltaSlowWalk#     = call dll(DLL_DBIni, "ReadFloat", "Game", "runEnergyDeltaSlowWalk",      1.25)
+runEnergyDeltaStanding#     = call dll(DLL_DBIni, "ReadFloat", "Game", "runEnergyDeltaStanding",      1.50)
+speedBoostWalking#          = call dll(DLL_DBIni, "ReadFloat", "Game", "speedBoostWalking",           1.0)
+speedBoostRunning#          = call dll(DLL_DBIni, "ReadFloat", "Game", "speedBoostRunning",           2.0)
+speedBoostSlowWalk#         = call dll(DLL_DBIni, "ReadFloat", "Game", "speedBoostSlowWalk",          0.5)
 call dll DLL_DBIni, "UnloadINI"
 delete dll DLL_DBIni
 
@@ -832,12 +840,12 @@ _handle_player:
         gosub JumpUpdate
            
         rem Laufen
-        speedboost# = 1
+        speedboost# = speedBoostWalking#
         
         gt = groundType(onGround, waterLevel)
         
         if upPressed()+downPressed()+leftPressed()+rightPressed() = 0
-            runEnergy# = runEnergy# + 2
+            runEnergy# = runEnergy# + runEnergyDeltaStanding#
             stop sound SFX_Walk_Earth
             stop sound SFX_Walk_Water
         else
@@ -857,21 +865,24 @@ _handle_player:
                 stop sound SFX_Walk_Earth
                 stop sound SFX_Walk_Water
             endif
+            
             energyChanged = 0
-            if ShiftKey()+ControlKey() = 1 : rem shift+control at the same time = walk normal
+            if ShiftKey()+ControlKey() = 1 : rem shift+control at the same time would result in 2. We want that they walk normal then, so we check for =1.
                 rem TODO: es ruckelt trotzdem noch
                 if ControlKey()=1 and runEnergy#>0 and gt=GROUNDTYPE_EARTH : rem Energy >1 , damit es nicht ruckelt (run-walk-run-walk-run-walk) . 3 = walk regain
-                    speedboost# = 2
-                    runEnergy# = runEnergy# - 1
+                    speedboost# = speedBoostRunning#
+                    runEnergy# = runEnergy# + runEnergyDeltaRunning# : rem Note: runEnergyDeltaRunning# is usually negative, so "+" is correct
                     energyChanged = 1
                 endif
                 if ShiftKey()=1
-                    speedboost# = 0.5
-                    runEnergy# = runEnergy# + 0.5
+                    speedboost# = speedBoostSlowWalk#
+                    runEnergy# = runEnergy# + runEnergyDeltaSlowWalk#
                     energyChanged = 1
                 endif
             endif
-            if not energyChanged then runEnergy# = runEnergy# + 1
+            rem If we were neither running, nor slow walking, then we are walking normally
+            if energyChanged = 0 then runEnergy# = runEnergy# + runEnergyDeltaWalking#
+
             if upPressed()
                 XTest# = Newxvalue(X#, cAY#, 7*speedboost#)
                 ZTest# = Newzvalue(Z#, cAY#, 7*speedboost#)
