@@ -1,5 +1,5 @@
 rem Nightmare Forest by Daniel Marschall
-rem Revision: 10 Sep 2025
+rem Revision: 11 September 2025
 
 rem ----------------------------------------------------------------
 
@@ -77,6 +77,7 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 #constant SFX_Jump 15
 #constant SFX_Attack_Base 20
 #constant SFX_TitleMusic 95
+#constant SFX_StormBG 96
 #constant SFX_DeathScreen 97
 #constant SFX_Monster_Base 1000
 
@@ -107,7 +108,8 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 #constant FN_SFX_ScorpionAttack2  "sound\scorp_attack2.wav"
 #constant FN_SFX_ScorpionAttack3  "sound\scorp_attack3.wav"
 #constant FN_SFX_ScorpionAttack4  "sound\scorp_attack4.wav"
-#constant FN_SFX_TitleMusic       "music\title.wav"
+#constant FN_SFX_TitleMusic       "music\cursed_forest.wav"
+#constant FN_SFX_StormBG          "sound\stormbg.wav"
 #constant FN_SFX_Deathscreen      "sound\deathscreen.wav"
 #constant FN_SFX_ScorpWalk        "sound\scorp_walk.wav"
 
@@ -224,6 +226,8 @@ rem Sync twice at application start for friendliness with dbpro's double bufferi
 rem (Required for newer versions of DB Pro)
 sync : sync
 
+load sound FN_SFX_TitleMusic, SFX_TitleMusic
+
 gosub _show_legend
 
 ink rgb(255, 230, 0), 0
@@ -245,6 +249,7 @@ gosub _create_radar
 
 gosub _draw_trees
 
+load sound FN_SFX_StormBG,         SFX_StormBG
 load sound FN_SFX_ForestBG,        SFX_ForestBG
 load sound FN_SFX_Walk_Earth,      SFX_Walk_Earth
 load sound FN_SFX_Walk_Water,      SFX_Walk_Water
@@ -316,7 +321,6 @@ return
 _show_legend:
     LoadImageFullscreen(FN_GFX_TitleScreen, IMG_TitleScreen)
 
-    load sound FN_SFX_TitleMusic, SFX_TitleMusic
     loop sound SFX_TitleMusic
     
     tmp = 0
@@ -421,6 +425,8 @@ _handle_stage:
         X# = camera position x()
         Y# = camera position y()
         Z# = camera position z()
+        
+        loop sound SFX_StormBG
     else
         if stage = 1
             rem dx# = abs(object position x(OBJ_Tent) - camera position x())
@@ -431,7 +437,7 @@ _handle_stage:
             ry# = object position y(OBJ_Tent)
             rz# = object position z(OBJ_Tent)
             if IsInCircle3D(rx#, ry#, rz#, X#, Y#, Z#, 300) = 1
-                gosub _stop_game_sounds
+                gosub _stop_game_sounds_keep_music
                 stage = 2
             endif
         else
@@ -440,6 +446,8 @@ _handle_stage:
                     rem Advance in 5-minute steps until it is night (stage 3)
                     clockSeconds = clockSeconds + 60*5
                 else
+                    stop sound SFX_TitleMusic
+                    stop sound SFX_StormBG
                     play sound SFX_Woosh
                     loop sound SFX_ForestBG
                     gosub _create_enemies
@@ -449,22 +457,24 @@ _handle_stage:
             else
                 if stage = 3                
                     if clockSeconds >= stage4ClockStart*60*60
-                    
-                        stop sound SFX_ForestBG
-                        loop sound SFX_TitleMusic
-                    
                         gosub _destroy_enemies
                         rem Quickly teleport to the tent, so that the player do not notice it
                         position camera object position x(OBJ_Tent), object position y(OBJ_Tent), object position z(OBJ_Tent)
                         rem move the camera and pause for a little while so that the player realizes the tent; TODO: we could end up at a tree!
                         move camera -tentCameraDistanceStage4
                         sync
+
+                        stop sound SFX_ForestBG
                         play sound SFX_Woosh
+
                         sleep 1000
                         X# = camera position x()
                         Y# = camera position y()
                         Z# = camera position z()
                         stage = 4
+
+                        loop sound SFX_TitleMusic
+                        loop sound SFX_StormBG
                     endif
                 else
                     if stage = 4
@@ -1378,6 +1388,7 @@ ENDFUNCTION ret
 _stop_game_sounds:
     gosub _stop_game_sounds_keep_music
     Stop Sound SFX_TitleMusic
+    Stop Sound SFX_StormBG
     Stop Sound SFX_DeathScreen
 return
 
@@ -1389,7 +1400,7 @@ _stop_game_sounds_keep_music:
     Stop Sound SFX_HIT_SOIL
     Stop Sound SFX_HIT_WATER
     Stop Sound SFX_Jump
-    if stage >= 3
+    if stage = 3
         for t = 0 to cMaxEnemies-1
             Stop Sound SFX_Monster_Base+t
         next t

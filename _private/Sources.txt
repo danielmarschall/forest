@@ -53,8 +53,11 @@ bitmap/water.bmp
 
 ## Music
 
-music/title.wav
-	Part from "Necropolis" intro video by mavrick
+sound/cursed_forest.wav
+	"The Cursed Forest" by "Universfield"
+	Source: https://freesound.org/people/Universfield/sounds/712309/
+	Converted from MP3 to WAV
+	License: Attribution 4.0
 
 ## 3D Models
 
@@ -103,6 +106,12 @@ sound/scorp_attack4.wav
 
 sound/scorp_walk.wav
 	Mix between Media\Sounds\Monsters\ItsEatingMe.wav and Media\Sounds\Aliens\GalacticDriver.wav, both from the Dark Game Studio
+
+sound/stormbg.wav
+	"distant storm 4.WAV" by "Soojay"
+	Source: https://freesound.org/people/Soojay/sounds/319565/
+	Cut away a few seconds from the end
+	License: Creative Commons 0
 
 sound/walk_soil.wav
 	Source: https://freesound.org/people/freefire66/sounds/175955/
