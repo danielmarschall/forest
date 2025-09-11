@@ -8,6 +8,7 @@ rem - Severe performance problems if there are too many trees or too high resolu
 rem - When the game is minimized (Alt+Tab) and restored, it exits. Is this an error in DarkBASIC, or our fault?
 
 rem Nice to have:
+rem - Tent should have a radio sound?
 rem - Fast walking (soil/water) sound
 rem - cleanup files and code
 rem - Edge of the map with wall-graphics; attention: dark forest wall does not fit to daylight scene!

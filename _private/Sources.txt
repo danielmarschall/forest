@@ -71,7 +71,10 @@ obj/tent/tent.x
 ## Sound effects
 
 sound/deathscreen.wav
-	Mix between Media\Sounds\Monsters\CaveCreatue.wav and Media\Sounds\Monsters\Dragon.wav, both from the Dark Game Studio
+	"Hybrid Monster Growl" by john129pats
+	Source: https://freesound.org/people/john129pats/sounds/146558/
+	License: Creative Commons 0
+	Added echo
 
 sound/forestbg.wav
 	Source: https://freesound.org/people/caquet/sounds/157495/
