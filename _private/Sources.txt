@@ -56,8 +56,8 @@ bitmap/water.bmp
 sound/cursed_forest.wav
 	"The Cursed Forest" by "Universfield"
 	Source: https://freesound.org/people/Universfield/sounds/712309/
-	Converted from MP3 to WAV
 	License: Attribution 4.0
+	Modifications: Cut to make a loop, increased bass
 
 ## 3D Models
 

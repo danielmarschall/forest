@@ -5,7 +5,7 @@ project name=Nightmare Forest
 
 ; **** source file information ****
 main=Forest.DBA
-LineMain=993
+LineMain=12
 
 ; **** Executable Information  ***
 ; build types: exe, media, installer, alone
