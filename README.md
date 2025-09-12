@@ -2,6 +2,8 @@
 # Nightmare Forest
 Nighmare Forest is a game developed in the programming languages DarkBASIC Professional and Delphi. The development stated in 2001 and in 2025 I finally brought the game into Beta stage, after the development had paused several times.
 
+![Nightmare Forest Screenshot](screenshot.jpg)
+
 ## The Tale of the Nightmare Forest 
 *They say there's a grove outside the village.
 By day it's small, nothing more than a patch of trees.*
