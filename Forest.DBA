@@ -124,8 +124,8 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 #constant FN_GFX_Water            "bitmap\water.bmp"
 #constant FN_GFX_Tree             "bitmap\tree.bmp"
 #constant FN_GFX_MapBackground    "bitmap\radar.bmp"
-#constant FN_GFX_TitleScreen      "bitmap\titlescreen.jpg"
-#constant FN_GFX_DeathScreen      "bitmap\deathscreen.jpg"
+#constant FN_GFX_TitleScreen      "bitmap\screen_background.jpg"
+#constant FN_GFX_DeathScreen      "bitmap\screen_gameover.jpg"
 
 #constant FN_INI_SETTINGS         "forest.ini"
 #constant FN_INI_SEED             "seed.ini"
