@@ -84,7 +84,10 @@ sound/forestbg.wav
 	Amplified and modified to make the loop work
 
 sound/hit_soil.wav
-	Short segment taken from walk_soil.wav (source see below)
+	https://freesound.org/people/j1987/sounds/106113/
+	bushhit.wav by j1987
+	License: Creative Commons 0
+	Reduced volume -1dB
 
 sound/hit_water.wav
 	Media\Sounds\Impacts\HitWater.wav from the Dark Game Studio CD (reduced volume)
