@@ -79,8 +79,8 @@ sound/deathscreen.wav
 sound/forestbg.wav
 	Source: https://freesound.org/people/caquet/sounds/157495/
 	"Night by the beach, in Barbate"
-	Author: caquet (http://caquet.es/)
-	License: http://creativecommons.org/licenses/by/3.0/
+	Author: caquet (https://caquet.es/)
+	License: Attribution 4.0
 	Amplified and modified to make the loop work
 
 sound/hit_soil.wav
@@ -108,11 +108,11 @@ sound/scorp_attack3.wav
 sound/scorp_attack4.wav
 	Mostly taken from "Sonic_Melon Stabbing Sample Remix" by "CGEffex"
 		Source: https://freesound.org/people/cgeffex/sounds/93102/
-		License: http://creativecommons.org/licenses/by/3.0/
+		License: Attribution 4.0
 	Extracted small parts out of the source material
 		The source material was a remix of: https://freesound.org/people/sonic/sounds/2883/
 		Author: sonic
-		License: http://creativecommons.org/licenses/sampling+/1.0/
+		License: Sampling Plus 1.0 Generic
 
 sound/scorp_walk.wav
 	Mix between Media\Sounds\Monsters\ItsEatingMe.wav and Media\Sounds\Aliens\GalacticDriver.wav, both from the Dark Game Studio
@@ -126,11 +126,11 @@ sound/stormbg.wav
 sound/walk_soil.wav
 	Source: https://freesound.org/people/freefire66/sounds/175955/
 	Author: freefire66
-	License: http://creativecommons.org/publicdomain/zero/1.0/
+	License: Creative Commons 0
 	Modified to make the loop work
 
 sound/walk_water.wav
-	Source: http://www.orangefreesounds.com/footsteps-walking-in-water/
+	Source: https://www.orangefreesounds.com/footsteps-walking-in-water/
 	Footsteps Walking In Water
 	Author: Alexander
 	Date: 6 Oct 2015
