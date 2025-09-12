@@ -5,7 +5,7 @@ project name=Nightmare Forest
 
 ; **** source file information ****
 main=Forest.DBA
-LineMain=15
+LineMain=993
 
 ; **** Executable Information  ***
 ; build types: exe, media, installer, alone
@@ -29,7 +29,7 @@ app title=Nightmare Forest
 
 ; graphics mode options: fullscreen, window, desktop, fulldesktop, hidden
 graphics mode=fullscreen
-fullscreen resolution=800x600x16
+fullscreen resolution=800x600x32
 
 ; arbitrary sizes are valid for windowed mode
 window resolution=800x600

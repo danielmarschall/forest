@@ -1,10 +1,11 @@
 rem Nightmare Forest by Daniel Marschall
-rem Revision: 11 September 2025
+rem Revision: 12 September 2025
 
 rem ----------------------------------------------------------------
 
 rem Important!!!
 rem - Severe performance problems if there are too many trees or too high resolution (fix with instance object instead of clone objects? Only draw monsters nearby?)
+rem   ... for some reasons, the performance issues are gone...?! High resolution and many trees are possible on my test system now
 rem - When the game is minimized (Alt+Tab) and restored, it exits. Is this an error in DarkBASIC, or our fault?
 
 rem Nice to have:
@@ -1166,6 +1167,7 @@ _create_enemies:
             animScorpWalkEnd = total object frames(OBJ_Monster_Base+t)
         else
             Clone Object OBJ_Monster_Base+t, OBJ_Monster_Base        
+            rem Instance Object OBJ_Monster_Base+t, OBJ_Monster_Base        
         endif
         
         eY# = floorHeight#(eX#, eZ#) : rem TODO  + scorpYOffset#
