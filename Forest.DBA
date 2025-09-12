@@ -9,7 +9,6 @@ rem   ... for some reasons, the performance issues are gone...?! High resolution
 rem - When the game is minimized (Alt+Tab) and restored, it exits. Is this an error in DarkBASIC, or our fault?
 
 rem Nice to have:
-rem - Tent should have a radio sound?
 rem - Fast walking (soil/water) sound
 rem - cleanup files and code
 rem - Edge of the map with wall-graphics; attention: dark forest wall does not fit to daylight scene!
@@ -71,6 +70,7 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 #constant MAT_Water 3
 
 #constant SFX_ForestBG 1
+#constant SFX_Radio 2
 #constant SFX_Walk_Earth 10
 #constant SFX_Walk_Water 11
 #constant SFX_Woosh 12
@@ -100,6 +100,7 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 #constant FN_DLL_DBIni            "cfgread\dbini32.dll"
 
 #constant FN_SFX_ForestBG         "sound\forestbg.wav"
+#constant FN_SFX_Radio            "sound\radio.wav"
 #constant FN_SFX_Walk_Earth       "sound\walk_soil.wav"
 #constant FN_SFX_Walk_Water       "sound\walk_water.wav"
 #constant FN_SFX_Woosh            "sound\woosh.wav"
@@ -170,8 +171,8 @@ cMapSizeX                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSize
 cMapSizeZ                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeZ",                   10000)
 cTreeRadius                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cTreeRadius",                 100)
 cMaxEnemies                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxEnemies",                 50)
-initialEnemySafezone#       = call dll(DLL_DBIni, "ReadFloat", "Game", "InitialEnemySafezone",        1000.0)
-cEnemySpawnMapBorderPadding = call dll(DLL_DBIni, "ReadInt",   "Game", "EnemySpawnMapBorderPadding",  1000)
+initialEnemySafezone#       = call dll(DLL_DBIni, "ReadFloat", "Game", "InitialEnemySafezone",        1400.0)
+cEnemySpawnMapBorderPadding = call dll(DLL_DBIni, "ReadInt",   "Game", "EnemySpawnMapBorderPadding",  750)
 stage1ClockStart            = call dll(DLL_DBIni, "ReadInt",   "Game", "stage1ClockStart",            15)
 stage1TinyForestFactor#     = call dll(DLL_DBIni, "ReadFloat", "Game", "stage1TinyForestFactor",      0.35)
 stage1Distance#             = call dll(DLL_DBIni, "ReadFloat", "Game", "stage1Distance",              1450.0)
@@ -429,6 +430,7 @@ _handle_stage:
         Z# = camera position z()
         
         loop sound SFX_StormBG
+        loop sound SFX_Radio
     else
         if stage = 1
             rem dx# = abs(object position x(OBJ_Tent) - camera position x())
@@ -439,7 +441,7 @@ _handle_stage:
             ry# = object position y(OBJ_Tent)
             rz# = object position z(OBJ_Tent)
             if IsInCircle3D(rx#, ry#, rz#, X#, Y#, Z#, 300) = 1
-                gosub _stop_game_sounds_keep_music
+                gosub _stop_game_sounds_keep_background
                 stage = 2
             endif
         else
@@ -452,6 +454,7 @@ _handle_stage:
                     stop sound SFX_StormBG
                     play sound SFX_Woosh
                     loop sound SFX_ForestBG
+                    loop sound SFX_Radio
                     gosub _create_enemies
                     clockSeconds = stage3ClockStart*60*60
                     stage = 3
@@ -503,10 +506,10 @@ return
 
 _pausemenu:
     if stage = 3
-        gosub _stop_game_sounds
+        gosub _stop_game_sounds_keep_background
         loop sound SFX_TitleMusic
     else
-        gosub _stop_game_sounds_keep_music
+        gosub _stop_game_sounds_keep_background
     endif
 
     tmp=0    
@@ -535,6 +538,7 @@ _pausemenu:
     if stage = 3
         stop sound SFX_TitleMusic
         loop sound SFX_ForestBG
+        loop sound SFX_Radio
     endif
 return
 
@@ -565,7 +569,7 @@ return
 _winscreen:
     enable escapekey
 
-    gosub _stop_game_sounds_keep_music
+    gosub _stop_game_sounds_keep_background
     
     tmp=TIMER()    
     repeat
@@ -606,6 +610,13 @@ _create_tent:
     scale object OBJ_Tent, tentSizeX, tentSizeY, tentSizeZ
     rotate object  OBJ_TENT, tentRotateX, tentRotateY, tentRotateZ
     position object OBJ_Tent, tentX#, tentY#, tentZ#
+    
+    if not sound exist(SFX_Radio)
+        rem NOTE: 3DSound requires Mono audio!
+        Load 3Dsound FN_SFX_Radio, SFX_Radio
+        rem TODO: also use sound3dVolumeCor, like for the scorpions?
+        Position Sound SFX_Radio, tentX#, tentY#, tentZ#
+    endif
     
     rem TODO: for some reason, the tent does not react to light. the scorpions do, but the trees, tent, and floor do not. why?!
     remstart
@@ -1389,14 +1400,15 @@ function isInCircle3D(pX#,pY#,pZ#,cX#,cY#,cZ#,cR#)
 ENDFUNCTION ret
 
 _stop_game_sounds:
-    gosub _stop_game_sounds_keep_music
+    gosub _stop_game_sounds_keep_background
     Stop Sound SFX_TitleMusic
     Stop Sound SFX_StormBG
-    Stop Sound SFX_DeathScreen
+    Stop Sound SFX_Radio
+    Stop Sound SFX_ForestBG
 return
 
-_stop_game_sounds_keep_music:
-    Stop Sound SFX_ForestBG
+_stop_game_sounds_keep_background:
+    Stop Sound SFX_DeathScreen
     Stop Sound SFX_Walk_Earth
     Stop Sound SFX_Walk_Water
     Stop Sound SFX_Woosh
@@ -1427,7 +1439,6 @@ type enemyType
     Angle as float
     CurrentAnim as float
     IsAttacking as integer
-    rem TODO: also "Drawn as boolean" to unload enemies that are too far away?
 endtype
 
 PressJumpKey:

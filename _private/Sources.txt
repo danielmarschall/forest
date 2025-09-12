@@ -95,6 +95,13 @@ sound/jump.wav
 	License: Creative Commons 0
 	Edited with Audition, transposed -2.5 half steps down
 
+sound/radio.wav
+	https://freesound.org/people/kwahmah_02/sounds/255851/
+	BangkokMeterologicalRadio.wav by kwahmah_02
+	"6-minute snippet of Bangkok Meteorological Radio (I'm sorry I couldn't spell the title) on shortwave. Male and female voices, and interval signals. Picked up and recorded with Twente University's online radio receiver."
+	License: Attribution 3.0
+	Modified: Reversed audio
+
 sound/scorp_attack1.wav
 sound/scorp_attack2.wav
 sound/scorp_attack3.wav
