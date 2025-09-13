@@ -4,8 +4,6 @@ rem Revision: 12 September 2025
 rem ----------------------------------------------------------------
 
 rem Important!!!
-rem - Severe performance problems if there are too many trees or too high resolution (fix with instance object instead of clone objects? Only draw monsters nearby?)
-rem   ... for some reasons, the performance issues are gone...?! High resolution and many trees are possible on my test system now
 rem - When the game is minimized (Alt+Tab) and restored, it exits. Is this an error in DarkBASIC, or our fault?
 
 rem Nice to have:
@@ -22,6 +20,7 @@ rem - rascheln im busch?
 rem - scorpion schiebt stehenden spieler manchmal nicht weg?
 
 rem Radar:
+rem - The radar causes *EXTREME* performance issues. The game is UNPLAYABLE with 2560x1440 or if there are too many trees
 rem - should be round, since it moves like in GTA
 rem - should not be affected from resolution (i.e. on widescreen it must stay a circle)
 rem - Don't show distant enemies
