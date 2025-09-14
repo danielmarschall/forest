@@ -25,7 +25,7 @@ see [Let's play of the beta version](https://www.youtube.com/watch?v=5Tp92G5N19c
 
 ### Download and Installation
 
-- Downloaded Nightmare Forest and DirectX 9.0c here: https://github.com/danielmarschall/forest/releases
+- Download Nightmare Forest and DirectX 9.0c here: https://github.com/danielmarschall/forest/releases
 - Install DirectX 9.0c (you need this even if you have a newer version of DirectX installed). If Windows requests to install .Net Framework, accept that too.
 - After everything is installed, you just need to run ForestLauncher.exe to play the game
 
