@@ -5,26 +5,53 @@ Nighmare Forest is a game developed in the programming languages DarkBASIC Profe
 ![Nightmare Forest Screenshot](screenshot.jpg)
 
 ## The Tale of the Nightmare Forest 
-*They say there's a grove outside the village.
-By day it's small, nothing more than a patch of trees.*
+*They say there's a grove outside the village.*
+*By day it's small, nothing more than a patch of trees.*
 
-*But when night falls, it opens into a forest without end.
-A few have gone in after dark. None came back.*
+*But when night falls, it opens into a forest without end.*
+*A few have gone in after dark. None came back.*
 
-*The elders whisper the forest doesn't lose you - it keeps you.
-And each soul it takes makes the grove a little larger by morning.*
+*The elders whisper the forest doesn't lose you - it keeps you.*
+*And each soul it takes makes the grove a little larger by morning.*
 
-*Today you've set up your tent below the trees,
-waiting for nightfall... to see if the legend is true.*
+*Today you've set up your tent below the trees,*
+*waiting for nightfall... to see if the legend is true.*
 
 ## Let's play
+
 see [Let's play of the beta version](https://www.youtube.com/watch?v=5Tp92G5N19c&ab_channel=DanielMarschall)
 
-## Download
-Compiled EXE version coming soon
+## How to play
 
-Requires DirectX 9.0c (included in this repository).
+### Download and Installation
+
+- Downloaded Nightmare Forest and DirectX 9.0c here: https://github.com/danielmarschall/forest/releases
+- Install DirectX 9.0c (you need this even if you have a newer version of DirectX installed). If Windows requests to install .Net Framework, accept that too.
+- After everything is installed, you just need to run ForestLauncher.exe to play the game
+
+### Instructions
+
+- When the clock shows 15:00, enter the tent located between the small patch of trees.
+- Survive until the clock shows 7:00
+- Leave the forest
+
+### Controls
+
+- WASD keys to move
+- Hold Ctrl to run (not inside water)
+- Hold Shift to slowly walk (regains run energy faster)
+- Jump with space key (hold longer for higher jump)
+
+## Development
+
+To compile and/or modify the game yourself, you need the following tools:
+
+- DarkBASIC Professional: Free version available at https://github.com/Dark-Basic-Software-Limited/Dark-Basic-Pro/releases/tag/12.02.16
+
+- Embarcadero Delphi: Free version available at https://www.embarcadero.com/de/products/delphi/starter (non-commercial use only)
 
 ## License
-The source code is licensed under the terms of the Apache 2.0 licenses.
-Sound and graphics files are mostly loyality free, though some sources are unknown; some of them were taken from free sound libraries or taken form the DarkBasic AddOn CD-ROMs.
+
+The main game and source code is licensed under the terms of the Apache 2.0 licenses.
+
+Sound and Graphics files are licensed under various free licenses. See the file _private/Sources.txt for details.

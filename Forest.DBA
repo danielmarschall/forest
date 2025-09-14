@@ -1,10 +1,15 @@
 rem Nightmare Forest by Daniel Marschall
-rem Revision: 12 September 2025
+rem Revision: 14 September 2025
 
 rem ----------------------------------------------------------------
 
 rem Important!!!
 rem - When the game is minimized (Alt+Tab) and restored, it exits. Is this an error in DarkBASIC, or our fault?
+rem   => When this is done during the title screen, then the following error will appear when the game is restored:
+rem      "Image does not exist" at line "PASTE IMAGE IMG_TitleScreen, 0, 0" 
+rem      A solution would be to add "if not image exist(IMG_TitleScreen) then LoadImageFullscreen(FN_GFX_TitleScreen, IMG_TitleScreen)"
+rem      at that loop. But that solves only the issue at the titlescreen. If the window is restored while the game is running,
+rem      then it will crash without error message; I guess that various objects, sounds, textures have also vanished from memory?!
 
 rem Nice to have:
 rem - Fast walking (soil/water) sound
@@ -82,9 +87,7 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 #constant SFX_DeathScreen 97
 #constant SFX_Monster_Base 1000
 
-#constant DLL_MapGen 1
-#constant DLL_DBIni 2
-#constant DLL_Resize32 3
+#constant DLL_ForestDLL 1
     
 #constant MEM_Map 1
 #constant MEM_ResizeSrc 2
@@ -94,9 +97,7 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 // File names
 // --------------------------------
 
-#constant FN_DLL_Resize32         "dll_resize\Resize32.dll"
-#constant FN_DLL_MapGen32         "mapgen\mapgen32.dll"
-#constant FN_DLL_DBIni            "cfgread\dbini32.dll"
+#constant FN_DLL_ForestDLL        "ForestDLL.dll"
 
 #constant FN_SFX_ForestBG         "sound\forestbg.wav"
 #constant FN_SFX_Radio            "sound\radio.wav"
@@ -126,71 +127,68 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 #constant FN_GFX_TitleScreen      "bitmap\screen_background.jpg"
 #constant FN_GFX_DeathScreen      "bitmap\screen_gameover.jpg"
 
-#constant FN_INI_SETTINGS         "forest.ini"
-#constant FN_INI_SEED             "seed.ini"
-
 // --------------------------------
 // Read configuration
 // --------------------------------
 
-load dll FN_DLL_DBIni, DLL_DBIni
-call dll DLL_DBIni, "LoadINI", FN_INI_SETTINGS
-debugShowCoords             = call dll(DLL_DBIni, "ReadInt",   "Game", "debugShowCoords",             0)
-maxFramerate                = call dll(DLL_DBIni, "ReadInt",   "Game", "maxFramerate",                30)
-screenResW                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResW",                  800)
-screenResH                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResH",                  600)
-screenResB                  = call dll(DLL_DBIni, "ReadInt",   "Game", "screenResB",                  32)
-screenVSync                 = call dll(DLL_DBIni, "ReadInt",   "Game", "screenVSync",                 0)
-clockSpeedFactor            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockSpeedFactor",            1)
-clockSecondsAdvance         = call dll(DLL_DBIni, "ReadInt",   "Game", "clockSecondsAdvance",         60)
-clockBlinksPerSecond        = call dll(DLL_DBIni, "ReadInt",   "Game", "clockBlinksPerSecond",        2)
-clockShowSeconds            = call dll(DLL_DBIni, "ReadInt",   "Game", "clockShowSeconds",            0)
-enemyRotateSmoothness       = call dll(DLL_DBIni, "ReadInt",   "Game", "enemyRotateSmoothness",       10)
-maxRunEnergy                = call dll(DLL_DBIni, "ReadInt",   "Game", "maxRunEnergy",                300)
-waterLevel                  = call dll(DLL_DBIni, "ReadInt",   "Game", "waterLevel",                  60)
-sound3dVolumeCor            = call dll(DLL_DBIni, "ReadInt",   "Game", "sound3dVolumeCor",            3500)
-invertMouse                 = call dll(DLL_DBIni, "ReadInt",   "Game", "invertMouse",                 0)
-camerarange#                = call dll(DLL_DBIni, "ReadFloat", "Game", "camerarange",                 2000.0)
-fogdistance#                = call dll(DLL_DBIni, "ReadFloat", "Game", "fogdistance",                 1000.0)
-waterMovementMaxDistance    = call dll(DLL_DBIni, "ReadInt",   "Game", "waterMovementMaxDistance",    30)
-gravity#                    = call dll(DLL_DBIni, "ReadFloat", "Game", "gravity",                     0.6)
-JumpStartVelocity#          = call dll(DLL_DBIni, "ReadFloat", "Game", "JumpStartVelocity",           15.0)
-EmergencyJumpFactor#        = call dll(DLL_DBIni, "ReadFloat", "Game", "EmergencyJumpFactor",         1.3)
-MinFallVelocity#            = call dll(DLL_DBIni, "ReadFloat", "Game", "MinFallVelocity",             6.0)
-scorpCollissionX#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionX",            150.0)
-scorpCollissionY#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionY",            190.0)
-scorpCollissionZ#           = call dll(DLL_DBIni, "ReadFloat", "Game", "scorpCollissionZ",            150.0)
-HitInterval#                = call dll(DLL_DBIni, "ReadFloat", "Game", "HitInterval",                 5.0)
-HitFactorFirst#             = call dll(DLL_DBIni, "ReadFloat", "Game", "HitFactorFirst",              5.0)
-HitFactorRecurrent#         = call dll(DLL_DBIni, "ReadFloat", "Game", "HitFactorRecurrent",          0.1)
-maxHitsTillDeath            = call dll(DLL_DBIni, "ReadInt",   "Game", "maxHitsTillDeath",            50)
-playerEyeHeight#            = call dll(DLL_DBIni, "ReadFloat", "Game", "playerEyeHeight",             135)
-cMaxTrees                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxTrees",                   1200)
-cMapSizeX                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeX",                   10000)
-cMapSizeZ                   = call dll(DLL_DBIni, "ReadInt",   "Game", "cMapSizeZ",                   10000)
-cTreeRadius                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cTreeRadius",                 100)
-cMaxEnemies                 = call dll(DLL_DBIni, "ReadInt",   "Game", "cMaxEnemies",                 50)
-initialEnemySafezone#       = call dll(DLL_DBIni, "ReadFloat", "Game", "InitialEnemySafezone",        1400.0)
-cEnemySpawnMapBorderPadding = call dll(DLL_DBIni, "ReadInt",   "Game", "EnemySpawnMapBorderPadding",  750)
-stage1ClockStart            = call dll(DLL_DBIni, "ReadInt",   "Game", "stage1ClockStart",            15)
-stage1TinyForestFactor#     = call dll(DLL_DBIni, "ReadFloat", "Game", "stage1TinyForestFactor",      0.35)
-stage1Distance#             = call dll(DLL_DBIni, "ReadFloat", "Game", "stage1Distance",              1450.0)
-stage3ClockStart            = call dll(DLL_DBIni, "ReadInt",   "Game", "stage3ClockStart",            22)
-stage4ClockStart            = call dll(DLL_DBIni, "ReadInt",   "Game", "stage4ClockStart",            7)
-stage4RunAwayFactor#        = call dll(DLL_DBIni, "ReadFloat", "Game", "stage4RunAwayFactor",         1.5)
-nightLightLevel#            = call dll(DLL_DBIni, "ReadFloat", "Game", "nightLightLevel",             0.0)
-dayLightLevelPeak#          = call dll(DLL_DBIni, "ReadFloat", "Game", "dayLightLevelPeak",           255.0)
-sunriseStart                = call dll(DLL_DBIni, "ReadInt",   "Game", "sunriseStart",                4)
-sunsetEnd                   = call dll(DLL_DBIni, "ReadInt",   "Game", "sunsetEnd",                   20)
-runEnergyDeltaRunning#      = call dll(DLL_DBIni, "ReadFloat", "Game", "runEnergyDeltaRunning",      -1.00)
-runEnergyDeltaWalking#      = call dll(DLL_DBIni, "ReadFloat", "Game", "runEnergyDeltaWalking",       1.00)
-runEnergyDeltaSlowWalk#     = call dll(DLL_DBIni, "ReadFloat", "Game", "runEnergyDeltaSlowWalk",      1.25)
-runEnergyDeltaStanding#     = call dll(DLL_DBIni, "ReadFloat", "Game", "runEnergyDeltaStanding",      1.50)
-speedBoostWalking#          = call dll(DLL_DBIni, "ReadFloat", "Game", "speedBoostWalking",           1.0)
-speedBoostRunning#          = call dll(DLL_DBIni, "ReadFloat", "Game", "speedBoostRunning",           2.0)
-speedBoostSlowWalk#         = call dll(DLL_DBIni, "ReadFloat", "Game", "speedBoostSlowWalk",          0.5)
-call dll DLL_DBIni, "UnloadINI"
-delete dll DLL_DBIni
+load dll FN_DLL_ForestDLL, DLL_ForestDLL
+call DLL DLL_ForestDLL, "COR_Initialize"
+
+title$ = space$(256)        : call dll DLL_ForestDLL, "INI_ReadString","Product", "Title", "Nightmare Forest", title$, 256
+debugShowCoords             = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "debugShowCoords",             0)
+maxFramerate                = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "maxFramerate",                30)
+screenResW                  = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "screenResW",                  800)
+screenResH                  = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "screenResH",                  600)
+screenResB                  = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "screenResB",                  32)
+screenVSync                 = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "screenVSync",                 0)
+clockSpeedFactor            = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "clockSpeedFactor",            1)
+clockSecondsAdvance         = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "clockSecondsAdvance",         60)
+clockBlinksPerSecond        = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "clockBlinksPerSecond",        2)
+clockShowSeconds            = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "clockShowSeconds",            0)
+enemyRotateSmoothness       = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "enemyRotateSmoothness",       10)
+maxRunEnergy                = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "maxRunEnergy",                300)
+waterLevel                  = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "waterLevel",                  60)
+sound3dVolumeCor            = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "sound3dVolumeCor",            3500)
+invertMouse                 = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "invertMouse",                 0)
+camerarange#                = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "camerarange",                 2000.0)
+fogdistance#                = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "fogdistance",                 1000.0)
+waterMovementMaxDistance    = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "waterMovementMaxDistance",    30)
+gravity#                    = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "gravity",                     0.6)
+JumpStartVelocity#          = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "JumpStartVelocity",           15.0)
+EmergencyJumpFactor#        = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "EmergencyJumpFactor",         1.3)
+MinFallVelocity#            = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "MinFallVelocity",             6.0)
+scorpCollissionX#           = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "scorpCollissionX",            150.0)
+scorpCollissionY#           = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "scorpCollissionY",            190.0)
+scorpCollissionZ#           = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "scorpCollissionZ",            150.0)
+HitInterval#                = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "HitInterval",                 5.0)
+HitFactorFirst#             = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "HitFactorFirst",              5.0)
+HitFactorRecurrent#         = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "HitFactorRecurrent",          0.1)
+maxHitsTillDeath            = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "maxHitsTillDeath",            50)
+playerEyeHeight#            = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "playerEyeHeight",             135)
+cMaxTrees                   = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "cMaxTrees",                   1200)
+cMapSizeX                   = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "cMapSizeX",                   10000)
+cMapSizeZ                   = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "cMapSizeZ",                   10000)
+cTreeRadius                 = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "cTreeRadius",                 100)
+cMaxEnemies                 = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "cMaxEnemies",                 50)
+initialEnemySafezone#       = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "InitialEnemySafezone",        1400.0)
+cEnemySpawnMapBorderPadding = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "EnemySpawnMapBorderPadding",  750)
+stage1ClockStart            = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "stage1ClockStart",            15)
+stage1TinyForestFactor#     = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "stage1TinyForestFactor",      0.35)
+stage1Distance#             = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "stage1Distance",              1450.0)
+stage3ClockStart            = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "stage3ClockStart",            22)
+stage4ClockStart            = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "stage4ClockStart",            7)
+stage4RunAwayFactor#        = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "stage4RunAwayFactor",         1.5)
+nightLightLevel#            = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "nightLightLevel",             0.0)
+dayLightLevelPeak#          = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "dayLightLevelPeak",           255.0)
+sunriseStart                = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "sunriseStart",                4)
+sunsetEnd                   = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "sunsetEnd",                   20)
+runEnergyDeltaRunning#      = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "runEnergyDeltaRunning",      -1.00)
+runEnergyDeltaWalking#      = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "runEnergyDeltaWalking",       1.00)
+runEnergyDeltaSlowWalk#     = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "runEnergyDeltaSlowWalk",      1.25)
+runEnergyDeltaStanding#     = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "runEnergyDeltaStanding",      1.50)
+speedBoostWalking#          = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "speedBoostWalking",           1.0)
+speedBoostRunning#          = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "speedBoostRunning",           2.0)
+speedBoostSlowWalk#         = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "speedBoostSlowWalk",          0.5)
 
 if stage3ClockStart < stage1ClockStart then stage3ClockStart = stage3ClockStart + 24
 if stage4ClockStart < stage3ClockStart then stage4ClockStart = stage4ClockStart + 24
@@ -232,8 +230,8 @@ load sound FN_SFX_TitleMusic, SFX_TitleMusic
 
 gosub _show_legend
 
-ink rgb(255, 230, 0), 0
-PASTE IMAGE IMG_TitleScreen, 0, 0
+rem ink rgb(255, 230, 0), 0
+rem PASTE IMAGE IMG_TitleScreen, 0, 0
 rem set text font "Arial" : set text size 30 : set text transparent
 rem text 28, 550, "Starting game..."
 
@@ -328,12 +326,12 @@ _show_legend:
     tmp = 0
     repeat
         cls
- 
+        
         PASTE IMAGE IMG_TitleScreen, 0, 0
     
         ink rgb(255, 100, 0), 0
         set text font "Arial" : set text size 50 : set text transparent
-        print "The Tale of the Nightmare Forest"
+        print "The Tale of the " + title$
         
         set text font "Arial" : set text size 30 : set text transparent
         print ""
@@ -797,7 +795,7 @@ _handle_enemies:
                 eRY# = smoothRotate#(eRY#, enemy(t).Angle, enemyRotateSmoothness)
                 rotate object OBJ_Monster_Base+t, eRX#, eRY#, eRZ#
             endif
-        next
+        next t
     endif
 
     if underAttack = 0
@@ -1071,7 +1069,7 @@ _handle_radar:
             ink rgb(radarpointcolor, 0, 0), 0
             circle x#, y#, 1
             circle x#, y#, 0
-        next
+        next t
     endif
     remend
 return
@@ -1089,44 +1087,17 @@ return
 
 _create_trees:
     dim tree(cMaxTrees-1) as treeType
-    
-    remstart
-    for t = 0 to cMaxTrees-1
-        tree(t).x = RndBetween(0, cMapSizeX) 
-        tree(t).z = RndBetween(0, cMapSizeZ) 
-        tree(t).drawn = 0
-    NEXT
-    remend
-       
-    rem TODO: wegbreite definieren
-    load dll FN_DLL_MapGen32, DLL_MapGen
-    call dll DLL_MapGen, "LoadParametersFromINI", FN_INI_SETTINGS
 
-    load dll FN_DLL_DBIni, DLL_DBIni
-    call dll DLL_DBIni, "LoadINI", FN_INI_SEED
-    onetimeseed = call dll(DLL_DBIni, "ReadInt", "Seed", "onetime", 0)
-    staticseed  = call dll(DLL_DBIni, "ReadInt", "Seed", "value", 0)
-    seedactive  = call dll(DLL_DBIni, "ReadInt", "Seed", "active", 0)
-    IF (onetimeseed = 1) AND (seedactive = 1)
-        call dll DLL_DBIni, "WriteInt", "Seed", "active", 0
-    ENDIF
-    IF seedactive
-        call dll DLL_MapGen, "UseSeed", staticseed
-    ELSE
-        call dll DLL_MapGen, "RandomSeed"
-    ENDIF
-    call dll DLL_DBIni, "UnloadINI"
-    delete dll DLL_DBIni
+    call dll DLL_ForestDLL, "MAP_LoadParameters" : rem This will internally also call MAP_RandomSeed or MAP_UseSeed
     
     make memblock MEM_Map, cMaxTrees*8
-    call dll DLL_MapGen, "GenerateMap", cMaxTrees, cTreeRadius, cMapSizeX, cMapSizeZ, get memblock ptr(MEM_Map), 0
+    call dll DLL_ForestDLL, "MAP_GenerateMap", cMaxTrees, cTreeRadius, cMapSizeX, cMapSizeZ, get memblock ptr(MEM_Map), 0
     for t = 0 to cMaxTrees-1
         tree(t).x = memblock dword(MEM_Map, t*8)
         tree(t).z = memblock dword(MEM_Map, t*8+4)
         tree(t).drawn = 0
-    NEXT
+    next t
     delete memblock MEM_Map
-    delete dll DLL_MapGen
 return
 
 _create_enemies:
@@ -1187,7 +1158,7 @@ _create_enemies:
         fix object pivot OBJ_Monster_Base+t
         gosub scorpChangeToWalk
         set object collision on OBJ_Monster_Base+t
-    NEXT
+    next t
 return
 
 scorpChangeToIdle:
@@ -1477,24 +1448,16 @@ JumpUpdate:
 return
 
 function resizeImage(image as dword, width as dword, height as dword)
-    if DLL EXIST(DLL_Resize32) = 0
-        load dll FN_DLL_Resize32, DLL_Resize32
-    endif
-    
     make memblock from image MEM_ResizeSrc, image
-    size = call dll(DLL_Resize32, "DestSize", get memblock ptr(MEM_ResizeSrc), width, height)
+    size = call dll(DLL_ForestDLL, "SIZ_DestSize", get memblock ptr(MEM_ResizeSrc), width, height)
 
-    rem TODO: Also allow 16bit color depth in Resize32.dll
     if size > 0
         make memblock MEM_ResizeDest, size
-        call dll DLL_Resize32, "Resize", get memblock ptr(MEM_ResizeSrc), get memblock ptr(MEM_ResizeDest), width, height
+        call dll DLL_ForestDLL, "SIZ_Resize", get memblock ptr(MEM_ResizeSrc), get memblock ptr(MEM_ResizeDest), width, height
         make image from memblock image, MEM_ResizeDest
         delete memblock MEM_ResizeSrc
         delete memblock MEM_ResizeDest
     endif
-    
-    REM delete dll DLL_Resize
-
 endfunction
 
 function LoadImageFullscreen(imgFN as string, imgID)
@@ -1514,4 +1477,7 @@ return
 
 rem -- MUST STAY AT THE END OF THE PROGRAM --
 _exit:
+    call DLL DLL_ForestDLL, "COR_Uninitialize"
+    delete dll DLL_ForestDLL
+
     exit

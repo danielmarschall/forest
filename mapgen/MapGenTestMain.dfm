@@ -3,6 +3,7 @@ object MainForm: TMainForm
   Top = 121
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
+  Caption = 'Map Generation Test'
   ClientHeight = 565
   ClientWidth = 589
   Color = clBtnFace
@@ -12,6 +13,7 @@ object MainForm: TMainForm
   Font.Name = 'MS Sans Serif'
   Font.Style = []
   Position = poScreenCenter
+  OnClose = FormClose
   OnShow = FormShow
   TextHeight = 13
   object MapImage: TImage
@@ -57,16 +59,6 @@ object MainForm: TMainForm
       TabOrder = 2
       OnClick = ShowPathCheckboxClick
     end
-    object LoadINIButton: TButton
-      Left = 432
-      Top = 8
-      Width = 65
-      Height = 29
-      Anchors = [akTop, akRight, akBottom]
-      Caption = 'Load INI'
-      TabOrder = 4
-      OnClick = LoadINIButtonClick
-    end
     object GenMapButton: TButton
       Left = 504
       Top = 8
@@ -111,14 +103,6 @@ object MainForm: TMainForm
     Interval = 200
     OnTimer = InitTimerTimer
     Left = 512
-    Top = 16
-  end
-  object INIOpenDialog: TOpenDialog
-    DefaultExt = 'ini'
-    Filter = 'INI Files (*.ini)|*.ini|All files (*.*)|*.*'
-    Options = [ofHideReadOnly, ofFileMustExist, ofEnableSizing]
-    Title = 'Select Forest.ini'
-    Left = 544
     Top = 16
   end
 end
