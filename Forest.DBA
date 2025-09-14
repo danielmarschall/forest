@@ -352,8 +352,10 @@ _show_legend:
         set text font "Arial" : set text size 23 : set text transparent
         print ""
         print "Press Space to start your journey."
-        print "Controls: WASD for walking, Hold CTRL for running (not while being in water),"
-        print "Space=Jump (press longer for higher jump)"
+        print "Controls: WASD for walking and mouse for looking around,"
+        print "Space for jumping (press longer for higher jump),"
+        print "Hold Ctrl for running (not while being in water),"
+        print "Hold Shift for walking slowly (refills run energy faster)"
   
         sync
 

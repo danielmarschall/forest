@@ -38,6 +38,7 @@ see [Let's play of the beta version](https://www.youtube.com/watch?v=5Tp92G5N19c
 ### Controls
 
 - WASD keys to move
+- Use the mouse to look around
 - Hold Ctrl to run (not inside water)
 - Hold Shift to slowly walk (regains run energy faster)
 - Jump with space key (hold longer for higher jump)

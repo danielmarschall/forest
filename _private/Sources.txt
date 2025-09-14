@@ -3,19 +3,7 @@
 
 ## Code
 
-forest.exe
-	Author: Daniel Marschall
-	License: Apache 2.0 License
-
-cfgread/dbini32.dll
-	Author: Daniel Marschall
-	License: Apache 2.0 License
-
-dll_resize/resize32.dll
-	Author: Daniel Marschall
-	License: Apache 2.0 License
-
-mapgen/mapgen32.dll and mapgen/mapgentest.exe
+Forest.exe and ForestDLL.dll
 	Author: Daniel Marschall
 	License: Apache 2.0 License
 
