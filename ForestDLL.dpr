@@ -32,7 +32,7 @@ begin
   result := 'ForestOnce.ini'; // TODO: user or user-temp dir
 end;
 
-procedure COR_Initialize; cdecl;
+procedure COR_Initialize(HandleOnceIni: integer); cdecl;
 begin
   {$IF CompilerVersion >= 20.0} // Version guessed
   FormatSettings.DecimalSeparator := '.';
@@ -47,10 +47,10 @@ begin
   else
     iniUser := TMemIniFile.Create(Internal_iniDefaultsFileName);
 
-  if FileExists(Internal_iniOnceFileName) then
+  if (HandleOnceIni<>0) and FileExists(Internal_iniOnceFileName) then
   begin
     iniOnce := TMemIniFile.Create(Internal_iniOnceFileName);
-    DeleteFile(Internal_iniOnceFileName); // avoid that it is loaded again
+    DeleteFile(Internal_iniOnceFileName); // to avoid that it is used a second time
   end
   else if FileExists(Internal_iniUserFileName) then
     iniOnce := TMemIniFile.Create(Internal_iniUserFileName)
@@ -92,7 +92,7 @@ begin
   if once <> 0 then fn := Internal_iniOnceFileName else fn := Internal_iniUserFileName;
   ini := TMemIniFile.Create(fn);
   try
-    ini.WriteInteger(section, name, value);
+    ini.WriteInteger(string(section), string(name), value);
     ini.UpdateFile;
   finally
     FreeAndNil(ini);
@@ -125,7 +125,7 @@ begin
   if once <> 0 then fn := Internal_iniOnceFileName else fn := Internal_iniUserFileName;
   ini := TMemIniFile.Create(fn);
   try
-    ini.WriteFloat(section, name, value);
+    ini.WriteFloat(string(section), string(name), value);
     ini.UpdateFile;
   finally
     FreeAndNil(ini);
@@ -158,7 +158,7 @@ begin
   if once <> 0 then fn := Internal_iniOnceFileName else fn := Internal_iniUserFileName;
   ini := TMemIniFile.Create(fn);
   try
-    ini.WriteBool(section, name, value<>0);
+    ini.WriteBool(string(section), string(name), value<>0);
     ini.UpdateFile;
   finally
     FreeAndNil(ini);
@@ -204,7 +204,7 @@ begin
   if once <> 0 then fn := Internal_iniOnceFileName else fn := Internal_iniUserFileName;
   ini := TMemIniFile.Create(fn);
   try
-    ini.WriteString(section, name, value);
+    ini.WriteString(string(section), string(name), string(value));
     ini.UpdateFile;
   finally
     FreeAndNil(ini);
@@ -539,7 +539,7 @@ begin
     else
       MAP_UseSeed(seedValue);
   finally
-    ini.Free;
+    FreeAndNil(ini);
   end;
 end;
 

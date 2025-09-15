@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{1298F29D-A253-4077-A48B-D7AA033CA5B4}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="ForestLauncher.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="ForestDLL.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="ForestLauncher">
+        <MSBuild Projects="ForestLauncher.dproj"/>
+    </Target>
+    <Target Name="ForestLauncher:Clean">
+        <MSBuild Projects="ForestLauncher.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ForestLauncher:Make">
+        <MSBuild Projects="ForestLauncher.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ForestDLL">
+        <MSBuild Projects="ForestDLL.dproj"/>
+    </Target>
+    <Target Name="ForestDLL:Clean">
+        <MSBuild Projects="ForestDLL.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ForestDLL:Make">
+        <MSBuild Projects="ForestDLL.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="ForestLauncher;ForestDLL"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="ForestLauncher:Clean;ForestDLL:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="ForestLauncher:Make;ForestDLL:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

@@ -1,9 +1,9 @@
-object MainForm: TMainForm
+object MapGenForm: TMapGenForm
   Left = 190
   Top = 121
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  Caption = 'Map Generation Test'
+  Caption = 'Map Preview'
   ClientHeight = 565
   ClientWidth = 589
   Color = clBtnFace
@@ -12,8 +12,7 @@ object MainForm: TMainForm
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
-  Position = poScreenCenter
-  OnClose = FormClose
+  Position = poMainFormCenter
   OnShow = FormShow
   TextHeight = 13
   object MapImage: TImage
@@ -59,16 +58,16 @@ object MainForm: TMainForm
       TabOrder = 2
       OnClick = ShowPathCheckboxClick
     end
-    object GenMapButton: TButton
+    object RegenerateBtn: TButton
       Left = 504
-      Top = 8
+      Top = 6
       Width = 77
       Height = 29
       Anchors = [akTop, akRight, akBottom]
       Caption = 'New map'
       Default = True
       TabOrder = 0
-      OnClick = GenMapButtonClick
+      OnClick = RegenerateBtnClick
     end
     object SeedSpinEdit: TSpinEdit
       Left = 256
@@ -88,21 +87,15 @@ object MainForm: TMainForm
       Value = 0
       OnChange = SeedSpinEditChange
     end
-    object PlayButton: TButton
-      Left = 360
-      Top = 8
+    object SaveBtn: TButton
+      Left = 359
+      Top = 6
       Width = 65
       Height = 29
       Anchors = [akTop, akRight, akBottom]
-      Caption = 'Play'
+      Caption = 'Save'
       TabOrder = 3
-      OnClick = PlayButtonClick
+      OnClick = SaveBtnClick
     end
-  end
-  object InitTimer: TTimer
-    Interval = 200
-    OnTimer = InitTimerTimer
-    Left = 512
-    Top = 16
   end
 end

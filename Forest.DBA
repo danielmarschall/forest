@@ -132,7 +132,7 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 // --------------------------------
 
 load dll FN_DLL_ForestDLL, DLL_ForestDLL
-call DLL DLL_ForestDLL, "COR_Initialize"
+call DLL DLL_ForestDLL, "COR_Initialize", 1
 
 title$ = space$(256)        : call dll DLL_ForestDLL, "INI_ReadString","Product", "Title", "Nightmare Forest", title$, 256
 debugShowCoords             = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "debugShowCoords",             0)
