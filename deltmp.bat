@@ -8,10 +8,3 @@ del *.~*
 del *.dcu
 del *.identcache
 del *.local
-
-rd /s /q mapgen\__history
-rd /s /q mapgen\__recovery
-del mapgen\*.~*
-del mapgen\*.dcu
-del mapgen\*.identcache
-del mapgen\*.local

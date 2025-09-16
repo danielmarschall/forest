@@ -135,6 +135,7 @@ load dll FN_DLL_ForestDLL, DLL_ForestDLL
 call DLL DLL_ForestDLL, "COR_Initialize", 1
 
 title$ = space$(256)        : call dll DLL_ForestDLL, "INI_ReadString","Product", "Title", "Nightmare Forest", title$, 256
+author$ = space$(256)       : call dll DLL_ForestDLL, "INI_ReadString","Product", "Author", "Daniel Marschall", author$, 256
 debugShowCoords             = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "debugShowCoords",             0)
 maxFramerate                = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "maxFramerate",                30)
 screenResW                  = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "screenResW",                  800)
@@ -160,6 +161,7 @@ MinFallVelocity#            = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "
 scorpCollissionX#           = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "scorpCollissionX",            150.0)
 scorpCollissionY#           = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "scorpCollissionY",            190.0)
 scorpCollissionZ#           = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "scorpCollissionZ",            150.0)
+scorpMinDistance            = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "scorpMinDistance",            100)
 HitInterval#                = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "HitInterval",                 5.0)
 HitFactorFirst#             = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "HitFactorFirst",              5.0)
 HitFactorRecurrent#         = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "HitFactorRecurrent",          0.1)
@@ -212,7 +214,6 @@ tentMinTreeDistance = 400
 rem These are some variables required for the scorpion model
 rem It makes no sense to add them to the INI file, I think.
 
-scorpMinDistance = 100
 scorpYOffset#    = 20
 
 set display mode screenResW, screenResH, screenResB, screenVSync
@@ -576,7 +577,7 @@ _winscreen:
         paste image IMG_TitleScreen, 0, 0
         ink rgb(255,255,255),1
         text 100,140,"Thank you for playing Nightmare Forest !"
-        text 100,180,"Created by Daniel Marschall 2001 - 2025"
+        text 100,180,"Created by " + author$ + " 2001 - 2025"
         text 100,220,"Developed with DarkBASIC Pro and Delphi"
         sync
     until abs(TIMER()-tmp) >= 7500
