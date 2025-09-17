@@ -32,7 +32,12 @@ begin
   result := 'ForestOnce.ini'; // TODO: user or user-temp dir
 end;
 
-procedure COR_Initialize(HandleOnceIni: integer); cdecl;
+const
+  COR_INITIALIZE_READ_DEFAULT = 1;
+  COR_INITIALIZE_READ_USER = 2;
+  COR_INITIALIZE_READ_ONCE = 4;
+  COR_INITIALIZE_DELETE_ONCE = 8;
+procedure COR_Initialize(source: integer); cdecl;
 begin
   {$IF CompilerVersion >= 20.0} // Version guessed
   FormatSettings.DecimalSeparator := '.';
@@ -40,22 +45,23 @@ begin
   DecimalSeparator := '.';
   {$ENDIF}
 
-  iniDefaults := TMemIniFile.Create(Internal_iniDefaultsFileName);
+  if ((source and COR_INITIALIZE_READ_DEFAULT) <> 0) and FileExists(Internal_iniDefaultsFileName) then
+    iniDefaults := TMemIniFile.Create(Internal_iniDefaultsFileName)
+  else
+    iniDefaults := nil;
 
-  if FileExists(Internal_iniUserFileName) then
+  if ((source and COR_INITIALIZE_READ_USER) <> 0) and FileExists(Internal_iniUserFileName) then
     iniUser := TMemIniFile.Create(Internal_iniUserFileName)
   else
-    iniUser := TMemIniFile.Create(Internal_iniDefaultsFileName);
+    iniUser := nil;
 
-  if (HandleOnceIni<>0) and FileExists(Internal_iniOnceFileName) then
-  begin
-    iniOnce := TMemIniFile.Create(Internal_iniOnceFileName);
-    DeleteFile(Internal_iniOnceFileName); // to avoid that it is used a second time
-  end
-  else if FileExists(Internal_iniUserFileName) then
-    iniOnce := TMemIniFile.Create(Internal_iniUserFileName)
+  if ((source and COR_INITIALIZE_READ_ONCE) <> 0) and FileExists(Internal_iniOnceFileName) then
+    iniOnce := TMemIniFile.Create(Internal_iniOnceFileName)
   else
-    iniOnce := TMemIniFile.Create(Internal_iniDefaultsFileName);
+    iniOnce := nil;
+
+  if ((source and COR_INITIALIZE_DELETE_ONCE) <> 0) and FileExists(Internal_iniOnceFileName) then
+    DeleteFile(Internal_iniOnceFileName); // to avoid that it is used a second time
 end;
 
 procedure COR_Uninitialize; cdecl;
@@ -73,9 +79,10 @@ function Internal_ReadInteger(const Section, Ident: string; Default: Integer): i
 var
   ini: TMemIniFile;
 begin
-  if iniOnce.ValueExists(section, ident) then ini := iniOnce
-  else if iniUser.ValueExists(section, ident) then ini := iniUser
-  else ini := iniDefaults;
+  if Assigned(iniOnce) and iniOnce.ValueExists(section, ident) then ini := iniOnce
+  else if Assigned(iniUser) and iniUser.ValueExists(section, ident) then ini := iniUser
+  else if Assigned(iniDefaults) then ini := iniDefaults
+  else exit(Default);
   result := ini.ReadInteger(section, ident, default);
 end;
 
@@ -103,9 +110,10 @@ function Internal_ReadFloat(const Section, Ident: string; Default: Double): Doub
 var
   ini: TMemIniFile;
 begin
-  if iniOnce.ValueExists(section, ident) then ini := iniOnce
-  else if iniUser.ValueExists(section, ident) then ini := iniUser
-  else ini := iniDefaults;
+  if Assigned(iniOnce) and iniOnce.ValueExists(section, ident) then ini := iniOnce
+  else if Assigned(iniUser) and iniUser.ValueExists(section, ident) then ini := iniUser
+  else if Assigned(iniDefaults) then ini := iniDefaults
+  else exit(Default);
   result := ini.ReadFloat(section, ident, default);
 end;
 
@@ -136,9 +144,10 @@ function Internal_ReadBool(const Section, Ident: string; Default: Boolean): Bool
 var
   ini: TMemIniFile;
 begin
-  if iniOnce.ValueExists(section, ident) then ini := iniOnce
-  else if iniUser.ValueExists(section, ident) then ini := iniUser
-  else ini := iniDefaults;
+  if Assigned(iniOnce) and iniOnce.ValueExists(section, ident) then ini := iniOnce
+  else if Assigned(iniUser) and iniUser.ValueExists(section, ident) then ini := iniUser
+  else if Assigned(iniDefaults) then ini := iniDefaults
+  else exit(Default);
   result := ini.ReadBool(section, ident, default);
 end;
 
@@ -169,9 +178,10 @@ function Internal_ReadString(const Section, Ident: string; Default: string): str
 var
   ini: TMemIniFile;
 begin
-  if iniOnce.ValueExists(section, ident) then ini := iniOnce
-  else if iniUser.ValueExists(section, ident) then ini := iniUser
-  else ini := iniDefaults;
+  if Assigned(iniOnce) and iniOnce.ValueExists(section, ident) then ini := iniOnce
+  else if Assigned(iniUser) and iniUser.ValueExists(section, ident) then ini := iniUser
+  else if Assigned(iniDefaults) then ini := iniDefaults
+  else exit(Default);
   result := ini.ReadString(section, ident, default);
 end;
 

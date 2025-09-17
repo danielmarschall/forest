@@ -4366,4 +4366,13 @@ object MainForm: TMainForm
     TabOrder = 4
     Value = 0
   end
+  object Button1: TButton
+    Left = 440
+    Top = 280
+    Width = 109
+    Height = 40
+    Caption = 'Reset to default'
+    TabOrder = 7
+    OnClick = Button1Click
+  end
 end

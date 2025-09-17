@@ -131,8 +131,13 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 // Read configuration
 // --------------------------------
 
+#constant COR_INITIALIZE_READ_DEFAULT 1
+#constant COR_INITIALIZE_READ_USER    2
+#constant COR_INITIALIZE_READ_ONCE    4
+#constant COR_INITIALIZE_DELETE_ONCE  8
+
 load dll FN_DLL_ForestDLL, DLL_ForestDLL
-call DLL DLL_ForestDLL, "COR_Initialize", 1
+call DLL DLL_ForestDLL, "COR_Initialize", COR_INITIALIZE_READ_DEFAULT || COR_INITIALIZE_READ_USER || COR_INITIALIZE_READ_ONCE || COR_INITIALIZE_DELETE_ONCE
 
 title$ = space$(256)        : call dll DLL_ForestDLL, "INI_ReadString","Product", "Title", "Nightmare Forest", title$, 256
 author$ = space$(256)       : call dll DLL_ForestDLL, "INI_ReadString","Product", "Author", "Daniel Marschall", author$, 256

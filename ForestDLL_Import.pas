@@ -13,8 +13,13 @@ type
 
 function INI_ReadString(section, name, default, buffer: PAnsiChar; bufferSize: DWORD): DWORD; cdecl; external 'ForestDLL.dll';
 
+const
+  COR_INITIALIZE_READ_DEFAULT = 1;
+  COR_INITIALIZE_READ_USER    = 2;
+  COR_INITIALIZE_READ_ONCE    = 4;
+  COR_INITIALIZE_DELETE_ONCE  = 8;
 
-procedure COR_Initialize(HandleOnceIni: integer); cdecl; external 'ForestDLL.dll';
+procedure COR_Initialize(source: integer); cdecl; external 'ForestDLL.dll';
 
 procedure COR_Uninitialize; cdecl; external 'ForestDLL.dll';
 

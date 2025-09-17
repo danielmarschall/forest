@@ -1,7 +1,6 @@
 unit ForestLauncherMain;
 
 // TODO: More Settings (damage amount etc.)
-// TODO: Feature "Reset to default"
 
 interface
 
@@ -25,10 +24,14 @@ type
     seMapSizeZ: TSpinEdit;
     Label4: TLabel;
     Label5: TLabel;
+    Button1: TButton;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure SaveAndPlayBtnClick(Sender: TObject);
     procedure MapPreviewBtnClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+  private
+    procedure LoadSettings;
   public
     seed_value: integer;
     treeradius: DWord;
@@ -181,33 +184,65 @@ begin
   MapGenForm.ShowModal;
 end;
 
-procedure TMainForm.FormCreate(Sender: TObject);
+procedure TMainForm.Button1Click(Sender: TObject);
+begin
+  COR_Uninitialize;
+
+  COR_Initialize(COR_INITIALIZE_READ_DEFAULT);
+  try
+    LoadSettings;
+  finally
+    COR_Uninitialize;
+  end;
+
+  COR_Initialize(COR_INITIALIZE_READ_DEFAULT or COR_INITIALIZE_READ_USER);
+end;
+
+procedure TMainForm.LoadSettings;
 resourcestring
-  LNG_TITLE = '%s, Version %s';
+  LNG_TITLE = '%s by %s, Version %s';
 var
   Mode: TDisplayMode;
   idx: integer;
-  pcTitle, pcVersion: array[0..255] of AnsiChar;
+  pcTitle, pcAuthor, pcVersion: array[0..255] of AnsiChar;
 begin
-  SetCurrentDir(ExtractFilePath(ParamStr(0)));
-
-  COR_Initialize(0);
-
   {$REGION 'Determine product title and version'}
-
   INI_ReadString('Product', 'Title', '', pcTitle, SizeOf(pcTitle));
+  INI_ReadString('Product', 'Author', '', pcAuthor, SizeOf(pcAuthor));
   INI_ReadString('Product', 'Version', '', pcVersion, SizeOf(pcTitle));
   Caption := Format(LNG_TITLE, [
     string(System.AnsiStrings.StrPas(pcTitle)),
+    string(System.AnsiStrings.StrPas(pcAuthor)),
     string(System.AnsiStrings.StrPas(pcVersion))
   ]);
-
   {$ENDREGION}
+
+  {$REGION 'Select current chosen screen resolution (default or user)'}
+  Mode.Width  := INI_ReadInt('Game', 'screenResW', 800);
+  Mode.Height := INI_ReadInt('Game', 'screenResH', 600);
+  Mode.Bits   := INI_ReadInt('Game', 'screenResB', 32);
+  idx := ComboBox1.Items.IndexOf(Mode.ToString);
+  if idx = -1 then idx := 0;
+  ComboBox1.ItemIndex := idx;
+  {$ENDREGION}
+
+  {$REGION 'Load game settings'}
+  seEnemies.Value  := INI_ReadInt('Game', 'cMaxEnemies', 50);
+  seTrees.Value    := INI_ReadInt('Game', 'cMaxTrees',   1200);
+  seMapSizeX.Value := INI_ReadInt('Game', 'cMapSizeX',   10000);
+  seMapSizeZ.Value := INI_ReadInt('Game', 'cMapSizeZ',   10000);
+  treeradius       := INI_ReadInt('Game', 'cTreeRadius', 100); // not to be edited by the user for now
+  {$ENDREGION}
+end;
+
+procedure TMainForm.FormCreate(Sender: TObject);
+begin
+  SetCurrentDir(ExtractFilePath(ParamStr(0)));
 
   {$REGION 'List screen resolutions'}
   ComboBox1.Clear;
   ListDisplayModes(ComboBox1.Items);
-  // TODO: sponge
+  // Just for testing:
   (*
   ComboBox1.Items.Add('640x480x16');
   ComboBox1.Items.Add('640x480x24');
@@ -221,24 +256,9 @@ begin
   *)
   {$ENDREGION}
 
-  {$REGION 'Select current chosen screen resolution (default or user)'}
-  Mode.Width  := INI_ReadInt('Game', 'screenResW', 800);
-  Mode.Height := INI_ReadInt('Game', 'screenResH', 600);
-  Mode.Bits   := INI_ReadInt('Game', 'screenResB', 32);
-  idx := ComboBox1.Items.IndexOf(Mode.ToString);
-  if idx = -1 then idx := 0;
-  ComboBox1.ItemIndex := idx;
-  {$ENDREGION}
+  COR_Initialize(COR_INITIALIZE_READ_DEFAULT or COR_INITIALIZE_READ_USER);
 
-  {$REGION 'Load game settings'}
-
-  seEnemies.Value  := INI_ReadInt('Game', 'cMaxEnemies', 50);
-  seTrees.Value    := INI_ReadInt('Game', 'cMaxTrees',   1200);
-  seMapSizeX.Value := INI_ReadInt('Game', 'cMapSizeX',   10000);
-  seMapSizeZ.Value := INI_ReadInt('Game', 'cMapSizeZ',   10000);
-  treeradius       := INI_ReadInt('Game', 'cTreeRadius', 100); // not to be edited by the user for now
-
-  {$ENDREGION}
+  LoadSettings;
 
   seed_value := MAP_RandomSeed;
 end;
