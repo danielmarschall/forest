@@ -55,6 +55,7 @@ obj/scorpion/scorpwalk.x and obj/scorpion/scorpidle.x
 obj/tent/tent.x
 	From DarkBasic Classic Media CD ROM "tent3.x"
 	DV8710 Copyright Viewpoint Datalabs Intl., Inc.
+	Modifications: Changed materials so that the colors look like they should.
 
 ## Sound effects
 
