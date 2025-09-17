@@ -265,7 +265,6 @@ end;
 
 procedure TMainForm.FormDestroy(Sender: TObject);
 begin
-  // TODO: ich hatte vorhin beim formdestroy eine accessviolation. hatte viel rumgemacht mit einstellungen ändern und mapgen auf und zu
   COR_Uninitialize;
 end;
 

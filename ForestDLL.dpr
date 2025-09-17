@@ -520,37 +520,31 @@ begin
   RandSeed := seed;
 end;
 
-procedure MAP_LoadParameters(filename: PAnsiChar); cdecl;
+procedure MAP_LoadParameters; cdecl;
 var
-  ini: TMemIniFile;
   seedValue: integer;
 begin
-  ini := TMemIniFile.Create(string(filename));
-  try
-    cMaxBranchLength                   := Internal_ReadInteger('MapGen32', 'MaxBranchLength',                   200   );
-    cPathFlexibility                   := Internal_ReadInteger('MapGen32', 'PathFlexibility',                    15   );
-    cMapBorderSize                     := Internal_ReadFloat  ('MapGen32', 'MapBorderSize',                       5   );
-    cPathWidthFactor                   := Internal_ReadFloat  ('MapGen32', 'PathWidthFactor',                     1   );
-    cPathLength                        := Internal_ReadFloat  ('MapGen32', 'PathLength',                          0.20);
-    cTreePlacementMaxAttempts          := Internal_ReadInteger('MapGen32', 'TreePlacementMaxAttempts',         1000   );
+  cMaxBranchLength                   := Internal_ReadInteger('MapGen32', 'MaxBranchLength',                   200   );
+  cPathFlexibility                   := Internal_ReadInteger('MapGen32', 'PathFlexibility',                    15   );
+  cMapBorderSize                     := Internal_ReadFloat  ('MapGen32', 'MapBorderSize',                       5   );
+  cPathWidthFactor                   := Internal_ReadFloat  ('MapGen32', 'PathWidthFactor',                     1   );
+  cPathLength                        := Internal_ReadFloat  ('MapGen32', 'PathLength',                          0.20);
+  cTreePlacementMaxAttempts          := Internal_ReadInteger('MapGen32', 'TreePlacementMaxAttempts',         1000   );
 
-    cPathAcceptCheckCornerCircle       := Internal_ReadBool   ('MapGen32', 'PathAcceptCheckCornerCircle',       false);
-    cPathAcceptCheckCornerCircleRadius := Internal_ReadInteger('MapGen32', 'PathAcceptCheckCornerCircleRadius', 500);
+  cPathAcceptCheckCornerCircle       := Internal_ReadBool   ('MapGen32', 'PathAcceptCheckCornerCircle',       false);
+  cPathAcceptCheckCornerCircleRadius := Internal_ReadInteger('MapGen32', 'PathAcceptCheckCornerCircleRadius', 500);
 
-    cPathAcceptCheckSquares            := Internal_readBool   ('MapGen32', 'PathAcceptCheckSquares',           true);
-    cPathAcceptCheckSquaresHorizontal  := Internal_ReadInteger('MapGen32', 'PathAcceptCheckSquaresHorizontal', 5);
-    cPathAcceptCheckSquaresVertical    := Internal_ReadInteger('MapGen32', 'PathAcceptCheckSquaresVertical',   5);
+  cPathAcceptCheckSquares            := Internal_readBool   ('MapGen32', 'PathAcceptCheckSquares',           true);
+  cPathAcceptCheckSquaresHorizontal  := Internal_ReadInteger('MapGen32', 'PathAcceptCheckSquaresHorizontal', 5);
+  cPathAcceptCheckSquaresVertical    := Internal_ReadInteger('MapGen32', 'PathAcceptCheckSquaresVertical',   5);
 
-    cPathBuildMaxAttempts              := Internal_ReadInteger('MapGen32', 'PathBuildMaxAttempts', 100);
+  cPathBuildMaxAttempts              := Internal_ReadInteger('MapGen32', 'PathBuildMaxAttempts', 100);
 
-    seedValue                          := Internal_ReadInteger('MapGen32', 'seed_value', 0);
-    if seedValue = 0 then
-      MAP_RandomSeed
-    else
-      MAP_UseSeed(seedValue);
-  finally
-    FreeAndNil(ini);
-  end;
+  seedValue                          := Internal_ReadInteger('MapGen32', 'seed_value', 0);
+  if seedValue = 0 then
+    MAP_RandomSeed
+  else
+    MAP_UseSeed(seedValue);
 end;
 
 function _RandBetween(a, b: integer): integer;

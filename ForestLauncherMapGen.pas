@@ -25,7 +25,7 @@ type
   private
     mbTrees, mbWayPoints: array of TDWordPoint;
     nwaypoints: integer;
-    miniatureFactor: DWord;
+    miniatureFactor: integer;
     procedure DrawCircle(x, y, r: integer; color: TColor);
     procedure RedrawMap;
     procedure ResizeMapForm;
@@ -55,7 +55,7 @@ procedure TMapGenForm.ResizeMapForm;
 begin
   // TODO: when the form will become bigger than the screen, we need to adjust the miniatureFactor
   ClientWidth := MainForm.seMapSizeX.Value div miniatureFactor;
-  ClientHeight := MainForm.seMapSizeZ.Value div miniatureFactor + Cardinal(ControlPanel.Height);
+  ClientHeight := MainForm.seMapSizeZ.Value div miniatureFactor + ControlPanel.Height;
 end;
 
 procedure TMapGenForm.GenMapSeed(seed: integer);
@@ -118,18 +118,18 @@ begin
     begin
       // Paths
       // TODO: use a new variable "pathradius" instead of "treeradius"?
-      DrawCircle(mbWayPoints[i][0] div miniatureFactor, mbWayPoints[i][1] div miniatureFactor, MainForm.treeradius div miniatureFactor, clGreen);
+      DrawCircle(Integer(mbWayPoints[i][0]) div miniatureFactor, Integer(mbWayPoints[i][1]) div miniatureFactor, Integer(MainForm.treeradius) div miniatureFactor, clGreen);
     end;
   end;
 
   for i := 0 to MainForm.seTrees.Value-1 do
   begin
     // Tree
-    DrawCircle(mbTrees[i][0] div miniatureFactor, mbTrees[i][1] div miniatureFactor, MainForm.treeradius div miniatureFactor, clMaroon);
+    DrawCircle(Integer(mbTrees[i][0]) div miniatureFactor, Integer(mbTrees[i][1]) div miniatureFactor, Integer(MainForm.treeradius) div miniatureFactor, clMaroon);
   end;
 
   // Player
-  DrawCircle(MainForm.seMapSizeX.Value div 2 div miniatureFactor, MainForm.seMapSizeZ.Value div 2 div miniatureFactor, MainForm.treeradius div miniatureFactor, clBlue);
+  DrawCircle(MainForm.seMapSizeX.Value div 2 div miniatureFactor, MainForm.seMapSizeZ.Value div 2 div miniatureFactor, Integer(MainForm.treeradius) div miniatureFactor, clBlue);
 end;
 
 procedure TMapGenForm.SeedSpinEditChange(Sender: TObject);
