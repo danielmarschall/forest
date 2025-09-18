@@ -233,6 +233,142 @@ type
   end;
   PImgMemBlockHeader = ^TImgMemBlockHeader;
 
+type
+  TRGB565 = packed record
+    Value: Word;
+  end;
+  PRGB565 = ^TRGB565;
+
+function RGB565To24(C: Word; out R, G, B: Byte): Boolean;
+begin
+  // Extrahiere R5,G6,B5 aus Word
+  R := (C shr 11) and $1F;
+  G := (C shr 5) and $3F;
+  B := C and $1F;
+  // Skaliere auf 8 Bit
+  R := (R * 255) div 31;
+  G := (G * 255) div 63;
+  B := (B * 255) div 31;
+  Result := True;
+end;
+
+function RGB24To565(R, G, B: Byte): Word;
+begin
+  Result := ((R shr 3) shl 11) or
+            ((G shr 2) shl 5) or
+            (B shr 3);
+end;
+
+function _Resize16(srcMemblock, dstMemblock: PImgMemBlockHeader; newWidth, newHeight: Cardinal): integer;
+// --- Based on http://www.davdata.nl/math/bmresize.html ---
+var
+  psStep, pdStep: integer;
+  ps0, pd0 : Pointer;
+  sx1, sy1, sx2, sy2 : single;
+  x, y, i, j: word;
+  destR, destG, destB : single;
+  srcR, srcG, srcB: Byte;
+  fx, fy, fix, fiy, dyf : single;
+  fxstep, fystep, dx, dy : single;
+  psi, psj : Pointer;
+  AP : single;
+  istart, iend, jstart, jend : word;
+  devX1, devX2, devY1, devY2 : single;
+  DSTPIX: PRGB565;
+begin
+  dstMemblock.width := newWidth;
+  dstMemblock.height := newHeight;
+  dstMemblock.colordepth := 16;
+
+  if srcMemblock.colordepth <> 16 then
+  begin
+    result := -1;
+    exit;
+  end;
+
+  result := 0;
+
+  // Quell- und Zielpuffer setzen
+  ps0 := Pointer(srcMemblock); Inc(PByte(ps0), SizeOf(TImgMemBlockHeader));
+  psStep := -srcMemblock.width * SizeOf(TRGB565);
+  pd0 := Pointer(dstMemblock); Inc(PByte(pd0), SizeOf(TImgMemBlockHeader));
+  pdStep := -dstMemblock.width * SizeOf(TRGB565);
+
+  fx := srcMemblock.width / newWidth;
+  fy := srcMemblock.height / newHeight;
+  fix := 1 / fx;
+  fiy := 1 / fy;
+  fxstep := 0.9999 * fx;
+  fystep := 0.9999 * fy;
+
+  DSTPIX := PRGB565(pd0);
+
+  for y := 0 to newHeight - 1 do
+  begin
+    sy1 := fy * y;
+    sy2 := sy1 + fystep;
+    jstart := Trunc(sy1);
+    jend   := Trunc(sy2);
+    devY1  := 1 - sy1 + jstart;
+    devY2  := jend + 1 - sy2;
+
+    for x := 0 to newWidth - 1 do
+    begin
+      sx1 := fx * x;
+      sx2 := sx1 + fxstep;
+      istart := Trunc(sx1);
+      iend   := Trunc(sx2);
+
+      if istart >= srcMemblock.width then istart := srcMemblock.width - 1;
+      if iend   >= srcMemblock.width then iend   := srcMemblock.width - 1;
+
+      devX1 := 1 - sx1 + istart;
+      devX2 := iend + 1 - sx2;
+
+      destR := 0; destG := 0; destB := 0;
+
+      if jstart >= srcMemblock.height then jstart := srcMemblock.height - 1;
+      if jend   >= srcMemblock.height then jend   := srcMemblock.height - 1;
+
+      psj := ps0; Dec(PByte(psj), jstart * psStep);
+      dy := devY1;
+
+      for j := jstart to jend do
+      begin
+        if j = jend then dy := dy - devY2;
+        dyf := dy * fiy;
+        psi := psj; Inc(PByte(psi), istart * SizeOf(TRGB565));
+        dx := devX1;
+
+        for i := istart to iend do
+        begin
+          if i = iend then dx := dx - devX2;
+          AP := dx * dyf * fix;
+
+          RGB565To24(PRGB565(psi)^.Value, srcR, srcG, srcB);
+
+          destR := destR + srcR * AP;
+          destG := destG + srcG * AP;
+          destB := destB + srcB * AP;
+
+          Inc(PByte(psi), SizeOf(TRGB565));
+          dx := 1;
+        end;
+
+        Dec(PByte(psj), psStep);
+        dy := 1;
+      end;
+
+      DSTPIX^.Value := RGB24To565(
+        Round(destR), Round(destG), Round(destB)
+      );
+
+      Inc(DSTPIX);
+      Inc(result, SizeOf(TRGB565));
+    end;
+  end;
+end;
+
 function _Resize24(srcMemblock, dstMemblock: PImgMemBlockHeader; newWidth, newHeight: Cardinal): integer;
 // --- Based on http://www.davdata.nl/math/bmresize.html ---
 type
@@ -454,22 +590,24 @@ end;
 
 function SIZ_DestSize(memblock: PImgMemBlockHeader; newWidth, newHeight: Cardinal): integer; cdecl;
 begin
-  // TODO: Implement 16 bit color mode
   if memblock.colordepth = 32 then
     result := SizeOf(TImgMemBlockHeader) + newWidth * newHeight * 4
   else if memblock.colordepth = 24 then
     result := SizeOf(TImgMemBlockHeader) + newWidth * newHeight * 3
+  else if memblock.colordepth = 16 then
+    result := SizeOf(TImgMemBlockHeader) + newWidth * newHeight * 2
   else
     result := -1;
 end;
 
 function SIZ_Resize(srcMemblock, dstMemblock: PImgMemBlockHeader; newWidth, newHeight: Cardinal): integer; cdecl;
 begin
-  // TODO: Implement 16 bit color mode
   if srcMemblock.colordepth = 32 then
     result := _Resize32(srcMemblock, dstMemblock, newWidth, newHeight)
   else if srcMemblock.colordepth = 24 then
     result := _Resize24(srcMemblock, dstMemblock, newWidth, newHeight)
+  else if srcMemblock.colordepth = 16 then
+    result := _Resize16(srcMemblock, dstMemblock, newWidth, newHeight)
   else
     result := -1;
 end;
