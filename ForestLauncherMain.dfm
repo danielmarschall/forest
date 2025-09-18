@@ -4,7 +4,7 @@ object MainForm: TMainForm
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   ClientHeight = 328
-  ClientWidth = 565
+  ClientWidth = 559
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -4273,30 +4273,44 @@ object MainForm: TMainForm
   object Label2: TLabel
     Left = 184
     Top = 83
-    Width = 108
+    Width = 47
     Height = 15
-    Caption = 'Amount of enemies:'
+    Caption = 'Enemies:'
   end
   object Label3: TLabel
-    Left = 336
-    Top = 83
-    Width = 89
+    Left = 386
+    Top = 147
+    Width = 30
     Height = 15
-    Caption = 'Amount of trees:'
+    Caption = 'Trees:'
   end
   object Label4: TLabel
     Left = 184
-    Top = 139
+    Top = 147
     Width = 60
     Height = 15
     Caption = 'Map width:'
   end
   object Label5: TLabel
-    Left = 337
-    Top = 139
+    Left = 286
+    Top = 147
     Width = 64
     Height = 15
     Caption = 'Map height:'
+  end
+  object Label6: TLabel
+    Left = 286
+    Top = 83
+    Width = 67
+    Height = 15
+    Caption = 'Clock speed:'
+  end
+  object Label7: TLabel
+    Left = 386
+    Top = 83
+    Width = 38
+    Height = 15
+    Caption = 'Health:'
   end
   object ComboBox1: TComboBox
     Left = 184
@@ -4326,19 +4340,20 @@ object MainForm: TMainForm
     Value = 0
   end
   object MapPreviewBtn: TButton
-    Left = 464
-    Top = 159
-    Width = 85
+    Left = 472
+    Top = 168
+    Width = 77
     Height = 25
     Caption = 'Map Preview'
     TabOrder = 5
     OnClick = MapPreviewBtnClick
   end
   object seTrees: TSpinEdit
-    Left = 336
-    Top = 104
-    Width = 121
+    Left = 386
+    Top = 168
+    Width = 73
     Height = 24
+    Increment = 100
     MaxValue = 0
     MinValue = 0
     TabOrder = 2
@@ -4346,8 +4361,8 @@ object MainForm: TMainForm
   end
   object seMapSizeX: TSpinEdit
     Left = 184
-    Top = 160
-    Width = 121
+    Top = 168
+    Width = 65
     Height = 24
     Increment = 1000
     MaxValue = 0
@@ -4356,9 +4371,9 @@ object MainForm: TMainForm
     Value = 0
   end
   object seMapSizeZ: TSpinEdit
-    Left = 337
-    Top = 160
-    Width = 121
+    Left = 286
+    Top = 168
+    Width = 65
     Height = 24
     Increment = 1000
     MaxValue = 0
@@ -4374,5 +4389,42 @@ object MainForm: TMainForm
     Caption = 'Reset to default'
     TabOrder = 7
     OnClick = Button1Click
+  end
+  object InvertMouse: TCheckBox
+    Left = 184
+    Top = 216
+    Width = 137
+    Height = 17
+    Caption = 'Invert mouse Y-axis'
+    TabOrder = 8
+  end
+  object TimeAdvance: TSpinEdit
+    Left = 286
+    Top = 104
+    Width = 65
+    Height = 24
+    Increment = 10
+    MaxValue = 0
+    MinValue = 0
+    TabOrder = 9
+    Value = 0
+  end
+  object VSync: TCheckBox
+    Left = 335
+    Top = 40
+    Width = 137
+    Height = 17
+    Caption = 'VSync'
+    TabOrder = 10
+  end
+  object HitsUntilDeath: TSpinEdit
+    Left = 386
+    Top = 104
+    Width = 73
+    Height = 24
+    MaxValue = 0
+    MinValue = 0
+    TabOrder = 11
+    Value = 0
   end
 end

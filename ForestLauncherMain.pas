@@ -1,7 +1,5 @@
 unit ForestLauncherMain;
 
-// TODO: More Settings (damage amount etc.)
-
 interface
 
 uses
@@ -25,6 +23,12 @@ type
     Label4: TLabel;
     Label5: TLabel;
     Button1: TButton;
+    InvertMouse: TCheckBox;
+    TimeAdvance: TSpinEdit;
+    VSync: TCheckBox;
+    HitsUntilDeath: TSpinEdit;
+    Label6: TLabel;
+    Label7: TLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure SaveAndPlayBtnClick(Sender: TObject);
@@ -46,6 +50,11 @@ uses
   WinApi.ShellApi, System.AnsiStrings, ForestDLL_Import, ForestLauncherMapGen;
 
 {$R *.dfm}
+
+function BoolTo10(b: boolean): integer;
+begin
+  if b then exit(1) else exit(0);
+end;
 
 {$REGION 'List display modes'}
 
@@ -160,6 +169,11 @@ begin
   INI_WriteInt('Game', 'cMaxTrees',   seTrees.Value,    0{not once});
   INI_WriteInt('Game', 'cMapSizeX',   seMapSizeX.Value, 0{not once});
   INI_WriteInt('Game', 'cMapSizeZ',   seMapSizeZ.Value, 0{not once});
+  INI_WriteInt('Game', 'cTreeRadius', treeradius,       0{not once});
+  INI_WriteBool('Game','invertMouse', BoolTo10(InvertMouse.Checked), 0{not once});
+  INI_WriteInt('Game', 'clockSecondsAdvance', TimeAdvance.Value, 0{not once});
+  INI_WriteBool('Game','screenVSync', BoolTo10(VSync.Checked), 0{not once});
+  INI_WriteInt('Game', 'maxHitsTillDeath', HitsUntilDeath.Value, 0{not once});
 
   {$ENDREGION}
 
@@ -227,11 +241,17 @@ begin
   {$ENDREGION}
 
   {$REGION 'Load game settings'}
+
   seEnemies.Value  := INI_ReadInt('Game', 'cMaxEnemies', 50);
   seTrees.Value    := INI_ReadInt('Game', 'cMaxTrees',   1200);
   seMapSizeX.Value := INI_ReadInt('Game', 'cMapSizeX',   10000);
   seMapSizeZ.Value := INI_ReadInt('Game', 'cMapSizeZ',   10000);
   treeradius       := INI_ReadInt('Game', 'cTreeRadius', 100); // not to be edited by the user for now
+  InvertMouse.Checked := INI_ReadBool('Game', 'invertMouse', 0) = 1;
+  TimeAdvance.Value := INI_ReadInt('Game', 'clockSecondsAdvance', 60);
+  VSync.Checked := INI_ReadBool('Game', 'screenVSync', 0) = 1;
+  HitsUntilDeath.Value := INI_ReadInt('Game', 'maxHitsTillDeath', 50);
+
   {$ENDREGION}
 end;
 
