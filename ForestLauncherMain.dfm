@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 0
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
-  ClientHeight = 328
+  ClientHeight = 321
   ClientWidth = 559
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -17,7 +17,7 @@ object MainForm: TMainForm
   TextHeight = 15
   object Image1: TImage
     Left = 8
-    Top = 16
+    Top = 8
     Width = 150
     Height = 300
     AutoSize = True
@@ -4322,7 +4322,7 @@ object MainForm: TMainForm
   end
   object SaveAndPlayBtn: TButton
     Left = 184
-    Top = 278
+    Top = 270
     Width = 169
     Height = 38
     Caption = 'Save and play game'
@@ -4340,9 +4340,9 @@ object MainForm: TMainForm
     Value = 0
   end
   object MapPreviewBtn: TButton
-    Left = 472
+    Left = 464
     Top = 168
-    Width = 77
+    Width = 85
     Height = 25
     Caption = 'Map Preview'
     TabOrder = 8
@@ -4351,7 +4351,7 @@ object MainForm: TMainForm
   object seTrees: TSpinEdit
     Left = 386
     Top = 168
-    Width = 73
+    Width = 65
     Height = 24
     Increment = 100
     MaxValue = 0
@@ -4383,7 +4383,7 @@ object MainForm: TMainForm
   end
   object Button1: TButton
     Left = 440
-    Top = 280
+    Top = 272
     Width = 109
     Height = 40
     Caption = 'Reset to default'
@@ -4412,7 +4412,7 @@ object MainForm: TMainForm
   object VSync: TCheckBox
     Left = 335
     Top = 40
-    Width = 58
+    Width = 66
     Height = 17
     Caption = 'VSync'
     TabOrder = 1
@@ -4420,7 +4420,7 @@ object MainForm: TMainForm
   object HitsUntilDeath: TSpinEdit
     Left = 386
     Top = 104
-    Width = 73
+    Width = 65
     Height = 24
     MaxValue = 0
     MinValue = 0

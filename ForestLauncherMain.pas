@@ -74,6 +74,25 @@ begin
   Result := Format('%dx%dx%d', [Width, Height, Bits]);
 end;
 
+function GetPrimaryDeviceName: string;
+var
+  dd: TDisplayDevice;
+  i: Integer;
+begin
+  Result := '';
+  i := 0;
+  ZeroMemory(@dd, SizeOf(dd));
+  dd.cb := SizeOf(dd);
+  while EnumDisplayDevices(nil, i, dd, 0) do
+  begin
+    if (dd.StateFlags and DISPLAY_DEVICE_PRIMARY_DEVICE) <> 0 then
+      Exit(dd.DeviceName);
+    Inc(i);
+    ZeroMemory(@dd, SizeOf(dd));
+    dd.cb := SizeOf(dd);
+  end;
+end;
+
 function CompareDisplayModes(const A, B: TDisplayMode): Integer;
 begin
   if A.Width <> B.Width then
@@ -93,6 +112,8 @@ var
   ModesList: TList<TDisplayMode>;
   Key: string;
   I: Integer;
+  dn: string;
+  pdn: PChar;
 begin
   ModesDict := TDictionary<string, TDisplayMode>.Create;
   try
@@ -100,9 +121,12 @@ begin
     FillChar(DevMode, SizeOf(DevMode), 0);
     DevMode.dmSize := SizeOf(DevMode);
 
-    // A NULL value specifies the current display device on the computer on which the calling thread is running.
-    // TODO: is that correct? on which screen are we playing?
-    while EnumDisplaySettings(nil, ModeNum, DevMode) do
+    dn := GetPrimaryDeviceName;
+    if dn <> '' then
+      pdn := PChar(dn)
+    else
+      pdn := nil;
+    while EnumDisplaySettings(pdn, ModeNum, DevMode) do
     begin
       ModeRec.Width := DevMode.dmPelsWidth;
       ModeRec.Height := DevMode.dmPelsHeight;
@@ -148,6 +172,8 @@ end;
 {$ENDREGION}
 
 procedure TMainForm.SaveAndPlayBtnClick(Sender: TObject);
+resourcestring
+  LNG_S_IsMissing = '%s is missing.';
 var
   Parts: TArray<string>;
   W, H, B: integer;
@@ -192,7 +218,7 @@ begin
   {$REGION 'Start the game'}
 
   if not FileExists('Forest.exe') then
-    raise Exception.Create('Forest.exe is missing');
+    raise Exception.CreateFmt(LNG_S_IsMissing, ['Forest.exe']);
   ShellExecute(0, 'open', PChar('Forest.exe'), '', '', SW_NORMAL);
   // Close;
 
@@ -269,18 +295,27 @@ begin
   {$REGION 'List screen resolutions'}
   ComboBox1.Clear;
   ListDisplayModes(ComboBox1.Items);
-  // Just for testing:
-  (*
-  ComboBox1.Items.Add('640x480x16');
-  ComboBox1.Items.Add('640x480x24');
-  ComboBox1.Items.Add('640x480x32');
-  ComboBox1.Items.Add('800x600x16');
-  ComboBox1.Items.Add('800x600x24');
-  ComboBox1.Items.Add('800x600x32');
-  ComboBox1.Items.Add('1024x768x16');
-  ComboBox1.Items.Add('1024x768x24');
-  ComboBox1.Items.Add('1024x768x32');
-  *)
+  if ComboBox1.Items.Count = 0 then
+  begin
+    ComboBox1.Items.Add('640x480x16');
+    ComboBox1.Items.Add('640x480x24');
+    ComboBox1.Items.Add('640x480x32');
+    ComboBox1.Items.Add('800x600x16');
+    ComboBox1.Items.Add('800x600x24');
+    ComboBox1.Items.Add('800x600x32');
+    ComboBox1.Items.Add('1024x768x16');
+    ComboBox1.Items.Add('1024x768x24');
+    ComboBox1.Items.Add('1024x768x32');
+    ComboBox1.Items.Add('1280x800x16');
+    ComboBox1.Items.Add('1280x800x24');
+    ComboBox1.Items.Add('1280x800x32');
+    ComboBox1.Items.Add('1366x768x16');
+    ComboBox1.Items.Add('1366x768x24');
+    ComboBox1.Items.Add('1366x768x32');
+    ComboBox1.Items.Add('1920x1080x16');
+    ComboBox1.Items.Add('1920x1080x24');
+    ComboBox1.Items.Add('1920x1080x32');
+  end;
   {$ENDREGION}
 
   COR_Initialize(COR_INITIALIZE_READ_DEFAULT or COR_INITIALIZE_READ_USER);
