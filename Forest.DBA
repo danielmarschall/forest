@@ -1,5 +1,5 @@
 rem Nightmare Forest by Daniel Marschall
-rem Revision: 14 September 2025
+rem Revision: 18 September 2025
 
 rem ----------------------------------------------------------------
 
@@ -581,7 +581,7 @@ _winscreen:
         cls        
         paste image IMG_TitleScreen, 0, 0
         ink rgb(255,255,255),1
-        text 100,140,"Thank you for playing Nightmare Forest !"
+        text 100,140,"Thank you for playing " + title$ + " !"
         text 100,180,"Created by " + author$ + " 2001 - 2025"
         text 100,220,"Developed with DarkBASIC Pro and Delphi"
         sync

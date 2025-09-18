@@ -53,7 +53,10 @@ uses
 
 function BoolTo10(b: boolean): integer;
 begin
-  if b then exit(1) else exit(0);
+  if b then
+    result := 1
+  else
+    result := 0;
 end;
 
 {$REGION 'List display modes'}
@@ -74,10 +77,11 @@ end;
 function CompareDisplayModes(const A, B: TDisplayMode): Integer;
 begin
   if A.Width <> B.Width then
-    Exit(A.Width - B.Width);
-  if A.Height <> B.Height then
-    Exit(A.Height - B.Height);
-  Result := A.Bits - B.Bits;
+    result := A.Width - B.Width
+  else if A.Height <> B.Height then
+    result := A.Height - B.Height
+  else
+    result := A.Bits - B.Bits;
 end;
 
 procedure ListDisplayModes(sl: TStrings);
@@ -96,6 +100,8 @@ begin
     FillChar(DevMode, SizeOf(DevMode), 0);
     DevMode.dmSize := SizeOf(DevMode);
 
+    // A NULL value specifies the current display device on the computer on which the calling thread is running.
+    // TODO: is that correct? on which screen are we playing?
     while EnumDisplaySettings(nil, ModeNum, DevMode) do
     begin
       ModeRec.Width := DevMode.dmPelsWidth;
@@ -156,9 +162,9 @@ begin
        TryStrToInt(Parts[1], H) and
        TryStrToInt(Parts[2], B) then
     begin
-        INI_WriteInt('Game', 'screenResW', W, 0{not once});
-        INI_WriteInt('Game', 'screenResH', H, 0{not once});
-        INI_WriteInt('Game', 'screenResB', B, 0{not once});
+      INI_WriteInt('Game', 'screenResW', W, 0{not once});
+      INI_WriteInt('Game', 'screenResH', H, 0{not once});
+      INI_WriteInt('Game', 'screenResB', B, 0{not once});
     end;
   end;
   {$ENDREGION}
@@ -201,15 +207,16 @@ end;
 procedure TMainForm.Button1Click(Sender: TObject);
 begin
   COR_Uninitialize;
-
-  COR_Initialize(COR_INITIALIZE_READ_DEFAULT);
   try
-    LoadSettings;
+    COR_Initialize(COR_INITIALIZE_READ_DEFAULT);
+    try
+      LoadSettings;
+    finally
+      COR_Uninitialize;
+    end;
   finally
-    COR_Uninitialize;
+    COR_Initialize(COR_INITIALIZE_READ_DEFAULT or COR_INITIALIZE_READ_USER);
   end;
-
-  COR_Initialize(COR_INITIALIZE_READ_DEFAULT or COR_INITIALIZE_READ_USER);
 end;
 
 procedure TMainForm.LoadSettings;
