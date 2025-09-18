@@ -53,9 +53,16 @@ end;
 
 procedure TMapGenForm.ResizeMapForm;
 begin
-  // TODO: when the form will become bigger than the screen, we need to adjust the miniatureFactor
-  ClientWidth := MainForm.seMapSizeX.Value div miniatureFactor;
-  ClientHeight := MainForm.seMapSizeZ.Value div miniatureFactor + ControlPanel.Height;
+  repeat
+    ClientWidth := MainForm.seMapSizeX.Value div miniatureFactor;
+    ClientHeight := MainForm.seMapSizeZ.Value div miniatureFactor + ControlPanel.Height;
+
+    if (ClientWidth > 0.9*Screen.Width) or (ClientHeight > 0.9*Screen.Height) then
+      // When the form will become bigger than the screen, we must adjust the miniatureFactor
+      Inc(MiniatureFactor, 1)
+    else
+      exit;
+  until false;
 end;
 
 procedure TMapGenForm.GenMapSeed(seed: integer);
