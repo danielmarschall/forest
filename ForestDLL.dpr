@@ -43,7 +43,7 @@ begin
   FormatSettings.DecimalSeparator := '.';
   {$ELSE}
   DecimalSeparator := '.';
-  {$ENDIF}
+  {$IFEND}
 
   if ((source and COR_INITIALIZE_READ_DEFAULT) <> 0) and FileExists(Internal_iniDefaultsFileName) then
     iniDefaults := TMemIniFile.Create(Internal_iniDefaultsFileName)
@@ -233,169 +233,61 @@ type
   end;
   PImgMemBlockHeader = ^TImgMemBlockHeader;
 
-type
-  TRGB565 = packed record
-    Value: Word;
-  end;
-  PRGB565 = ^TRGB565;
-
-function RGB565To24(C: Word; out R, G, B: Byte): Boolean;
-begin
-  // Extrahiere R5,G6,B5 aus Word
-  R := (C shr 11) and $1F;
-  G := (C shr 5) and $3F;
-  B := C and $1F;
-  // Skaliere auf 8 Bit
-  R := (R * 255) div 31;
-  G := (G * 255) div 63;
-  B := (B * 255) div 31;
-  Result := True;
-end;
-
-function RGB24To565(R, G, B: Byte): Word;
-begin
-  Result := ((R shr 3) shl 11) or
-            ((G shr 2) shl 5) or
-            (B shr 3);
-end;
-
 function _Resize16(srcMemblock, dstMemblock: PImgMemBlockHeader; newWidth, newHeight: Cardinal): integer;
 // --- Based on http://www.davdata.nl/math/bmresize.html ---
-var
-  psStep, pdStep: integer;
-  ps0, pd0 : Pointer;
-  sx1, sy1, sx2, sy2 : single;
-  x, y, i, j: word;
-  destR, destG, destB : single;
-  srcR, srcG, srcB: Byte;
-  fx, fy, fix, fiy, dyf : single;
-  fxstep, fystep, dx, dy : single;
-  psi, psj : Pointer;
-  AP : single;
-  istart, iend, jstart, jend : word;
-  devX1, devX2, devY1, devY2 : single;
-  DSTPIX: PRGB565;
-begin
-  dstMemblock.width := newWidth;
-  dstMemblock.height := newHeight;
-  dstMemblock.colordepth := 16;
-
-  if srcMemblock.colordepth <> 16 then
+  procedure Decode555(C: Word; out B, G, R: Byte);
   begin
-    result := -1;
-    exit;
+    (*
+    R := (((integer(C) shr 10) and $1F) * 255) div $1F;
+    G := (((integer(C) shr 5)  and $1F) * 255) div $1F;
+    B := (( integer(C)         and $1F) * 255) div $1F;
+    *)
+
+    (*
+    R := Round(((C shr 10) and 31)/31*255);
+    G := Round(((C shr  5) and 31)/31*255);
+    B := Round(((C shr  0) and 31)/31*255);
+    *)
+
+    R := (C shr 10) and 31;
+    G := (C shr 5) and 31;
+    B := C and 31;
   end;
-
-  result := 0;
-
-  // Quell- und Zielpuffer setzen
-  ps0 := Pointer(srcMemblock); Inc(PByte(ps0), SizeOf(TImgMemBlockHeader));
-  psStep := -srcMemblock.width * SizeOf(TRGB565);
-  pd0 := Pointer(dstMemblock); Inc(PByte(pd0), SizeOf(TImgMemBlockHeader));
-  pdStep := -dstMemblock.width * SizeOf(TRGB565);
-
-  fx := srcMemblock.width / newWidth;
-  fy := srcMemblock.height / newHeight;
-  fix := 1 / fx;
-  fiy := 1 / fy;
-  fxstep := 0.9999 * fx;
-  fystep := 0.9999 * fy;
-
-  DSTPIX := PRGB565(pd0);
-
-  for y := 0 to newHeight - 1 do
+  function Encode555(B, G, R: Byte): Word;
   begin
-    sy1 := fy * y;
-    sy2 := sy1 + fystep;
-    jstart := Trunc(sy1);
-    jend   := Trunc(sy2);
-    devY1  := 1 - sy1 + jstart;
-    devY2  := jend + 1 - sy2;
+    (*
+    Result := ((((integer(R) * $1F) div 255) and $1F) shl 10) or
+              ((((integer(G) * $1F) div 255) and $1F) shl  5) or
+              ( ((integer(B) * $1F) div 255) and $1F        );
+    *)
 
-    for x := 0 to newWidth - 1 do
-    begin
-      sx1 := fx * x;
-      sx2 := sx1 + fxstep;
-      istart := Trunc(sx1);
-      iend   := Trunc(sx2);
+    (*
+    result := ((Round(R/255*31) and 31) shl 10) or
+              ((Round(G/255*31) and 31) shl  5) or
+              ((Round(B/255*31) and 31) shl  0);
+    *)
 
-      if istart >= srcMemblock.width then istart := srcMemblock.width - 1;
-      if iend   >= srcMemblock.width then iend   := srcMemblock.width - 1;
-
-      devX1 := 1 - sx1 + istart;
-      devX2 := iend + 1 - sx2;
-
-      destR := 0; destG := 0; destB := 0;
-
-      if jstart >= srcMemblock.height then jstart := srcMemblock.height - 1;
-      if jend   >= srcMemblock.height then jend   := srcMemblock.height - 1;
-
-      psj := ps0; Dec(PByte(psj), jstart * psStep);
-      dy := devY1;
-
-      for j := jstart to jend do
-      begin
-        if j = jend then dy := dy - devY2;
-        dyf := dy * fiy;
-        psi := psj; Inc(PByte(psi), istart * SizeOf(TRGB565));
-        dx := devX1;
-
-        for i := istart to iend do
-        begin
-          if i = iend then dx := dx - devX2;
-          AP := dx * dyf * fix;
-
-          RGB565To24(PRGB565(psi)^.Value, srcR, srcG, srcB);
-
-          destR := destR + srcR * AP;
-          destG := destG + srcG * AP;
-          destB := destB + srcB * AP;
-
-          Inc(PByte(psi), SizeOf(TRGB565));
-          dx := 1;
-        end;
-
-        Dec(PByte(psj), psStep);
-        dy := 1;
-      end;
-
-      DSTPIX^.Value := RGB24To565(
-        Round(destR), Round(destG), Round(destB)
-      );
-
-      Inc(DSTPIX);
-      Inc(result, SizeOf(TRGB565));
-    end;
+    result :=
+      ((R and 31) shl 10) or ((G and 31) shl 5) or (B and 31);
   end;
-end;
-
-function _Resize24(srcMemblock, dstMemblock: PImgMemBlockHeader; newWidth, newHeight: Cardinal): integer;
-// --- Based on http://www.davdata.nl/math/bmresize.html ---
-type
-  TBGRATriple = packed record
-    B: byte;
-    G: byte;
-    R: byte;
-  end;
-  PBGRATriple = ^TBGRATriple;
 var
   psStep,pdStep: integer;
   ps0,pd0 : Pointer;       //scanline[0], row steps
   sx1,sy1,sx2,sy2 : single;             //source field positions
   x,y,i,j: word;  //source,dest field pixels
   destR,destG,destB : single;           //destination colors
-  src: TBGRATriple;                      //source colors
+  srcR,srcG,srcB: byte;                    //source colors
   fx,fy,fix,fiy,dyf : single;           //factors
   fxstep,fystep, dx,dy : single;
   psi,psj : Pointer;
   AP : single;
   istart,iend,jstart,jend : word;
   devX1,devX2,devY1,devY2 : single;
-  DSTPIX: PBGRATriple;
+  DSTPIX: PWord;
 begin
   dstMemblock.width := newWidth;
   dstMemblock.height := newHeight;
-  dstMemblock.colordepth := sizeof(TBGRATriple) * 8;
+  dstMemblock.colordepth := sizeof(Word) * 8;
 
   if srcMemblock.colordepth <> dstMemblock.colordepth then
   begin
@@ -406,16 +298,16 @@ begin
   result := 0;
 
   ps0 := Pointer(srcMemblock); Inc(pbyte(ps0), SizeOf(TImgMemBlockHeader));
-  psstep := -srcMemblock.width * sizeof(TBGRATriple);
+  psstep := -srcMemblock.width * sizeof(Word);
   pd0 := Pointer(dstMemblock); Inc(pbyte(pd0), SizeOf(TImgMemBlockHeader));
-  pdstep := -dstMemblock.width * sizeof(TBGRATriple);
+  pdstep := -dstMemblock.width * sizeof(Word);
   fx := srcMemblock.width/ newWidth;
   fy := srcMemblock.height/newHeight;
   fix := 1/fx;
   fiy := 1/fy;
   fxstep := 0.9999 * fx;
   fystep := 0.9999 * fy;
-  DSTPIX := PBGRATriple(pd0);
+  DSTPIX := PWord(pd0);
   for y := 0 to newHeight-1 do         //vertical destination pixels
   begin
     sy1 := fy * y;
@@ -448,19 +340,127 @@ begin
       begin
         if j = jend then dy := dy - devY2;
         dyf := dy*fiy;
-        psi := psj; Inc(pbyte(psi), istart*SizeOf(TBGRATriple));
+        psi := psj; Inc(pbyte(psi), istart*SizeOf(Word));
         dx := devX1;
         for i := istart to iend do //horizontal source pixels
         begin
           if i = iend then dx := dx - devX2;
           AP := dx*dyf*fix;
-          src := PBGRATriple(psi)^;
+          Decode555(PWord(psi)^, srcR, srcG, srcB);
+
+          destB := destB + srcB*AP;
+          destG := destG + srcG*AP;
+          destR := destR + srcR*AP;
+
+          inc(pbyte(psi), sizeof(Word));
+          dx := 1;
+        end;//for i
+        dec(pbyte(psj),psStep);
+        dy := 1;
+      end;//for j
+
+      srcB := round(destB);
+      srcG := round(destG);
+      srcR := round(destR);
+      DSTPIX^ := Encode555(srcR, srcG, srcB);
+      inc(DSTPIX, 1{element});
+      inc(result, SizeOf(Word));
+    end;//for x
+  end;//for y
+end;
+
+function _Resize24(srcMemblock, dstMemblock: PImgMemBlockHeader; newWidth, newHeight: Cardinal): integer;
+// --- Based on http://www.davdata.nl/math/bmresize.html ---
+type
+  TBGRTriple = packed record
+    B: byte;
+    G: byte;
+    R: byte;
+  end;
+  PBGRTriple = ^TBGRTriple;
+var
+  psStep,pdStep: integer;
+  ps0,pd0 : Pointer;       //scanline[0], row steps
+  sx1,sy1,sx2,sy2 : single;             //source field positions
+  x,y,i,j: word;  //source,dest field pixels
+  destR,destG,destB : single;           //destination colors
+  src: TBGRTriple;                      //source colors
+  fx,fy,fix,fiy,dyf : single;           //factors
+  fxstep,fystep, dx,dy : single;
+  psi,psj : Pointer;
+  AP : single;
+  istart,iend,jstart,jend : word;
+  devX1,devX2,devY1,devY2 : single;
+  DSTPIX: PBGRTriple;
+begin
+  dstMemblock.width := newWidth;
+  dstMemblock.height := newHeight;
+  dstMemblock.colordepth := sizeof(TBGRTriple) * 8;
+
+  if srcMemblock.colordepth <> dstMemblock.colordepth then
+  begin
+    result := -1;
+    exit;
+  end;
+
+  result := 0;
+
+  ps0 := Pointer(srcMemblock); Inc(pbyte(ps0), SizeOf(TImgMemBlockHeader));
+  psstep := -srcMemblock.width * sizeof(TBGRTriple);
+  pd0 := Pointer(dstMemblock); Inc(pbyte(pd0), SizeOf(TImgMemBlockHeader));
+  pdstep := -dstMemblock.width * sizeof(TBGRTriple);
+  fx := srcMemblock.width/ newWidth;
+  fy := srcMemblock.height/newHeight;
+  fix := 1/fx;
+  fiy := 1/fy;
+  fxstep := 0.9999 * fx;
+  fystep := 0.9999 * fy;
+  DSTPIX := PBGRTriple(pd0);
+  for y := 0 to newHeight-1 do         //vertical destination pixels
+  begin
+    sy1 := fy * y;
+    sy2 := sy1 + fystep;
+    jstart := trunc(sy1);
+    jend := trunc(sy2);
+    devY1 := 1-sy1+jstart;
+    devY2 := jend+1-sy2;
+    for x := 0 to newWidth-1 do        //horizontal destination pixels
+    begin
+      sx1 := fx * x;                        //x related values are repeated
+      sx2 := sx1 + fxstep;                  //for each y and may be placed in
+      istart := trunc(sx1);                 //lookup table
+      iend := trunc(sx2);                   //...
+
+      if istart >= srcMemblock.width then istart := srcMemblock.width-1;
+      if iend   >= srcMemblock.width then iend   := srcMemblock.width-1;
+
+      devX1 := 1-sx1+istart;                  //...
+      devX2 := iend+1-sx2;                  //...
+      destR := 0; destG := 0; destB := 0;   //clear destination colors
+
+      if jstart >= srcMemblock.height then jstart := srcMemblock.height-1;
+      if jend   >= srcMemblock.height then jend   := srcMemblock.height-1;
+
+      psj := ps0; dec(pbyte(psj), jstart*psStep);
+      dy := devY1;
+
+      for j := jstart to jend do  //vertical source pixels
+      begin
+        if j = jend then dy := dy - devY2;
+        dyf := dy*fiy;
+        psi := psj; Inc(pbyte(psi), istart*SizeOf(TBGRTriple));
+        dx := devX1;
+        for i := istart to iend do //horizontal source pixels
+        begin
+          if i = iend then dx := dx - devX2;
+          AP := dx*dyf*fix;
+          src := PBGRTriple(psi)^;
 
           destB := destB + src.B*AP;
           destG := destG + src.G*AP;
           destR := destR + src.R*AP;
 
-          inc(pbyte(psi), sizeof(TBGRATriple));
+          inc(pbyte(psi), sizeof(TBGRTriple));
           dx := 1;
         end;//for i
         dec(pbyte(psj),psStep);
@@ -472,7 +472,7 @@ begin
       src.R := round(destR);
       DSTPIX^ := src;
       inc(DSTPIX, 1{element});
-      inc(result, SizeOf(TBGRATriple));
+      inc(result, SizeOf(TBGRTriple));
     end;//for x
   end;//for y
 end;
