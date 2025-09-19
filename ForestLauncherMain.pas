@@ -51,6 +51,15 @@ uses
 
 {$R *.dfm}
 
+function GetSysDir: string;
+var
+  Buffer: array[0..MAX_PATH] of Char;
+begin
+  GetSystemDirectory(Buffer, MAX_PATH - 1);
+  SetLength(Result, StrLen(Buffer));
+  Result := Buffer;
+end;
+
 function BoolTo10(b: boolean): integer;
 begin
   if b then
@@ -213,6 +222,15 @@ begin
 
   INI_WriteInt('MapGen32', 'seed_value', seed_value, 1{once});
 
+  {$ENDREGION}
+
+  {$REGION 'Check for DirectX 9.0c'}
+  if not FileExists(IncludeTrailingPathDelimiter(GetSysDir) + 'd3d9.dll') then
+  begin
+    if MessageDlg('You need to install DirectX 9.0c in order to play this game. Download DirectX 9.0c now?', TMsgDlgType.mtInformation, mbYesNoCancel, 0) = mrYes then
+      ShellExecute(0, 'open', 'https://github.com/danielmarschall/forest/releases', '', '', SW_NORMAL);
+    Abort;
+  end;
   {$ENDREGION}
 
   {$REGION 'Start the game'}
