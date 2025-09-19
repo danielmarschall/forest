@@ -225,7 +225,12 @@ begin
   {$ENDREGION}
 
   {$REGION 'Check for DirectX 9.0c'}
-  if not FileExists(IncludeTrailingPathDelimiter(GetSysDir) + 'd3d9.dll') then
+  // These two DLL files are required by DBProSetupDebug.dll (that is unpacked into the Temp directory)
+  // For Necropolis, an error message shows that DBProSetupDebug.dll cannot be loaded (because DirectX DLL is missing)
+  // Forest however, does not show any message and just don't start.
+  // d3d9.dll is installed on Windows 10, but d3dx9_35.dll is not, unless the DirectX Runtime is installed.
+  if not FileExists(IncludeTrailingPathDelimiter(GetSysDir) + 'd3d9.dll') or
+     not FileExists(IncludeTrailingPathDelimiter(GetSysDir) + 'd3dx9_35.dll') then
   begin
     if MessageDlg('You need to install DirectX 9.0c in order to play this game. Download DirectX 9.0c now?', TMsgDlgType.mtInformation, mbYesNoCancel, 0) = mrYes then
       ShellExecute(0, 'open', 'https://github.com/danielmarschall/forest/releases', '', '', SW_NORMAL);
