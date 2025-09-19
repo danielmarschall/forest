@@ -1355,16 +1355,6 @@ function mod(num,modulus)
     value=num-((num/modulus)*modulus)
 endfunction value
 
-function fileReadInt(fileNum)
-    read string 1, s$
-    ret=val(s$)
-ENDFUNCTION ret
-
-function fileReadFloat#(fileNum)
-    read string 1, s$
-    ret#=val(s$)
-ENDFUNCTION ret#
-
 function RndBetween(a,b)
     ret = a+Rnd(b-a)
 ENDFUNCTION ret
