@@ -223,12 +223,12 @@ rem It makes no sense to add them to the INI file, I think.
 scorpYOffset# = 20
 
 set display mode screenResW, screenResH, screenResB, screenVSync
-if fullscreen=1
-    set window off
-else
+if fullscreen = 0
     set window on
     set window title title$
     set window position int(desktop width()/2 - screen width()/2), int(desktop height()/2 - screen height()/2)
+else
+    set window off
 endif
 
 hide mouse
@@ -289,7 +289,7 @@ Disable EscapeKey
 
 rem Main loop
 do
-    if fullscreen<>1 then position mouse int(screen width()/2), int(screen height()/2)
+    if fullscreen = 0 then position mouse int(screen width()/2), int(screen height()/2)
     gosub _handle_weather
     gosub _handle_player
     gosub _update_trees
