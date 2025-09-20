@@ -4266,9 +4266,9 @@ object MainForm: TMainForm
   object Label1: TLabel
     Left = 184
     Top = 16
-    Width = 97
+    Width = 146
     Height = 15
-    Caption = 'Screen Resolution:'
+    Caption = 'Window/Screen Resolution:'
   end
   object Label2: TLabel
     Left = 184
@@ -4326,7 +4326,7 @@ object MainForm: TMainForm
     Width = 169
     Height = 38
     Caption = 'Save and play game'
-    TabOrder = 10
+    TabOrder = 11
     OnClick = SaveAndPlayBtnClick
   end
   object seEnemies: TSpinEdit
@@ -4336,7 +4336,7 @@ object MainForm: TMainForm
     Height = 24
     MaxValue = 0
     MinValue = 0
-    TabOrder = 2
+    TabOrder = 3
     Value = 0
   end
   object MapPreviewBtn: TButton
@@ -4345,7 +4345,7 @@ object MainForm: TMainForm
     Width = 85
     Height = 25
     Caption = 'Map Preview'
-    TabOrder = 8
+    TabOrder = 9
     OnClick = MapPreviewBtnClick
   end
   object seTrees: TSpinEdit
@@ -4356,7 +4356,7 @@ object MainForm: TMainForm
     Increment = 100
     MaxValue = 0
     MinValue = 0
-    TabOrder = 7
+    TabOrder = 8
     Value = 0
   end
   object seMapSizeX: TSpinEdit
@@ -4367,7 +4367,7 @@ object MainForm: TMainForm
     Increment = 1000
     MaxValue = 0
     MinValue = 0
-    TabOrder = 5
+    TabOrder = 6
     Value = 0
   end
   object seMapSizeZ: TSpinEdit
@@ -4378,7 +4378,7 @@ object MainForm: TMainForm
     Increment = 1000
     MaxValue = 0
     MinValue = 0
-    TabOrder = 6
+    TabOrder = 7
     Value = 0
   end
   object Button1: TButton
@@ -4387,7 +4387,7 @@ object MainForm: TMainForm
     Width = 109
     Height = 40
     Caption = 'Reset to default'
-    TabOrder = 11
+    TabOrder = 12
     OnClick = Button1Click
   end
   object InvertMouse: TCheckBox
@@ -4396,7 +4396,7 @@ object MainForm: TMainForm
     Width = 137
     Height = 17
     Caption = 'Invert mouse Y-axis'
-    TabOrder = 9
+    TabOrder = 10
   end
   object TimeAdvance: TSpinEdit
     Left = 286
@@ -4406,12 +4406,12 @@ object MainForm: TMainForm
     Increment = 10
     MaxValue = 0
     MinValue = 0
-    TabOrder = 3
+    TabOrder = 4
     Value = 0
   end
   object VSync: TCheckBox
-    Left = 335
-    Top = 40
+    Left = 350
+    Top = 16
     Width = 66
     Height = 17
     Caption = 'VSync'
@@ -4424,7 +4424,15 @@ object MainForm: TMainForm
     Height = 24
     MaxValue = 0
     MinValue = 0
-    TabOrder = 4
+    TabOrder = 5
     Value = 0
+  end
+  object fullscreen: TCheckBox
+    Left = 350
+    Top = 39
+    Width = 83
+    Height = 17
+    Caption = 'Fullscreen'
+    TabOrder = 2
   end
 end

@@ -5,7 +5,8 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Vcl.StdCtrls,
-  System.Generics.Collections, System.Generics.Defaults, Vcl.Samples.Spin;
+  System.Generics.Collections, System.Generics.Defaults, Vcl.Samples.Spin,
+  System.UITypes;
 
 type
   TMainForm = class(TForm)
@@ -29,6 +30,7 @@ type
     HitsUntilDeath: TSpinEdit;
     Label6: TLabel;
     Label7: TLabel;
+    fullscreen: TCheckBox;
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure SaveAndPlayBtnClick(Sender: TObject);
@@ -188,7 +190,8 @@ var
   W, H, B: integer;
   S: string;
 begin
-  {$REGION 'Save resolution'}
+  {$REGION 'Save resolution (for user)'}
+
   S := ComboBox1.Text;
   Parts := S.Split(['x']);
   if Length(Parts) = 3 then
@@ -202,6 +205,9 @@ begin
       INI_WriteInt('Game', 'screenResB', B, 0{not once});
     end;
   end;
+  INI_WriteBool('Game','fullscreen',  BoolTo10(fullscreen.Checked), 0{not once});
+  INI_WriteBool('Game','screenVSync', BoolTo10(VSync.Checked),      0{not once});
+
   {$ENDREGION}
 
   {$REGION 'Save other game settings (for user)'}
@@ -213,7 +219,6 @@ begin
   INI_WriteInt('Game', 'cTreeRadius', treeradius,       0{not once});
   INI_WriteBool('Game','invertMouse', BoolTo10(InvertMouse.Checked), 0{not once});
   INI_WriteInt('Game', 'clockSecondsAdvance', TimeAdvance.Value, 0{not once});
-  INI_WriteBool('Game','screenVSync', BoolTo10(VSync.Checked), 0{not once});
   INI_WriteInt('Game', 'maxHitsTillDeath', HitsUntilDeath.Value, 0{not once});
 
   {$ENDREGION}
@@ -288,15 +293,20 @@ begin
   {$ENDREGION}
 
   {$REGION 'Select current chosen screen resolution (default or user)'}
+
   Mode.Width  := INI_ReadInt('Game', 'screenResW', 800);
   Mode.Height := INI_ReadInt('Game', 'screenResH', 600);
   Mode.Bits   := INI_ReadInt('Game', 'screenResB', 32);
   idx := ComboBox1.Items.IndexOf(Mode.ToString);
   if idx = -1 then idx := 0;
   ComboBox1.ItemIndex := idx;
+
+  VSync.Checked := INI_ReadBool('Game', 'screenVSync', 0) = 1;
+  fullscreen.Checked := INI_ReadBool('Game', 'fullscreen', 0) = 1;
+
   {$ENDREGION}
 
-  {$REGION 'Load game settings'}
+  {$REGION 'Load game settings (default or user)'}
 
   seEnemies.Value  := INI_ReadInt('Game', 'cMaxEnemies', 50);
   seTrees.Value    := INI_ReadInt('Game', 'cMaxTrees',   1200);
@@ -305,7 +315,6 @@ begin
   treeradius       := INI_ReadInt('Game', 'cTreeRadius', 100); // not to be edited by the user for now
   InvertMouse.Checked := INI_ReadBool('Game', 'invertMouse', 0) = 1;
   TimeAdvance.Value := INI_ReadInt('Game', 'clockSecondsAdvance', 60);
-  VSync.Checked := INI_ReadBool('Game', 'screenVSync', 0) = 1;
   HitsUntilDeath.Value := INI_ReadInt('Game', 'maxHitsTillDeath', 50);
 
   {$ENDREGION}

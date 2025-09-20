@@ -1,5 +1,5 @@
 rem Nightmare Forest by Daniel Marschall
-rem Revision: 18 September 2025
+rem Revision: 20 September 2025
 
 rem ----------------------------------------------------------------
 
@@ -10,6 +10,8 @@ rem      "Image does not exist" at line "PASTE IMAGE IMG_TitleScreen, 0, 0"
 rem      A solution would be to add "if not image exist(IMG_TitleScreen) then LoadImageFullscreen(FN_GFX_TitleScreen, IMG_TitleScreen)"
 rem      at that loop. But that solves only the issue at the titlescreen. If the window is restored while the game is running,
 rem      then it will crash without error message; I guess that various objects, sounds, textures have also vanished from memory?!
+rem   => Also, when "set window off" and "set window on" are called, all loaded resources are gone and the game crashes
+rem      This is an error with DarkBASIC! It also happens on Necropolis...
 
 rem Nice to have:
 rem - Fast walking (soil/water) sound
@@ -147,6 +149,7 @@ screenResW                  = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "
 screenResH                  = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "screenResH",                  600)
 screenResB                  = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "screenResB",                  32)
 screenVSync                 = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "screenVSync",                 0)
+fullscreen                  = call dll(DLL_ForestDLL, "INI_ReadBool",  "Game", "fullscreen",                  1)
 clockSpeedFactor            = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "clockSpeedFactor",            1)
 clockSecondsAdvance         = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "clockSecondsAdvance",         60)
 clockBlinksPerSecond        = call dll(DLL_ForestDLL, "INI_ReadInt",   "Game", "clockBlinksPerSecond",        2)
@@ -202,7 +205,6 @@ if stage4ClockStart < stage3ClockStart then stage4ClockStart = stage4ClockStart 
 
 rem These are some variables required for the tent
 rem It makes no sense to add them to the INI file, I think.
-
 tentDryRadius = 120
 tentSizeX     = 20000
 tentSizeY     = 15000
@@ -218,10 +220,16 @@ tentMinTreeDistance = 400
 
 rem These are some variables required for the scorpion model
 rem It makes no sense to add them to the INI file, I think.
-
-scorpYOffset#    = 20
+scorpYOffset# = 20
 
 set display mode screenResW, screenResH, screenResB, screenVSync
+if fullscreen=1
+    set window off
+else
+    set window on
+    set window title title$
+    set window position int(desktop width()/2 - screen width()/2), int(desktop height()/2 - screen height()/2)
+endif
 
 hide mouse
 
@@ -273,21 +281,22 @@ load sound FN_SFX_ScorpionAttack4, SFX_Attack_Base+3
 
 LoadImageFullscreen(FN_GFX_DeathScreen, IMG_DeathScreen)
 
-rem Bildschirm neu aufbauen
+rem Rebuild screen
 cls
 sync
 
 Disable EscapeKey
 
-rem Hauptschleife
+rem Main loop
 do
+    if fullscreen<>1 then position mouse int(screen width()/2), int(screen height()/2)
     gosub _handle_weather
     gosub _handle_player
     gosub _update_trees
     gosub _handle_stage
     gosub _handle_radar
     gosub _handle_enemies
-    gosub _handleClock
+    gosub _handle_clock
     gosub _update_hud
     if hits >= maxHitsTillDeath then gosub _deathscreen
     if EscapeKey() = 1
@@ -1183,7 +1192,7 @@ scorpChangeToWalk:
     endif
 return
 
-_handleClock:
+_handle_clock:
     if mod(clockTickCounter*clockBlinksPerSecond, clockTicksPerSecond) = 0
         clockCurrentMidDot = 1 - clockCurrentMidDot
     endif
