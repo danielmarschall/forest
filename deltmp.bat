@@ -8,3 +8,10 @@ del *.~*
 del *.dcu
 del *.identcache
 del *.local
+
+rd /s /q ext\__history
+rd /s /q ext\__recovery
+del ext\*.~*
+del ext\*.dcu
+del ext\*.identcache
+del ext\*.local
