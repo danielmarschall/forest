@@ -218,10 +218,6 @@ tentRotateZ   = 0
 tentCameraDistanceStage4 = 60
 tentMinTreeDistance = 400
 
-rem These are some variables required for the scorpion model
-rem It makes no sense to add them to the INI file, I think.
-scorpYOffset# = 20
-
 set display mode screenResW, screenResH, screenResB, screenVSync
 if fullscreen = 0
     set window on
@@ -805,7 +801,7 @@ _handle_enemies:
                     enemy(t).CurSpeed = RndBetween(0, enemy(t).MaxSpeed)
                 endif
         
-                eY# = floorHeight#(eX#, eZ#) + scorpYOffset#
+                eY# = floorHeight#(eX#, eZ#)
                 Position Object OBJ_Monster_Base+t, eX#, eY#, eZ#
                 Position Sound SFX_Monster_Base+t, eX#, eY#, eZ#
                 
@@ -1168,7 +1164,7 @@ _create_enemies:
             rem Instance Object OBJ_Monster_Base+t, OBJ_Monster_Base        
         endif
         
-        eY# = floorHeight#(eX#, eZ#) : rem TODO  + scorpYOffset#
+        eY# = floorHeight#(eX#, eZ#)
         position object OBJ_Monster_Base+t, eX#, eY#, eZ#
         Position Sound SFX_Monster_Base+t, eX#, eY#, eZ#
         

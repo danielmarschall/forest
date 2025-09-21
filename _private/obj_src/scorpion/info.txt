@@ -14,7 +14,7 @@ ScorpIdle_orig_bin.x and ScorpWalk_orig_bin.x were converted (re-exported) using
 as text format ScorpIdle_orig_txt.x and ScorpWalk_orig_txt.x
 
 Additionally, following changes were done to address the problems mentioned above:
-1. The coordinates of x3ds_mid02 (the whole scorpion) were corrected from y=-250 to y=0 (with a text editor)
+1. The coordinates of x3ds_mid02 (the whole scorpion) were corrected from y=-250 to y=30 (with a text editor)
 2. The unnecessary limb #1 (mid03) was stripped.
 
 ScorpIdle.x and ScorpWalk.x both work in DarkBASIC Professional, but they do not work in DarkBASIC anymore.
