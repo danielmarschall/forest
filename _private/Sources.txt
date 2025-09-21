@@ -53,10 +53,11 @@ obj/scorpion/walk.dbo and obj/scorpion/idle.dbo
 	From DarkBasic Classic Demo "Room", modified to fix minor problems,
 	and converted to the DBO format.
 
-obj/tent/tent.x
+obj/tent/tent.dbo
 	From DarkBasic Classic Media CD ROM "tent3.x"
 	DV8710 Copyright Viewpoint Datalabs Intl., Inc.
-	Modifications: Changed materials so that the colors look like they should.
+	Modifications: Changed materials so that the colors look like they should instead of black.
+	Converted from X to DBO file format.
 
 ## Sound effects
 

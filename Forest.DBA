@@ -120,7 +120,7 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 
 #constant FN_OBJ_ScorpIdle        "obj\scorpion\idle.dbo"
 #constant FN_OBJ_ScorpWalk        "obj\scorpion\walk.dbo"
-#constant FN_OBJ_Tent             "obj\tent\tent.x"
+#constant FN_OBJ_Tent             "obj\tent\tent.dbo"
 
 #constant FN_GFX_FloorTexture     "bitmap\forest_floor_texture.jpg"
 #constant FN_GFX_Water            "bitmap\water.bmp"
