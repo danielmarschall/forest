@@ -118,8 +118,8 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 #constant FN_SFX_Deathscreen      "sound\deathscreen.wav"
 #constant FN_SFX_ScorpWalk        "sound\scorp_walk.wav"
 
-#constant FN_OBJ_ScorpIdle        "obj\scorpion\idle.x"
-#constant FN_OBJ_ScorpWalk        "obj\scorpion\walk.x"
+#constant FN_OBJ_ScorpIdle        "obj\scorpion\idle.dbo"
+#constant FN_OBJ_ScorpWalk        "obj\scorpion\walk.dbo"
 #constant FN_OBJ_Tent             "obj\tent\tent.x"
 
 #constant FN_GFX_FloorTexture     "bitmap\forest_floor_texture.jpg"

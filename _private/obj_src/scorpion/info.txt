@@ -18,3 +18,8 @@ Additionally, following changes were done to address the problems mentioned abov
 2. The unnecessary limb #1 (mid03) was stripped.
 
 ScorpIdle.x and ScorpWalk.x both work in DarkBASIC Professional, but they do not work in DarkBASIC anymore.
+
+---
+
+Using DarkBASIC Pro's integrated command "load object" and "save object", the "X" format
+has been converted to the "DBO" format which can be quicker loaded.
