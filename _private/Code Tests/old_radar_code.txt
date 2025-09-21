@@ -1,0 +1,110 @@
+rem Radar:
+rem - The radar causes *EXTREME* performance issues. The game is UNPLAYABLE with 2560x1440 or if there are too many trees
+rem - should be round, since it moves like in GTA
+rem - should not be affected from resolution (i.e. on widescreen it must stay a circle)
+rem - Don't show distant enemies
+rem - blue point should always be in the center
+rem - Radar wackelt?
+rem - Radar lieber als Matrix anstelle als bild? Viele Probleme wie z.B. mit Skorpion transparenz
+rem - Unscharfes Radar, Radar ganz dyn. zeichnen? Rader stay on top
+rem - the player dot should always stay at the same position
+rem - don't show far away enemies (as you also don't see far away trees)
+
+radarpointcolor = 150
+
+_handle_radar:
+    rem TODO: removed radar for now, because it has a lot of problems
+
+    remstart
+    rem Leuchtpunkt
+    if radarpointrev = 0
+        inc radarpointcolor, 3
+    else
+        dec radarpointcolor, 3
+    endif
+    if radarpointcolor > 255
+        radarpointrev = 1
+        radarpointcolor = 254
+    endif
+    if radarpointcolor < 150
+        radarpointrev = 0
+        radarpointcolor = 149
+    endif
+    rem Bäume
+    for t = 0 to cMaxTrees-1
+        if tree(t).drawn = 1
+            x# = tree(t).x
+            y# = tree(t).z
+
+            x0# = camera position x()
+            y0# = camera position z()
+            ang# = camera angle y()
+            tx# = x0# + (x#-x0#)*cos(ang#) - (y#-y0#)*sin(ang#)
+            ty# = y0# + (x#-x0#)*sin(ang#) + (y#-y0#)*cos(ang#)
+            x# = tx#
+            y# = ty#
+            
+            x# = (x# / 62.5) + 7.5
+            y# = screen height() - 7.5 - (y# / 62.5)
+            
+            rem ink rgb(0, radarpointcolor, 0), 0
+            ink rgb(0, 50, 0), 0
+            circle x#, y#, 1
+            circle x#, y#, 0
+        endif
+    next i
+    rem Player
+    x# = (X# / 62.5) + 7.5
+    y# = screen height() - 7.5 - (Z# / 62.5)
+    ink rgb(0, 0, radarpointcolor), 0
+    circle x#, y#, 1
+    circle x#, y#, 0
+    rem Enemies
+    if stage = 3
+        for t = 0 to cMaxEnemies-1
+            x# = object position x(OBJ_Monster_Base+t)
+            y# = object position z(OBJ_Monster_Base+t)
+            
+            x0# = camera position x()
+            y0# = camera position z()
+            ang# = camera angle y()
+            tx# = x0# + (x#-x0#)*cos(ang#) - (y#-y0#)*sin(ang#)
+            ty# = y0# + (x#-x0#)*sin(ang#) + (y#-y0#)*cos(ang#)
+            x# = tx#
+            y# = ty#
+            
+            x# = (x# / 62.5) + 7.5
+            y# = screen height() - 7.5 - (y# / 62.5)
+            
+            ink rgb(radarpointcolor, 0, 0), 0
+            circle x#, y#, 1
+            circle x#, y#, 0
+        next t
+    endif
+    remend
+return
+
+_create_radar:
+    rem TODO: removed radar for now, because it has a lot of problems
+
+    rem Karte - Abstand zur Kamera: 1.1 (old)
+    remstart
+    load image FN_GFX_MapBackground, IMG_MapBackground
+    make object plain OBJ_MapGhostObject, 0.352, 0.352
+    lock object on OBJ_MapGhostObject
+    position object OBJ_MapGhostObject, -0.6908, -0.4675, 1.1
+    ghost object on OBJ_MapGhostObject
+    texture object OBJ_MapGhostObject, IMG_MapBackground
+    remend
+    
+    rem Karte - Abstand zur Kamera: 1.5
+    remstart
+    load image FN_GFX_MapBackground, IMG_MapBackground
+    make object plain OBJ_MapGhostObject, 0.48, 0.48
+    lock object on OBJ_MapGhostObject
+    position object OBJ_MapGhostObject, -0.942, -0.6375, 1.5
+    ghost object on OBJ_MapGhostObject
+    texture object OBJ_MapGhostObject, IMG_MapBackground
+    remend
+return
+

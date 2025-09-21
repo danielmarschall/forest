@@ -30,9 +30,6 @@ bitmap/forest_floor_texture.jpg
 	Photo credit / source: club-balalaika.de
 	Modified with Photoshop to make it more seamless
 
-bitmap/radar.jpg (currently unused)
-	Daniel Marschall
-
 bitmap/tree.bmp
 	From DarkBasic Classic Demo "Tank"
 
