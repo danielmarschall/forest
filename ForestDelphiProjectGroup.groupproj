@@ -6,7 +6,7 @@
         <Projects Include="ForestLauncher.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="ForestDLL.dproj">
+        <Projects Include="ext\ForestDLL.dproj">
             <Dependencies/>
         </Projects>
     </ItemGroup>
@@ -27,13 +27,13 @@
         <MSBuild Projects="ForestLauncher.dproj" Targets="Make"/>
     </Target>
     <Target Name="ForestDLL">
-        <MSBuild Projects="ForestDLL.dproj"/>
+        <MSBuild Projects="ext\ForestDLL.dproj"/>
     </Target>
     <Target Name="ForestDLL:Clean">
-        <MSBuild Projects="ForestDLL.dproj" Targets="Clean"/>
+        <MSBuild Projects="ext\ForestDLL.dproj" Targets="Clean"/>
     </Target>
     <Target Name="ForestDLL:Make">
-        <MSBuild Projects="ForestDLL.dproj" Targets="Make"/>
+        <MSBuild Projects="ext\ForestDLL.dproj" Targets="Make"/>
     </Target>
     <Target Name="Build">
         <CallTarget Targets="ForestLauncher;ForestDLL"/>

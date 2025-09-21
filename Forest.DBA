@@ -99,7 +99,7 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 // File names
 // --------------------------------
 
-#constant FN_DLL_ForestDLL        "ForestDLL.dll"
+#constant FN_DLL_ForestDLL        "ext\ForestDLL.dll"
 
 #constant FN_SFX_ForestBG         "sound\forestbg.wav"
 #constant FN_SFX_Radio            "sound\radio.wav"

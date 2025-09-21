@@ -3,7 +3,7 @@
 
 ## Code
 
-Forest.exe and ForestDLL.dll
+Forest.exe, ForestLauncher.exe and ext\ForestDLL.dll
 	Author: Daniel Marschall
 	License: Apache 2.0 License
 

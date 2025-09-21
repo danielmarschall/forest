@@ -24,12 +24,12 @@ end;
 
 function Internal_iniUserFileName: string;
 begin
-  result := 'ForestUser.ini'; // TODO: user dir
+  result := 'ForestUser.ini';
 end;
 
 function Internal_iniOnceFileName: string;
 begin
-  result := 'ForestOnce.ini'; // TODO: user or user-temp dir
+  result := 'ForestOnce.ini';
 end;
 
 const

@@ -144,7 +144,7 @@
             <Form>MapGenForm</Form>
             <FormType>dfm</FormType>
         </DCCReference>
-        <DCCReference Include="ForestDLL_Import.pas"/>
+        <DCCReference Include="ext\ForestDLL_Import.pas"/>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

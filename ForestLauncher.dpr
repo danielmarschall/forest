@@ -4,7 +4,7 @@ uses
   Vcl.Forms,
   ForestLauncherMain in 'ForestLauncherMain.pas' {MainForm},
   ForestLauncherMapGen in 'ForestLauncherMapGen.pas' {MapGenForm},
-  ForestDLL_Import in 'ForestDLL_Import.pas';
+  ForestDLL_Import in 'ext\ForestDLL_Import.pas';
 
 {$R *.res}
 
