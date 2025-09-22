@@ -38,7 +38,7 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 // Numerical Resources
 // --------------------------------
 
-#constant CAM_DEFAULT           0
+#constant CAM_DEFAULT         100
 
 #constant IMG_ForestFloor     100
 #constant IMG_Water           101
@@ -413,18 +413,18 @@ _handle_stage:
         gosub _setup_player_position
         clockSeconds = stage1ClockStart*60*60
         rem Move the camera so we can see the tiny forest; TODO: we could end up at a tree!
-        move camera -stage1Distance#
-        X# = camera position x()
-        Y# = camera position y()
-        Z# = camera position z()
+        move camera CAM_DEFAULT, -stage1Distance#
+        X# = camera position x(CAM_DEFAULT)
+        Y# = camera position y(CAM_DEFAULT)
+        Z# = camera position z(CAM_DEFAULT)
 
         loop sound SFX_StormBG
         loop sound SFX_Radio
     else
         if stage = 1
-            rem dx# = abs(object position x(OBJ_Tent) - camera position x())
-            rem dy# = abs(object position y(OBJ_Tent) - camera position y())
-            rem dz# = abs(object position z(OBJ_Tent) - camera position z())
+            rem dx# = abs(object position x(OBJ_Tent) - camera position x(CAM_DEFAULT))
+            rem dy# = abs(object position y(OBJ_Tent) - camera position y(CAM_DEFAULT))
+            rem dz# = abs(object position z(OBJ_Tent) - camera position z(CAM_DEFAULT))
             rem if dx# < 300 and dy# < 300 and dz# < 300
             rx# = object position x(OBJ_Tent)
             ry# = object position y(OBJ_Tent)
@@ -453,18 +453,18 @@ _handle_stage:
                     if clockSeconds >= stage4ClockStart*60*60
                         gosub _destroy_enemies
                         rem Quickly teleport to the tent, so that the player do not notice it
-                        position camera object position x(OBJ_Tent), object position y(OBJ_Tent), object position z(OBJ_Tent)
+                        position camera CAM_DEFAULT, object position x(OBJ_Tent), object position y(OBJ_Tent), object position z(OBJ_Tent)
                         rem move the camera and pause for a little while so that the player realizes the tent; TODO: we could end up at a tree!
-                        move camera -tentCameraDistanceStage4
+                        move camera  CAM_DEFAULT, -tentCameraDistanceStage4
                         sync
 
                         stop sound SFX_ForestBG
                         play sound SFX_Woosh
 
                         sleep 1000
-                        X# = camera position x()
-                        Y# = camera position y()
-                        Z# = camera position z()
+                        X# = camera position x(CAM_DEFAULT)
+                        Y# = camera position y(CAM_DEFAULT)
+                        Z# = camera position z(CAM_DEFAULT)
                         stage = 4
 
                         loop sound SFX_TitleMusic
@@ -584,7 +584,8 @@ _winscreen:
 return
 
 _setup_camera:
-    Set camera range 1, camerarange#
+    if CAM_DEFAULT <> 0 then Make Camera CAM_DEFAULT
+    Set camera range CAM_DEFAULT, 1, camerarange#
     AUTOMATIC CAMERA COLLISION CAM_DEFAULT, collissionboxsize#, 0 : rem TODO: scorpione stoßen den spieler nicht weg, wenn keine taste gedrückt wird? syntax mit 4 parametern funktioniert im neuen dbpro free nicht!
     Autocam off
 return
@@ -625,7 +626,7 @@ _setup_player_position:
     X# = cMapSizeX / 2
     Y# = floorHeight#(X#, Z#) + playerEyeHeight
     Z# = cMapSizeZ / 2
-    position camera X#, Y#, Z#
+    position camera CAM_DEFAULT, X#, Y#, Z#
 return
 
 _handle_weather:
@@ -677,8 +678,8 @@ _handle_weather:
     fogColorB = fogColorB - attackHudColorStrength
     if fogColorB < 0 then fogColorB = 0
 
-    backdrop on
-    color backdrop rgb(fogColorR, fogColorG, fogColorB)
+    backdrop on CAM_DEFAULT
+    color backdrop CAM_DEFAULT, rgb(fogColorR, fogColorG, fogColorB)
 
     if fog available() = 1
         fog on
@@ -693,8 +694,8 @@ _handle_weather:
 return
 
 _handle_enemies:
-    pX# = Camera Position X()
-    pZ# = Camera Position Z()
+    pX# = Camera Position X(CAM_DEFAULT)
+    pZ# = Camera Position Z(CAM_DEFAULT)
 
     if stage = 3
         underAttack = 0
@@ -703,9 +704,9 @@ _handle_enemies:
             rem ry# = object position y(OBJ_Monster_Base+t)
             rem rz# = object position z(OBJ_Monster_Base+t)
             rem if IsInCircle3D(rx#, ry#, rz#, X#, Y#, Z#, scorpCollissionZ#) = 1
-            dx# = abs(object position x(OBJ_Monster_Base+t) - camera position x())
-            dy# = abs(object position y(OBJ_Monster_Base+t) - camera position y())
-            dz# = abs(object position z(OBJ_Monster_Base+t) - camera position z())
+            dx# = abs(object position x(OBJ_Monster_Base+t) - camera position x(CAM_DEFAULT))
+            dy# = abs(object position y(OBJ_Monster_Base+t) - camera position y(CAM_DEFAULT))
+            dz# = abs(object position z(OBJ_Monster_Base+t) - camera position z(CAM_DEFAULT))
             if dx# < scorpCollissionX# and dy# < scorpCollissionY# and dz# < scorpCollissionZ#
                 underAttack = underAttack + 1
                 if enemy(t).IsAttacking = 1
@@ -810,8 +811,8 @@ function groundType(onGround, waterLevel)
     if onGround = 0
         ret = GROUNDTYPE_AIR
     else
-        X# = camera position x()
-        Z# = camera position z()
+        X# = camera position x(CAM_DEFAULT)
+        Z# = camera position z(CAM_DEFAULT)
         if floorHeight#(X#,Z#) > waterLevel
             ret = GROUNDTYPE_EARTH
         else
@@ -827,9 +828,9 @@ _handle_player:
 
     if (stage <> 0) and (stage <> 2)
 
-        X# = camera position x()
-        Y# = camera position y()
-        Z# = camera position z()
+        X# = camera position x(CAM_DEFAULT)
+        Y# = camera position y(CAM_DEFAULT)
+        Z# = camera position z(CAM_DEFAULT)
 
         if invertMouse = 1
             cAX# = WrapValue(cAX# - MousemoveY() * 0.2)
@@ -837,7 +838,7 @@ _handle_player:
             cAX# = WrapValue(cAX# + MousemoveY() * 0.2)
         endif
         cAY# = WrapValue(cAY# + MousemoveX() * 0.2)
-        cAZ# = Camera angle Z()
+        cAZ# = Camera angle Z(CAM_DEFAULT)
 
         rem Sprungroutine
         rem TODO: + Anlaufsprung
@@ -923,8 +924,8 @@ _handle_player:
         cTestX# = WrapValue(cAX# - 180)
         if cTestX# > 225 then cAX# = 45
         if cTestX# < 135 then cAX# = 315
-        YRotate camera CurveAngle(cAY#, oldcAY#, 24)
-        XRotate camera CurveAngle(cAX#, oldcAX#, 24)
+        YRotate camera CAM_DEFAULT, CurveAngle(cAY#, oldcAY#, 24)
+        XRotate camera CAM_DEFAULT, CurveAngle(cAX#, oldcAX#, 24)
 
         Rem Position Camera
         if onGround=1
@@ -933,7 +934,7 @@ _handle_player:
             Y#=JumpPosition#
         ENDIF
         inc Y#, playerEyeHeight#
-        Position Camera X#, Y#, Z#
+        Position Camera CAM_DEFAULT, X#, Y#, Z#
 
         Rem Position Listener
         Position Listener X#, Y#, Z#
@@ -1054,9 +1055,9 @@ _create_enemies:
             Clone Sound SFX_Monster_Base+t, SFX_Monster_Base
         endif
 
-        pX# = Camera Position X()
-        pY# = Camera Position Y()
-        pZ# = Camera Position Z()
+        pX# = Camera Position X(CAM_DEFAULT)
+        pY# = Camera Position Y(CAM_DEFAULT)
+        pZ# = Camera Position Z(CAM_DEFAULT)
 
         repeat
             eX# = RndBetween(cEnemySpawnMapBorderPadding, cMapSizeX-cEnemySpawnMapBorderPadding)
