@@ -949,8 +949,21 @@ _handle_player:
 return
 
 _WorldBoundCheck:
-    if XTest# > 0 and XTest# < cMapSizeX then X# = XTest#
-    if ZTest# > 0 and ZTest# < cMapSizeZ then Z# = ZTest#
+    if stage = 1
+        rx# = object position x(OBJ_Tent)
+        rz# = object position z(OBJ_Tent)
+        if IsInCircle(rx#, rz#, XTest#, ZTest#, stage1Distance#*stage4RunAwayFactor#)
+            X# = XTest#
+            Z# = ZTest#
+        else
+            Print ""
+            Print "Wrong Direction! Rest in the Tent!"
+            Print ""
+        endif
+    else
+        if XTest# > 0 and XTest# < cMapSizeX then X# = XTest#
+        if ZTest# > 0 and ZTest# < cMapSizeZ then Z# = ZTest#
+    endif
 return
 
 _update_trees:
