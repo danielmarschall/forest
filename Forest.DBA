@@ -38,45 +38,43 @@ rem   ... scheinbar ist die jumpheight = 0 dann!
 // Numerical Resources
 // --------------------------------
 
-#constant CAM_DEFAULT 0
+#constant CAM_DEFAULT           0
 
-#constant IMG_ForestFloor 1
-#constant IMG_Water 3
-#constant IMG_Tree 4
-#constant IMG_MapBackground 5
-#constant IMG_TitleScreen 95
-#constant IMG_DeathScreen 97
+#constant IMG_ForestFloor     100
+#constant IMG_Water           101
+#constant IMG_Tree            102
+#constant IMG_TitleScreen     103
+#constant IMG_DeathScreen     104
 
-#constant OBJ_Tent 10
-#constant OBJ_MapGhostObject 51
-#constant OBJ_TreeTemplate 52
-#constant OBJ_Monster_Base 1000
-#constant OBJ_Tree_Base 1500
+#constant OBJ_Tent            100
+#constant OBJ_TreeTemplate    101
+#constant OBJ_Monster_Base   1000
+#constant OBJ_Tree_Base      2000
 
-#constant MSH_TreeTemplate 52
+#constant MSH_TreeTemplate    100
 
-#constant MAT_Ground 1
-#constant MAT_Water 3
+#constant MAT_Ground          100
+#constant MAT_Water           101
 
-#constant SFX_ForestBG 1
-#constant SFX_Radio 2
-#constant SFX_Walk_Earth 10
-#constant SFX_Walk_Water 11
-#constant SFX_Woosh 12
-#constant SFX_HIT_SOIL 13
-#constant SFX_HIT_WATER 14
-#constant SFX_Jump 15
-#constant SFX_Attack_Base 20
-#constant SFX_TitleMusic 95
-#constant SFX_StormBG 96
-#constant SFX_DeathScreen 97
-#constant SFX_Monster_Base 1000
+#constant SFX_ForestBG        100
+#constant SFX_Radio           101
+#constant SFX_Walk_Earth      102
+#constant SFX_Walk_Water      103
+#constant SFX_Woosh           104
+#constant SFX_HIT_SOIL        105
+#constant SFX_HIT_WATER       106
+#constant SFX_Jump            107
+#constant SFX_TitleMusic      109
+#constant SFX_StormBG         110
+#constant SFX_DeathScreen     111
+#constant SFX_Attack_Base     900
+#constant SFX_Monster_Base   1000
 
-#constant DLL_ForestDLL 1
+#constant DLL_ForestDLL       100
 
-#constant MEM_Map 1
-#constant MEM_ResizeSrc 2
-#constant MEM_ResizeDest 3
+#constant MEM_Map             100
+#constant MEM_ResizeSrc       101
+#constant MEM_ResizeDest      102
 
 // --------------------------------
 // File names
@@ -182,6 +180,8 @@ speedBoostWalking#          = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "
 speedBoostRunning#          = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "speedBoostRunning",           2.0)
 speedBoostSlowWalk#         = call dll(DLL_ForestDLL, "INI_ReadFloat", "Game", "speedBoostSlowWalk",          0.5)
 
+rem Some fixes to the configuration to over errors due to wrong values
+if cMaxEnemies > OBJ_Tree_Base-OBJ_Monster_Base then cMaxEnemies = OBJ_Tree_Base-OBJ_Monster_Base
 if stage3ClockStart < stage1ClockStart then stage3ClockStart = stage3ClockStart + 24
 if stage4ClockStart < stage3ClockStart then stage4ClockStart = stage4ClockStart + 24
 
@@ -1158,8 +1158,6 @@ _create_floor:
         if floorHeight#(cMapSizeX / 2                , cMapSizeZ / 2 + tentDryRadius) <= waterLevel then tentIsDry = 0
         if floorHeight#(cMapSizeX / 2 + tentDryRadius, cMapSizeZ / 2 + tentDryRadius) <= waterLevel then tentIsDry = 0
     until tentIsDry = 1
-
-    update matrix MAT_Ground
 return
 
 rem Rotate smooth, and rotate in the direction with the lowest distance
