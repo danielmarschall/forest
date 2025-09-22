@@ -1,5 +1,5 @@
 rem Nightmare Forest by Daniel Marschall
-rem Revision: 20 September 2025
+rem Revision: 22 September 2025
 
 rem ----------------------------------------------------------------
 
@@ -937,7 +937,7 @@ _handle_player:
 
         Rem Position Listener
         Position Listener X#, Y#, Z#
-        Rotate Listener 0, cAY#, 0   : rem TODO why 0 instead of cAX# and cAZ#?
+        Rotate Listener cAX#, cAY#, cAZ#
 
         rem if onGround = 0
         rem     jumpheight#=Y#-FloorHeight#(X#,Z#)
@@ -1160,48 +1160,6 @@ _create_floor:
     until tentIsDry = 1
 
     update matrix MAT_Ground
-
-    remstart
-    currentmatrix=1
-    for z=1 to 20
-        for x=1 to 20
-            rem Get matrix heights
-            rem print x, " - ", z
-            rem sync
-            rem sleep 100
-    
-            h8#=get matrix height(currentmatrix,x,z-1)
-            h4#=get matrix height(currentmatrix,x-1,z)
-            h#=get matrix height(currentmatrix,x,z)
-            h2#=get matrix height(currentmatrix,x,z)
-    
-            rem Calculate projected angle X using heights
-            x1#=(x-1)*25.0 : y1#=h#
-            x2#=(x+0)*25.0 : y2#=h4#
-            dx#=x2#-x1#
-            dy#=y2#-y1#
-            ax#=atanfull(dx#,dy#)
-            ax#=wrapvalue(90-ax#)
-    
-            rem Calculate projected angle Z using heights
-            z1#=(z-1)*25.0 : y1#=h2#
-            z2#=(z+0)*25.0 : y2#=h8#
-            dz#=z2#-z1#
-            dy#=y2#-y1#
-            az#=atanfull(dz#,dy#)
-            az#=wrapvalue(90-az#)
-    
-            rem Make normal from projected angle
-            nx#=sin(ax#)
-            ny#=cos(ax#)
-            nz#=sin(az#)
-    
-            rem Setting matrix normal for smoothness
-            set matrix normal currentmatrix,x,z,nx#,ny#,nz#
-        next x
-    next z
-    update matrix currentmatrix
-    remend
 return
 
 rem Rotate smooth, and rotate in the direction with the lowest distance
