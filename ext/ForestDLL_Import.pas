@@ -6,7 +6,7 @@ uses
   Winapi.Windows;
 
 const
-  ForestDLL = 'ForestDLL.dll';
+  ForestDLL = 'ext\ForestDLL.dll';
 
 {$REGION '(COR) Core Functions'}
 

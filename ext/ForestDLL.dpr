@@ -846,6 +846,11 @@ begin
   result := Round(cPathLength*nTrees);
 end;
 
+function Min(a,b: integer): integer;
+begin
+  if a < b then exit(a) else exit(b);
+end;
+
 procedure MAP_GenerateMap(nTrees, treeRadius, mapX, mapY: integer;
   memblockTrees, memblockWayPoints: PDWordArray); cdecl;
 var
@@ -854,6 +859,7 @@ var
   p, q: TPoint;
   ok: boolean;
   nFreespots: integer;
+  borderTrees: integer;
 begin
   pathSize := Round(cPathWidthFactor * treeRadius);
   nFreespots := MAP_GetWaypointArrayElements(nTrees);
@@ -866,7 +872,43 @@ begin
 
   if memblockTrees <> nil then
   begin
-    for i := 0 to nTrees-1 do
+    {$REGION 'Fill map border with trees (only if there are enough tree slots available)'}
+    borderTrees := 0;
+    if (2*(mapX div treeRadius) + 2*(mapY div treeRadius)) <= nTrees then
+    begin
+      borderTrees := 0;
+      for i := 0 to (mapX div treeRadius)-1 do
+      begin
+        p := Point(i*treeRadius, treeRadius);
+        CopyMemory(PByte(memblockTrees) + (i+borderTrees)*8,   @p.X, 4);
+        CopyMemory(PByte(memblockTrees) + (i+borderTrees)*8+4, @p.Y, 4);
+      end;
+      Inc(borderTrees,mapX div treeRadius);
+      for i := 0 to (mapX div treeRadius)-1 do
+      begin
+        p := Point(i*treeRadius, mapY-treeRadius);
+        CopyMemory(PByte(memblockTrees) + (i+borderTrees)*8,   @p.X, 4);
+        CopyMemory(PByte(memblockTrees) + (i+borderTrees)*8+4, @p.Y, 4);
+      end;
+      Inc(borderTrees,mapX div treeRadius);
+      for i := 0 to (mapY div treeRadius)-1 do
+      begin
+        p := Point(treeRadius, i*treeRadius);
+        CopyMemory(PByte(memblockTrees) + (i+borderTrees)*8,   @p.X, 4);
+        CopyMemory(PByte(memblockTrees) + (i+borderTrees)*8+4, @p.Y, 4);
+      end;
+      Inc(borderTrees,mapY div treeRadius);
+      for i := 0 to (mapY div treeRadius)-1 do
+      begin
+        p := Point(mapX-treeRadius, i*treeRadius);
+        CopyMemory(PByte(memblockTrees) + (i+borderTrees)*8,   @p.X, 4);
+        CopyMemory(PByte(memblockTrees) + (i+borderTrees)*8+4, @p.Y, 4);
+      end;
+      Inc(borderTrees,mapY div treeRadius);
+    end;
+    {$ENDREGION}
+
+    for i := borderTrees to nTrees-1 do
     begin
       k := 0;
       repeat
@@ -875,17 +917,6 @@ begin
         p := Point(Random(mapX+1), Random(mapY+1));
 
         // Bäume nicht in den Weg bauen
-        for j := Low(FreeSpots) to High(FreeSpots) do
-        begin
-          q := Point(FreeSpots[j].X, FreeSpots[j].Y);
-          if _IsInCircle(p, q, treeRadius + pathSize div 2) then
-          begin
-            ok := false;
-            break;
-          end;
-        end;
-
-        // Bäume sollen sich nicht überschneiden
         for j := Low(FreeSpots) to High(FreeSpots) do
         begin
           q := Point(FreeSpots[j].X, FreeSpots[j].Y);
