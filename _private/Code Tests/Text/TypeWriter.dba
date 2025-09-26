@@ -1,31 +1,26 @@
-remstart
 Sync Rate 0
-load music "music\darkness.mid", 1
-loop music 1
 load sound "sound\Type.wav", 1
-lcd("The Dark Night...", 1, 10, 1, 1, 0)
+lcd("The Tale of the Nightmare Forest...", 1, 10, 1, 1, 0)
 sleep 500
-lcd("Dies ist eine Beta. Das Spiel wird in den nächsten 5 Jahren", 1, 40, 0, 1, 0)
+lcd("Insert text here ...................", 1, 40, 0, 1, 0)
 sleep 500
-lcd("fertig sein. Benutzen Sie die Maus, um sich umzuschauen", 1, 55, 0, 1, 0)
+lcd("Insert text here ...................", 1, 55, 0, 1, 0)
 sleep 500
-lcd("und benutzen Sie die Pfeiltasten, um zu laufen. Mit der rechten", 1, 70, 0, 1, 0)
+lcd("Insert text here ...................", 1, 70, 0, 1, 0)
 sleep 500
-lcd("Maustaste springen Sie.", 1, 85, 0, 1, 0)
+lcd("Insert text here ...................", 1, 85, 0, 1, 0)
 sleep 500
-lcd("(C)Copyright 2001 - 2002 Daniel Marschall.", 1, 115, 1, 0, 0)
+lcd("Insert text here ...................", 1, 115, 1, 0, 0)
 sleep 500
-lcd("Alle Rechte vorbehalten!", 1, 130, 1, 0, 0)
+lcd("Insert text here ...................", 1, 130, 1, 0, 0)
 sleep 500
-lcd("Besuchen Sie meine Webseite!", 1, 160, 0, 0, 1)
+lcd("Insert text here ...................", 1, 160, 0, 0, 1)
 sleep 500
-lcd("http://www.d-m-home.de", 1, 175, 0, 0, 1)
+lcd("Insert text here ...................", 1, 175, 0, 0, 1)
 sleep 500
-lcd("Diese Version ist vom 6.9.2002.", 1, 205, 1, 1, 1)
+lcd("Insert text here ...................", 1, 205, 1, 1, 1)
 sleep 5000
 delete sound 1
-delete music 1
-remend
 
 function lcd(rich$, x, y, r, g, b)
   a = len(rich$) + 1
