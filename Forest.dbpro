@@ -5,12 +5,12 @@ project name=Nightmare Forest
 
 ; **** source file information ****
 main=Forest.DBA
-LineMain=226
+LineMain=289
 
 ; **** Executable Information  ***
 ; build types: exe, media, installer, alone
 executable=Forest.exe
-build type=exe
+build type=alone
 ; ** Media file compression **
 compression=NO
 
