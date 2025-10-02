@@ -465,6 +465,8 @@ _handle_stage:
                         X# = camera position x(CAM_DEFAULT)
                         Y# = camera position y(CAM_DEFAULT)
                         Z# = camera position z(CAM_DEFAULT)
+
+                        clockSeconds = stage4ClockStart*60*60
                         stage = 4
 
                         loop sound SFX_TitleMusic
