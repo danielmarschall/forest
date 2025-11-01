@@ -43,6 +43,10 @@ see [Let's play of the beta version](https://www.youtube.com/watch?v=5Tp92G5N19c
 - Hold Shift to slowly walk (regains run energy faster)
 - Jump with space key (hold longer for higher jump)
 
+## Known issues
+
+- If you are playing in fullscreen mode, you MUST NOT minimize the game (e.g. using Alt+Tab), otherwise the game will crash once the window is restored. (This is a bug in the DarkBASIC compiler)
+
 ## Development
 
 To compile and/or modify the game yourself, you need the following tools:
@@ -55,4 +59,4 @@ To compile and/or modify the game yourself, you need the following tools:
 
 The main game and source code is licensed under the terms of the Apache 2.0 licenses.
 
-Sound and Graphics files are licensed under various free licenses. See the file _private/Sources.txt for details.
+Sound and Graphics files are licensed under various free licenses. See the file **Credits.md** for details.
